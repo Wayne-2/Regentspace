@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:newregentspace/core/src/canva/canva.dart';
+import 'package:newregentspace/core/src/canva/widgets/profile_option_new_tile.dart';
 
 class SettingsTemplate extends StatelessWidget {
   const SettingsTemplate({

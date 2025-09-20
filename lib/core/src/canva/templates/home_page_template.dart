@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:newregentspace/core/src/canva/canva_tools/icontabs.dart';
+import 'package:newregentspace/core/src/canva/widgets/icontabs.dart';
 
 class HomePageTemplate extends StatelessWidget {
   const HomePageTemplate({
