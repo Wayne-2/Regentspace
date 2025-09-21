@@ -6,26 +6,32 @@ class Icontabs extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.themecolor,
-    required this.color
+    required this.color,
+    required this.height,
+    required this.width,
+    required this.iconsize
   });
   final IconData icon;
   final Color themecolor;
   final Color color;
   final String label;
+  final double height;
+  final double width;
+  final double iconsize;
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 30,
-          height: 30,
+          width: width,
+          height: height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: Colors.black12, width: 1),
             color: themecolor,
           ),
-          child: Center(child: Icon(icon, size: 10, color: color)),
+          child: Center(child: Icon(icon, size: iconsize, color: color)),
         ),
         SizedBox(height: 4),
         Text(

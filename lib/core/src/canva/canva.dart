@@ -73,11 +73,12 @@ class _RegentcanvaState extends State<Regentcanva> {
       appBar: buildAppBarMenu(),
       body: Column(
         children: [
+          
           Flexible(
           flex: 7, // 6 out of 10 → 60%
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 5),
+            padding: const EdgeInsets.symmetric(vertical: 0),
             child:  PreviewSection(
             appName: appName,
             myColor: myColor,
@@ -90,7 +91,9 @@ class _RegentcanvaState extends State<Regentcanva> {
           ),
           ),
         ),
-         
+         Text(
+            'Tap on the page to preview in full',
+            style: TextStyle(fontSize: 10),),
           Flexible(
           flex: 3, // 4 out of 10 → 40%
           child: EditableSection(

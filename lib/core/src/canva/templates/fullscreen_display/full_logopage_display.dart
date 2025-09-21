@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 
-class LogopageTemplate extends StatelessWidget {
-  const LogopageTemplate({
+class FullLogopageDisplay extends StatelessWidget {
+  const FullLogopageDisplay({
     super.key,
     required this.selectedImagePath,
     required this.appName,

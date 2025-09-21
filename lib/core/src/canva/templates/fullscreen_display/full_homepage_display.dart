@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:newregentspace/core/src/canva/widgets/icontabs.dart';
 
-class HomePageTemplate extends StatelessWidget {
-  const HomePageTemplate({
+class FullHomepageDisplay extends StatelessWidget {
+  const FullHomepageDisplay({
     super.key,
     required this.primaryapptheme,
     required this.iconthemeColor,
@@ -19,7 +19,7 @@ class HomePageTemplate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(12.0),
       child: Column(
         children: [
           Row(
@@ -28,7 +28,7 @@ class HomePageTemplate extends StatelessWidget {
               Row(
                 children: [
                   CircleAvatar(
-                    radius: 10,
+                    radius: 20,
                     backgroundColor: Color.fromRGBO(
                       168,
                       168,
@@ -36,10 +36,10 @@ class HomePageTemplate extends StatelessWidget {
                       1,
                     ),
                   ),
-                  SizedBox(width: 5),
+                  SizedBox(width: 10),
                   Text(
                     'hello User',
-                    style: TextStyle(fontSize: 10),
+                    style: TextStyle(fontSize: 14),
                   ),
                 ],
               ),
@@ -47,8 +47,8 @@ class HomePageTemplate extends StatelessWidget {
                 children: [
                   Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
+                      horizontal: 10,
+                      vertical: 5,
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
@@ -60,25 +60,25 @@ class HomePageTemplate extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.add_circle, size: 8,color: iconthemeColor),
-                        SizedBox(width: 4),
+                        Icon(Icons.add_circle, size: 14,color: iconthemeColor),
+                        SizedBox(width: 10),
                         Text(
                           "Add Money",
-                          style: TextStyle(fontSize: 10, color: iconthemeColor),
+                          style: TextStyle(fontSize: 14, color: iconthemeColor),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(width: 6),
+                  SizedBox(width: 10),
                   Icon(
                     Icons.notifications_outlined,
-                    size: 10,
+                    size: 20,
                   ),
                 ],
               ),
             ],
           ),
-          SizedBox(height: 6),
+          SizedBox(height: 12),
           Stack(
             clipBehavior: Clip.hardEdge,
     
@@ -90,21 +90,21 @@ class HomePageTemplate extends StatelessWidget {
                 child: _selectedBgImagePath == null
                     ? Image.asset(
                         'assets/newbg.png',
-                        width: 175,
-                        height: 70,
+                        width: double.infinity,
+                        height: 150,
                         fit: BoxFit.cover,
                       )
                     : Image.file(
                         File(_selectedBgImagePath),
-                        width: 175,
-                        height: 70,
+                        width: double.infinity,
+                        height: 150,
                         fit: BoxFit.cover,
                       ),
               ),
               Container(
-                width: 175,
-                height: 70,
-                padding: EdgeInsets.all(6),
+                width: double.infinity,
+                height: 150,
+                padding: EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -115,17 +115,20 @@ class HomePageTemplate extends StatelessWidget {
                     Text(
                       "Account Balance",
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 16,
                         color: Colors.white70,
                       ),
                     ),
+                    SizedBox(height: 10,),
                     Text(
                       "₦ 2,554,706",
                       style: GoogleFonts.lato(
-                        fontSize: 10,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                         color: primaryapptheme,
                       ),
                     ),
+                    SizedBox(height: 10,),
                     Row(
                       mainAxisAlignment:
                           MainAxisAlignment.start,
@@ -134,10 +137,10 @@ class HomePageTemplate extends StatelessWidget {
                           "Moniepoint",
                           style: GoogleFonts.lato(
                             color: Colors.white,
-                            fontSize: 10.5,
+                            fontSize: 16
                           ),
                         ),
-                        SizedBox(width: 3),
+                        SizedBox(width: 6),
                         GestureDetector(
                           onTap: () {
                             Clipboard.setData(
@@ -150,15 +153,15 @@ class HomePageTemplate extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.copy,
-                                size: 12,
+                                size: 16,
                                 color: Colors.white,
                               ),
-                              SizedBox(width: 4),
+                              SizedBox(width: 8),
                               Text(
                                 "1100336447",
                                 style: GoogleFonts.lato(
                                   color: Colors.white,
-                                  fontSize: 10.5,
+                                  fontSize: 16,
                                 ),
                               ),
                             ],
@@ -171,94 +174,91 @@ class HomePageTemplate extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 6),
+          SizedBox(height: 12),
           Text(
             "Top-up Services",
-            style: TextStyle(fontSize: 10),
+            style: TextStyle(fontSize: 14),
           ),
-          SizedBox(height: 5),
+          SizedBox(height: 10),
           SizedBox(
-            width: 175,
-            height: 120, // instead of 200
+            width: double.infinity,
+            height: 180, // instead of 200
             child: GridView.count(
               crossAxisCount: 4,
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 6,
-              mainAxisSpacing: 6,
-              childAspectRatio: 0.7,
               children: [
                 Icontabs(
                   icon: Icons.phone_android,
                   color: iconthemeColor,
                   label: 'Airtime',
-                  themecolor: primaryapptheme,
-                  height: 30, 
-                  width: 30, 
-                  iconsize: 12,
+                  themecolor: primaryapptheme, 
+                  height: 60, 
+                  width: 60, 
+                  iconsize: 20,
                 ),
                 Icontabs(
                   icon: Icons.wifi,
                   color: iconthemeColor,
                   label: 'data',
                   themecolor: primaryapptheme,
-                  height: 30, 
-                  width: 30, 
-                  iconsize: 12,
+                  height: 60, 
+                  width: 60, 
+                  iconsize: 20,
                 ),
                 Icontabs(
                   icon: Icons.bolt,
                   color: iconthemeColor,
                   label: 'electric',
                   themecolor: primaryapptheme,
-                  height: 30, 
-                  width: 30, 
-                  iconsize: 12,
+                  height: 60, 
+                  width: 60, 
+                  iconsize: 20,
                 ),
                 Icontabs(
                   icon: Icons.tv,
                   color: iconthemeColor,
                   label: 'Cable',
                   themecolor: primaryapptheme,
-                  height: 30, 
-                  width: 30, 
-                  iconsize: 12,
+                  height: 60, 
+                  width: 60, 
+                  iconsize: 20,
                 ),
                 Icontabs(
                   icon: Icons.sports_soccer,
                   color: iconthemeColor,
                   label: 'Betting',
                   themecolor: primaryapptheme,
-                  height: 30, 
-                  width: 30, 
-                  iconsize: 12,
+                  height: 60, 
+                  width: 60, 
+                  iconsize: 20,
                 ),
                 Icontabs(
                   icon: Icons.flight,
                   color: iconthemeColor,
                   label: 'Flight',
                   themecolor: primaryapptheme,
-                  height: 30, 
-                  width: 30, 
-                  iconsize: 12,
+                  height: 60, 
+                  width: 60, 
+                  iconsize: 20,
                 ),
                 Icontabs(
                   icon: Icons.shopping_cart,
                   color: iconthemeColor,
                   label: 'Shop',
                   themecolor: primaryapptheme,
-                  height: 30, 
-                  width: 30, 
-                  iconsize: 12,
+                  height: 60, 
+                  width: 60, 
+                  iconsize: 20,
                 ),
                 Icontabs(
                   icon: Icons.generating_tokens,
                   color: iconthemeColor,
                   label: 'Results',
                   themecolor: primaryapptheme,
-                  height: 30, 
-                  width: 30, 
-                  iconsize: 12,
+                  height: 60, 
+                  width: 60, 
+                  iconsize: 20,
                 ),
               ],
             ),
@@ -266,15 +266,15 @@ class HomePageTemplate extends StatelessWidget {
           SizedBox(height: 3),
           Text(
             "Advertisements",
-            style: TextStyle(fontSize: 10),
+            style: TextStyle(fontSize: 14),
           ),
-          SizedBox(height: 5),
+          SizedBox(height: 10),
           Expanded(
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
                 Container(
-                  width: 175,
+                  width: 250,
                   height: 80,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
@@ -286,7 +286,7 @@ class HomePageTemplate extends StatelessWidget {
                 ),
                 SizedBox(width: 10),
                 Container(
-                  width: 175,
+                  width: 250,
                   height: 80,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
@@ -302,7 +302,7 @@ class HomePageTemplate extends StatelessWidget {
           SizedBox(height: 5),
           Container(
             width: double.infinity,
-            height: 20,
+            height: 50,
             color: primaryapptheme,
           ),
         ],

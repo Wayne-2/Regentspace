@@ -6,11 +6,13 @@ class Usageinfo extends StatelessWidget {
     required this.amount,
     required this.rating,
     required this.servicetype,
+    required this.fontsize
   });
 
   final String servicetype;
   final String rating;
   final String amount;
+  final double fontsize;
 
   @override
   Widget build(BuildContext context) {
@@ -18,14 +20,14 @@ class Usageinfo extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(amount,
-            style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w600)),
+            style: TextStyle(fontSize: fontsize, fontWeight: FontWeight.w600)),
         const SizedBox(height: 2),
         Text(rating,
-            style: const TextStyle(
-                fontSize: 8, fontWeight: FontWeight.w600, color: Colors.red)),
+            style: TextStyle(
+                fontSize: fontsize, fontWeight: FontWeight.w600, color: Colors.red)),
         const SizedBox(height: 2),
         Text(servicetype,
-            style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w600)),
+            style: TextStyle(fontSize: fontsize, fontWeight: FontWeight.w600)),
       ],
     );
   }

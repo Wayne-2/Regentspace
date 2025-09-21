@@ -1,7 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:newregentspace/core/src/canva/templates/finances_template.dart';
+import 'package:newregentspace/core/src/canva/templates/fullscreen_display/full_finances_display.dart';
+import 'package:newregentspace/core/src/canva/templates/fullscreen_display/full_homepage_display.dart';
+import 'package:newregentspace/core/src/canva/templates/fullscreen_display/full_logopage_display.dart';
+import 'package:newregentspace/core/src/canva/templates/fullscreen_display/full_settings_display.dart';
 import 'package:newregentspace/core/src/canva/templates/home_page_template.dart';
+import 'package:newregentspace/core/src/canva/templates/logopage_template.dart';
 import 'package:newregentspace/core/src/canva/templates/settings_template.dart';
 
 class PreviewSection extends StatelessWidget {
@@ -39,55 +43,16 @@ class PreviewSection extends StatelessWidget {
 
           /// Launcher Page
           _PreviewThumbnail(
-            fullscreenContent: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 100,
-                  backgroundColor: Colors.transparent,
-                  child: selectedImagePath == null
-                      ? Image.asset('assets/addLogo.png')
-                      : Image.file(File(selectedImagePath!)),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  appName,
-                  style: TextStyle(
-                    fontSize: 28,
-                    color: appNameColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+            fullscreenContent: FullLogopageDisplay(selectedImagePath: selectedImagePath, appName: appName, appNameColor: appNameColor),
             backgroundColor: myColor,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.transparent,
-                  child: selectedImagePath == null
-                      ? Image.asset('assets/addLogo.png')
-                      : Image.file(File(selectedImagePath!)),
-                ),
-                Text(
-                  appName,
-                  style: TextStyle(
-                    fontSize: 17,
-                    color: appNameColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+            child: LogopageTemplate(selectedImagePath: selectedImagePath, appName: appName, appNameColor: appNameColor),
           ),
 
           const SizedBox(width: 20),
 
           /// HomePage
           _PreviewThumbnail(
-            fullscreenContent: HomePageTemplate(
+            fullscreenContent: FullHomepageDisplay(
               primaryapptheme: primaryapptheme,
               selectedBgImagePath: selectedBgImagePath,
               iconthemeColor: iconthemeColor,
@@ -105,7 +70,7 @@ class PreviewSection extends StatelessWidget {
           /// Finances
           _PreviewThumbnail(
             fullscreenContent:
-                FinancesTemplate(primaryapptheme: primaryapptheme),
+                FullFinancesDisplay(primaryapptheme: primaryapptheme),
             backgroundColor: homePagebgColor,
             child: FinancesTemplate(primaryapptheme: primaryapptheme),
           ),
@@ -114,7 +79,7 @@ class PreviewSection extends StatelessWidget {
 
           /// Settings
           _PreviewThumbnail(
-            fullscreenContent: const SettingsTemplate(),
+            fullscreenContent: const FullSettingsDisplay(),
             backgroundColor: homePagebgColor,
             child: const SettingsTemplate(),
           ),

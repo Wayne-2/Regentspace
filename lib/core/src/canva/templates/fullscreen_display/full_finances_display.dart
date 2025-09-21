@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:newregentspace/core/src/canva/widgets/usageinfo.dart';
 
-class FinancesTemplate extends StatelessWidget {
-  const FinancesTemplate({
+class FullFinancesDisplay extends StatelessWidget {
+  const FullFinancesDisplay({
     super.key,
     required this.primaryapptheme,
   });
@@ -12,12 +12,12 @@ class FinancesTemplate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(14.0),
       child: Column(
         children: [
           Container(
-            width: 175,
-            height: 50,
+            width: double.infinity,
+            height: 100,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               color: primaryapptheme,
@@ -38,15 +38,15 @@ class FinancesTemplate extends StatelessWidget {
                       Text(
                         'Solomon',
                         style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w400,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       Text(
                         'Prepaid- 5235829243',
                         style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w200,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -54,8 +54,8 @@ class FinancesTemplate extends StatelessWidget {
                   Text(
                     'Manage account',
                     style: TextStyle(
-                      fontSize: 6,
-                      fontWeight: FontWeight.w200,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ],
@@ -64,24 +64,24 @@ class FinancesTemplate extends StatelessWidget {
           ),
           SizedBox(height: 5,),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Usageinfo(amount: '20,000.00', rating: 'Kes', servicetype: 'Airtime',fontsize: 10,),
-                Usageinfo(amount: '4000', rating: 'Mms', servicetype: 'Voice Bundle',fontsize: 10,),
-                Usageinfo(amount: '2,903.00', rating: 'Mb', servicetype: 'Data Bundle',fontsize: 10,),
+                Usageinfo(amount: '20,000.00', rating: 'Kes', servicetype: 'Airtime', fontsize: 14,),
+                Usageinfo(amount: '4000', rating: 'Mms', servicetype: 'Voice Bundle',fontsize: 14,),
+                Usageinfo(amount: '2,903.00', rating: 'Mb', servicetype: 'Data Bundle',fontsize: 14,),
               ],
             ),
           ),
-          SizedBox(height:6),
+          SizedBox(height:10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
+                          horizontal: 20,
+                          vertical: 10,
                         ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
@@ -93,14 +93,14 @@ class FinancesTemplate extends StatelessWidget {
                         ),
                         child: Text(
                           "History",
-                          style: TextStyle(fontSize: 10),
+                          style: TextStyle(fontSize: 14),
                         ),
                       ),
                       SizedBox(width:10),
               Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
+                          horizontal: 20,
+                          vertical: 10,
                         ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
@@ -112,19 +112,19 @@ class FinancesTemplate extends StatelessWidget {
                         ),
                         child: Text(
                           "Schedule payments",
-                          style: TextStyle(fontSize: 10),
+                          style: TextStyle(fontSize: 14),
                         ),
                       ),
             ],
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical:8.0),
+            padding: const EdgeInsets.symmetric(vertical:10.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
                   "Recent Transactions",
-                  style: TextStyle(fontSize: 10),
+                  style: TextStyle(fontSize: 14),
                 ),
               ],
             ),
@@ -134,9 +134,9 @@ class FinancesTemplate extends StatelessWidget {
                         itemCount: 5,
                         itemBuilder: (BuildContext context, int index) {
     return Padding(
-      padding: const EdgeInsets.all(2.0),
+      padding: const EdgeInsets.all(7.0),
       child: Container(
-          padding: EdgeInsets.all(4),
+          padding: EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(5),
@@ -146,19 +146,19 @@ class FinancesTemplate extends StatelessWidget {
             children: [
               // Image
               Container(
-                width: 10,
-                height: 10,
+                width: 20,
+                height: 20,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   color: Colors.grey[100],
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(6.0),
-                  child: Icon(Icons.wallet_outlined, size: 8,)
+                  child: Icon(Icons.wallet_outlined, size: 13,)
                 ),
               ),
     
-              SizedBox(width: 12),
+              SizedBox(width: 14),
     
               // Title and Time
               Expanded(
@@ -168,15 +168,15 @@ class FinancesTemplate extends StatelessWidget {
                     Text(
                       'loan payment',
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    SizedBox(height: 6),
                     Text(
                       '12:00pm',
                       style: TextStyle(
-                        fontSize: 8,
+                        fontSize: 12,
                         color: Colors.grey[600],
                       ),
                     ),
@@ -188,7 +188,7 @@ class FinancesTemplate extends StatelessWidget {
               Text(
                 '+3,000',
                 style: TextStyle(
-                  fontSize: 7,
+                  fontSize: 14,
                   color:Colors.red ,
                   fontWeight: FontWeight.bold,
                 ),
