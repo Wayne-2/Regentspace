@@ -12,6 +12,7 @@ class PreviewSection extends StatelessWidget {
   final String? selectedBgImagePath;
   final Color primaryapptheme;
   final Color homePagebgColor;
+  final Color iconthemeColor;
 
   const PreviewSection({
     super.key,
@@ -22,6 +23,7 @@ class PreviewSection extends StatelessWidget {
     required this.selectedBgImagePath,
     required this.primaryapptheme,
     required this.homePagebgColor,
+    required this.iconthemeColor,
   });
 
   @override
@@ -72,6 +74,7 @@ class PreviewSection extends StatelessWidget {
             child: HomePageTemplate(
               primaryapptheme: primaryapptheme,
               selectedBgImagePath: selectedBgImagePath,
+              iconthemeColor: iconthemeColor
             ),
           ),
           const SizedBox(width: 20),

@@ -8,10 +8,12 @@ class HomePageTemplate extends StatelessWidget {
   const HomePageTemplate({
     super.key,
     required this.primaryapptheme,
+    required this.iconthemeColor,
     required String? selectedBgImagePath,
   }) : _selectedBgImagePath = selectedBgImagePath;
 
   final Color primaryapptheme;
+  final Color iconthemeColor;
   final String? _selectedBgImagePath;
 
   @override
@@ -58,11 +60,11 @@ class HomePageTemplate extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.add_circle, size: 8),
+                        Icon(Icons.add_circle, size: 8,color: iconthemeColor),
                         SizedBox(width: 4),
                         Text(
                           "Add Money",
-                          style: TextStyle(fontSize: 10),
+                          style: TextStyle(fontSize: 10, color: iconthemeColor),
                         ),
                       ],
                     ),
@@ -193,41 +195,49 @@ class HomePageTemplate extends StatelessWidget {
               children: [
                 Icontabs(
                   icon: Icons.phone_android,
+                  color: iconthemeColor,
                   label: 'Airtime',
                   themecolor: primaryapptheme,
                 ),
                 Icontabs(
                   icon: Icons.wifi,
+                  color: iconthemeColor,
                   label: 'data',
                   themecolor: primaryapptheme,
                 ),
                 Icontabs(
                   icon: Icons.bolt,
+                  color: iconthemeColor,
                   label: 'electric',
                   themecolor: primaryapptheme,
                 ),
                 Icontabs(
                   icon: Icons.tv,
+                  color: iconthemeColor,
                   label: 'Cable',
                   themecolor: primaryapptheme,
                 ),
                 Icontabs(
                   icon: Icons.sports_soccer,
+                  color: iconthemeColor,
                   label: 'Betting',
                   themecolor: primaryapptheme,
                 ),
                 Icontabs(
                   icon: Icons.flight,
+                  color: iconthemeColor,
                   label: 'Flight',
                   themecolor: primaryapptheme,
                 ),
                 Icontabs(
                   icon: Icons.shopping_cart,
+                  color: iconthemeColor,
                   label: 'Shop',
                   themecolor: primaryapptheme,
                 ),
                 Icontabs(
                   icon: Icons.generating_tokens,
+                  color: iconthemeColor,
                   label: 'Results',
                   themecolor: primaryapptheme,
                 ),

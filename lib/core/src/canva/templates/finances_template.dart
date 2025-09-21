@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:newregentspace/core/src/canva/canva.dart';
 import 'package:newregentspace/core/src/canva/widgets/usageinfo.dart';
 
 class FinancesTemplate extends StatelessWidget {

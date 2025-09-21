@@ -6,9 +6,11 @@ class Icontabs extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.themecolor,
+    required this.color
   });
   final IconData icon;
   final Color themecolor;
+  final Color color;
   final String label;
   @override
   Widget build(BuildContext context) {
@@ -23,7 +25,7 @@ class Icontabs extends StatelessWidget {
             border: Border.all(color: Colors.black12, width: 1),
             color: themecolor,
           ),
-          child: Center(child: Icon(icon, size: 10)),
+          child: Center(child: Icon(icon, size: 10, color: color)),
         ),
         SizedBox(height: 4),
         Text(

@@ -22,7 +22,7 @@ class _RegentcanvaState extends State<Regentcanva> {
   Color appNameColor = const Color.fromARGB(204, 0, 0, 0);
   Color primaryapptheme = const Color.fromARGB(255, 250, 182, 144);
   Color homePagebgColor = const Color.fromARGB(255, 255, 247, 234);
-
+  Color iconthemeColor = const Color.fromARGB(204, 0, 0, 0);
   // image pickers
   Future _pickImage() async {
     final path = await pickImageFromGallery();
@@ -60,6 +60,11 @@ class _RegentcanvaState extends State<Regentcanva> {
         pickerColor: homePagebgColor,
         onColorChanged: (c) => setState(() => homePagebgColor = c),
       );
+  void _iconcolor() => showColorPickerDialog(
+        context,
+        pickerColor: iconthemeColor,
+        onColorChanged: (c) => setState(() => iconthemeColor = c),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +73,12 @@ class _RegentcanvaState extends State<Regentcanva> {
       appBar: buildAppBarMenu(),
       body: Column(
         children: [
-          PreviewSection(
+          Flexible(
+          flex: 7, // 6 out of 10 → 60%
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child:  PreviewSection(
             appName: appName,
             myColor: myColor,
             appNameColor: appNameColor,
@@ -76,23 +86,31 @@ class _RegentcanvaState extends State<Regentcanva> {
             selectedBgImagePath: _selectedBgImagePath,
             primaryapptheme: primaryapptheme,
             homePagebgColor: homePagebgColor,
+            iconthemeColor: iconthemeColor
           ),
-          Expanded(
-            child: EditableSection(
-              textEditingController: _textEditingController,
-              onAppNameChanged: () => setState(() => appName = _textEditingController.text),
-              onPickImage: _pickImage,
-              onPickBgImage: _pickDashbImage,
-              onPickAppNameColor: _appNameColorPicker,
-              onPickBackgroundColor: _showColorPicker,
-              onPickPrimaryTheme: _primaryAppTheme,
-              onPickHomeBgColor: _homePageBgColor,
-              appNameColor: appNameColor,
-              myColor: myColor,
-              primaryapptheme: primaryapptheme,
-              homePagebgColor: homePagebgColor,
-            ),
           ),
+        ),
+         
+          Flexible(
+          flex: 3, // 4 out of 10 → 40%
+          child: EditableSection(
+            textEditingController: _textEditingController,
+            onAppNameChanged: () =>
+                setState(() => appName = _textEditingController.text),
+            onPickImage: _pickImage,
+            onPickBgImage: _pickDashbImage,
+            onPickAppNameColor: _appNameColorPicker,
+            onPickBackgroundColor: _showColorPicker,
+            onPickPrimaryTheme: _primaryAppTheme,
+            onPickHomeBgColor: _homePageBgColor,
+            onPickIconThemeColor:_iconcolor,
+            appNameColor: appNameColor,
+            myColor: myColor,
+            primaryapptheme: primaryapptheme,
+            homePagebgColor: homePagebgColor,
+            iconthemeColor: iconthemeColor,
+          ),
+        ),
 
         ],
       ),

@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:newregentspace/core/src/canva/canva.dart';
 import 'package:newregentspace/core/src/canva/widgets/profile_option_new_tile.dart';
 
 class SettingsTemplate extends StatelessWidget {
@@ -68,17 +67,6 @@ class SettingsTemplate extends StatelessWidget {
                     SizedBox(height: 3),
       
                     ProfileOptionNewTile(
-                      title: 'Support',
-                      leading: Image.asset(
-                        'images/support.png',
-                        width: 10,
-                        height: 10,                ),
-                      onTap: () {},
-                    ),
-      
-                    SizedBox(height: 3),
-      
-                    ProfileOptionNewTile(
                       title: 'About Us',
                       leading: Image.asset(
                         'assets/images/aboutus.png',
@@ -94,18 +82,6 @@ class SettingsTemplate extends StatelessWidget {
                       title: 'FAQs',
                       leading: Image.asset(
                         'assets/images/FAQs.png',
-                        width: 10,
-                        height: 10,
-                      ),
-                      onTap: () {},
-                    ),
-      
-                    SizedBox(height: 3),
-      
-                    ProfileOptionNewTile(
-                      title: 'Privacy Policy',
-                      leading: Image.asset(
-                        'images/privacypolicy.png',
                         width: 10,
                         height: 10,
                       ),
