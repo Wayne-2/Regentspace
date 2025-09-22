@@ -104,6 +104,7 @@ class _RegentcanvaState extends State<Regentcanva> {
             onPickBgImage: _pickDashbImage,
             onPickAppNameColor: _appNameColorPicker,
             onPickBackgroundColor: _showColorPicker,
+            selectedBgImagePath: _selectedBgImagePath,
             onPickPrimaryTheme: _primaryAppTheme,
             onPickHomeBgColor: _homePageBgColor,
             onPickIconThemeColor:_iconcolor,

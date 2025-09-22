@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:newregentspace/core/demo_pages/utils/navigator.dart';
 
 class EditableSection extends StatelessWidget {
   final TextEditingController textEditingController;
@@ -15,6 +16,7 @@ class EditableSection extends StatelessWidget {
   final Color primaryapptheme;
   final Color homePagebgColor;
   final Color iconthemeColor;
+  final String? selectedBgImagePath;
 
   const EditableSection({
     super.key,
@@ -32,6 +34,7 @@ class EditableSection extends StatelessWidget {
     required this.homePagebgColor,
     required this.onPickIconThemeColor,
     required this.iconthemeColor,
+    required this.selectedBgImagePath,
   });
 
   @override
@@ -266,6 +269,46 @@ class EditableSection extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+            MaterialButton(
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              color: Colors.blueGrey,
+              onPressed: (){
+                Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=> BottomNav(
+                  appNameColor: appNameColor, 
+                  myColor: myColor, 
+                  primaryapptheme: primaryapptheme, 
+                  homePagebgColor: homePagebgColor, 
+                  iconthemeColor: iconthemeColor,
+                  selectedBgImagePath: selectedBgImagePath,)));
+              },
+              shape:RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8)
+              ),
+              child:Text("Run Demo", style: TextStyle(color:Colors.white, fontSize: 10)),
+            ),
+            MaterialButton(
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              color: Colors.grey,
+              onPressed: (){},
+              shape:RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8)
+              ),
+              child:Text("Save Draft", style: TextStyle(color:Colors.white, fontSize: 10)),
+            ),
+            MaterialButton(
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical:10),
+              color: const Color.fromARGB(255, 68, 5, 150),
+              onPressed: (){},
+              shape:RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8)
+              ),
+              child:Text("Publish app", style: TextStyle(color:Colors.white, fontSize: 10)),
+            )
+          ],)
         ],
       ),
     );

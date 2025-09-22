@@ -39,13 +39,9 @@ class BankaccountState extends State<Bankaccount> {
           Text('No Bank Added!!!', style: TextStyle(fontSize: 14, color: Color(0xFF979797), fontWeight: FontWeight.w500),),
           SizedBox(height: 15),
           Text('Looks like you haven’t added any bank', style: TextStyle(fontSize: 16, color: Color(0xFF7063E4), fontWeight: FontWeight.w500),),
-          Text('to your FinPadi account yet', style: TextStyle(fontSize: 16, color: Color(0xFF7063E4), fontWeight: FontWeight.w500),),
-
-          //Spacer(),
+          Text('to your regentspace account yet', style: TextStyle(fontSize: 16, color: Color(0xFF7063E4), fontWeight: FontWeight.w500),),
 
           SizedBox(height: 70),
-
-
 
           SizedBox(
             width: double.infinity,
@@ -59,12 +55,9 @@ class BankaccountState extends State<Bankaccount> {
                 ),
               ),
 
-
-
               onPressed: () {
                 Navigator.of(context).pop();
                 },
-
 
 
               child: Text(

@@ -1,8 +1,8 @@
 // import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class FullSettingsDisplay extends StatelessWidget {
-  const FullSettingsDisplay({
+class SettingsDemo extends StatelessWidget {
+  const SettingsDemo({
     super.key,
   });
 
