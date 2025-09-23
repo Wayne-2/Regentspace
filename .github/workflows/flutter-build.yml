@@ -2,8 +2,8 @@ name: Build Flutter APK
 
 on:
   push:
-    branches: [ main ]   # change "main" to "master" if your repo uses that
-  workflow_dispatch:      # lets you trigger build manually from GitHub
+    branches: [ main ]   # change to "master" if that's your default branch
+  workflow_dispatch:
 
 jobs:
   build:
@@ -25,7 +25,7 @@ jobs:
         run: flutter build apk --release
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
