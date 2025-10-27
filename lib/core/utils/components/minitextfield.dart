@@ -1,35 +1,49 @@
 import 'package:flutter/material.dart';
 
 class Minitextfield extends StatelessWidget {
-  const Minitextfield({super.key});
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final FocusNode? nextFocusNode;
+  final FocusNode? prevFocusNode;
+
+  const Minitextfield({
+    super.key,
+    required this.controller,
+    required this.focusNode,
+    this.nextFocusNode,
+    this.prevFocusNode,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-            width: 53,
-            height: 64,
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 255, 255, 255),
-              border: Border.all(
-                color: Color.fromRGBO(175, 175, 175, 1),
-                width: 1.0,
-              ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: TextField(
-                obscureText: true,
-                maxLength: 1,
-                decoration: InputDecoration(
-                  border: InputBorder.none, // This line is also invalid and should be fixed or removed
-                  hintText: '',
-                  hintStyle: TextStyle(fontSize: 14),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  counterText: ""
-                  
-                ),
-              ),
-            ),
-          );
+    return SizedBox(
+      width: 55,
+      child: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        textAlign: TextAlign.center,
+        keyboardType: TextInputType.number,
+        maxLength: 1,
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        decoration: const InputDecoration(
+          counterText: '',
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26),
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Color.fromRGBO(133, 99, 188, 1), width: 2),
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+          ),
+        ),
+        onChanged: (value) {
+          if (value.isNotEmpty && nextFocusNode != null) {
+            FocusScope.of(context).requestFocus(nextFocusNode);
+          } else if (value.isEmpty && prevFocusNode != null) {
+            FocusScope.of(context).requestFocus(prevFocusNode);
+          }
+        },
+      ),
+    );
   }
 }

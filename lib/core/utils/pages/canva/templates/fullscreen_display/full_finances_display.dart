@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:newregentspace/core/utils/pages/canva/widgets/usageinfo.dart';
 
-class FinancesDemo extends StatelessWidget {
-  const FinancesDemo({
+class FullFinancesDisplay extends StatelessWidget {
+  const FullFinancesDisplay({
     super.key,
     required this.primaryapptheme,
   });

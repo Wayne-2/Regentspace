@@ -19,13 +19,15 @@ class _CreateaccountpageState extends State<Createaccountpage> {
   super.initState();
   SystemChrome.setSystemUIOverlayStyle(
     SystemUiOverlayStyle(
-      statusBarColor: Colors.white
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
     ));}
 
   
   @override
 Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
       body:Stack(
         children: [

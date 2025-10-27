@@ -18,7 +18,8 @@ class _LoadingscreenState extends State<Loadingscreen> {
   super.initState();
   SystemChrome.setSystemUIOverlayStyle(
     SystemUiOverlayStyle(
-      statusBarColor: Colors.white
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
     )
   );
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
@@ -32,6 +33,7 @@ class _LoadingscreenState extends State<Loadingscreen> {
   @override
  Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar:true,
       backgroundColor: Colors.white,
       body:SizedBox(
         width:MediaQuery.of(context).size.width*1.0,

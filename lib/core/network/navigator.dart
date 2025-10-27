@@ -1,9 +1,8 @@
-import 'package:newregentspace/core/src/canva/canva.dart';
-
-// import 'regentcanvapage.dart';
-import '../src/dashboard/dashboard.dart';
-import '../src/finances/finance.dart';
-import '../src/settings/setting.dart';
+import 'package:newregentspace/core/utils/pages/canva/canva.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../utils/pages/dashboard/dashboard.dart';
+import '../utils/pages/finances/finance.dart';
+import '../utils/pages/profile/profile.dart';
 import 'package:flutter/material.dart';
 
 class RegentBottomNav extends StatefulWidget {
@@ -19,17 +18,17 @@ class _RegentBottomNavState extends State<RegentBottomNav> {
   late final List<Widget> pages;
   late final Dashboard dashboard;
   late final Regentcanva canva;
-  late final RegentFinancePage finance;
-  late final RegentSettings settings;
+  late final Finances finance;
+  late final ProfilePage profile;
 
   @override
   void initState() {
     super.initState();
     dashboard = Dashboard();
     canva = Regentcanva();
-    finance = RegentFinancePage();
-    settings = RegentSettings();
-    pages = [dashboard, canva, finance, settings];
+    finance = Finances();
+    profile = ProfilePage();
+    pages = [dashboard, canva, finance, profile];
   }
 
   @override
@@ -51,24 +50,24 @@ class _RegentBottomNavState extends State<RegentBottomNav> {
         items: const [
           BottomNavigationBarItem(
             //icon: ImageIcon(AssetImage("images/homeicon.png")),
-            icon: Icon(Icons.dashboard_customize_rounded),
+            icon: Icon(LucideIcons.layoutDashboard,),
             label: 'Dashboard',
           ),
 
           BottomNavigationBarItem(
             //icon: ImageIcon(AssetImage("images/billsicon.png")),
-            icon: Icon(Icons.add_box_outlined),
+            icon: Icon(LucideIcons.plusSquare,),
             label: 'Canvas',
           ),
           BottomNavigationBarItem(
             //icon: ImageIcon(AssetImage("images/moreicon.png")),
-            icon: Icon(Icons.wallet_outlined),
+            icon: Icon(LucideIcons.wallet),
             label: 'Finance',
           ),
           BottomNavigationBarItem(
             //icon: ImageIcon(AssetImage("images/settingsicon.png")),
-            icon: Icon(Icons.settings),
-            label: 'Settings',
+            icon: Icon(LucideIcons.userCircle),
+            label: 'Profile',
           ),
         ],
       ),
