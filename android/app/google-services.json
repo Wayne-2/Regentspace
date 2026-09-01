@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "964930079549",
+    "project_id": "regentsspace",
+    "storage_bucket": "regentsspace.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:964930079549:android:d32a3b0112f77a91e2d354",
+        "android_client_info": {
+          "package_name": "com.example.regentspace"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "964930079549-p3sml4o47rudks3qq3o3prhdmtu4rvvv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.regentspace",
+            "certificate_hash": "c3e1be22e01415097eacfcc4849c0c8f6ddebee0"
+          }
+        },
+        {
+          "client_id": "964930079549-t5ap8poi88q4j76te5p7tsubpv4nuj29.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnVKi3K2jZt-nTtwZYUmVPgZN-6R7_WTc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "964930079549-t5ap8poi88q4j76te5p7tsubpv4nuj29.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "964930079549-dh5audta9vh2s71pi1oso89nfmiu2ddr.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.regentspace"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
