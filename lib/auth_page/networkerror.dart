@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +14,7 @@ class Networkerror extends StatefulWidget {
 
 class _NetworkerrorState extends State<Networkerror> {
   bool _isRetrying = false;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
   @override
   void initState() {
@@ -24,7 +26,7 @@ class _NetworkerrorState extends State<Networkerror> {
       ),
     );
 
-    Connectivity().onConnectivityChanged.listen((results) {
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
       final hasConnection = results.any((r) => r != ConnectivityResult.none);
       if (hasConnection && mounted && !_isRetrying) {
         _handleRetry();
@@ -32,14 +34,18 @@ class _NetworkerrorState extends State<Networkerror> {
     });
   }
 
+  @override
+  void dispose() {
+    _connectivitySub?.cancel();
+    super.dispose();
+  }
+
   Future<void> _handleRetry() async {
     if (_isRetrying) return;
     setState(() => _isRetrying = true);
     try {
       await widget.onRetry();
-    } catch (_) {
-      // Firebase init still failed — stay on this screen
-    }
+    } catch (_) {}
     if (mounted) setState(() => _isRetrying = false);
   }
 
@@ -57,8 +63,8 @@ class _NetworkerrorState extends State<Networkerror> {
                 Container(
                   width: 80,
                   height: 80,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFDF4FF),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFDF4FF),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -105,7 +111,7 @@ class _NetworkerrorState extends State<Networkerror> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF6C0090),
                             foregroundColor: Colors.white,
-                            textStyle: TextStyle(
+                            textStyle: const TextStyle(
                               fontFamily: 'DMSans',
                               fontSize: 14,
                               fontWeight: FontWeight.w600,

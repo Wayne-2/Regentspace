@@ -381,9 +381,13 @@ class _RegentcanvaState extends State<Regentcanva> {
       case 1:
         return _buildLoginScreen();
       case 2:
+        return _buildCreateAccountScreen();
+      case 3:
         return _buildVtuHomeScreen();
-      // case 3:
-      //   return _buildYourNextScreen();
+      case 4:
+        return _buildVtuFinanceScreen();
+      case 5:
+        return _buildVtuProfileScreen();
       default:
         return Center(
           child: Text(
@@ -593,6 +597,148 @@ class _RegentcanvaState extends State<Regentcanva> {
     );
   }
 
+   Widget _buildCreateAccountScreen() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Logo + app name row
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFFE0E0E0),
+                    width: 1,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.image_outlined,
+                  size: 14,
+                  color: Color(0xFFB0B0B0),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'App Name',
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF444444),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+
+          // "Login" heading
+          const Text(
+            'Create Account',
+            style: TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF333333),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Welcome user, fill the follow',
+            style: TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: 10,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFFAAAAAA),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Email field placeholder
+          _buildLoginField(label: 'Email', hint: 'you@example.com'),
+          const SizedBox(height: 12),
+
+          // Password field placeholder
+          _buildLoginField(label: 'Password', hint: '••••••••'),
+          const SizedBox(height: 8),
+
+          // Password field placeholder
+          _buildLoginField(label: 'Confirm Password', hint: '••••••••'),
+          const SizedBox(height: 8),
+
+          // Forgot password
+          const Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'Forgot password?',
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 9.5,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFFB0B0B0),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Login button placeholder
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDDDDDD),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Center(
+              child: Text(
+                'Log In',
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF666666),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Sign up prompt
+          Center(
+            child: RichText(
+              text: const TextSpan(
+                children: [
+                  TextSpan(
+                    text: "Don't have an account? ",
+                    style: TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: 10,
+                      color: Color(0xFFAAAAAA),
+                    ),
+                  ),
+                  TextSpan(
+                    text: 'Sign up',
+                    style: TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF999999),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLoginField({required String label, required String hint}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,6 +776,7 @@ class _RegentcanvaState extends State<Regentcanva> {
       ],
     );
   }
+
 
     Widget _buildVtuHomeScreen() {
     const fullName = 'New User';
@@ -833,6 +980,244 @@ class _RegentcanvaState extends State<Regentcanva> {
       ),
     );
   }
+
+    Widget _buildVtuFinanceScreen() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Finance',
+            style: TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF333333),
+            ),
+          ),
+          const SizedBox(height: 2),
+          const Text(
+            'Track your balance and spending',
+            style: TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: 8.5,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFFAAAAAA),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Balance summary row
+          Row(
+            children: [
+              Expanded(
+                child: _FinanceSummaryTile(
+                  label: 'Balance',
+                  value: '₦0.00',
+                  icon: Icons.account_balance_wallet_rounded,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _FinanceSummaryTile(
+                  label: 'This Month',
+                  value: '₦0.00',
+                  icon: Icons.trending_down_rounded,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Current plan card
+          const Text(
+            'Current Plan',
+            style: TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF444444),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 89, 88, 88),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'No Active Plan',
+                            style: TextStyle(
+                              fontFamily: 'DMSans',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Subscribe to a data or cable plan',
+                        style: TextStyle(
+                          fontFamily: 'DMSans',
+                          fontSize: 8,
+                          color: Color(0xFFAAAAAA),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Renews: —',
+                        style: TextStyle(
+                          fontFamily: 'DMSans',
+                          fontSize: 7.5,
+                          color: Color(0xFF999999),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    'Manage',
+                    style: TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: 8,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2E2E2E),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Transactions
+          const Text(
+            'Recent Transactions',
+            style: TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF444444),
+            ),
+          ),
+          const SizedBox(height: 10),
+          const _TransactionItem(
+            icon: Icons.wifi_rounded,
+            title: 'Data Purchase',
+            subtitle: 'No transactions yet',
+            amount: '',
+            isCredit: false,
+          ),
+        ],
+      ),
+    );
+  }
+
+    Widget _buildVtuProfileScreen() {
+    const fullName = 'New User';
+    final initials = fullName
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .map((w) => w[0])
+        .take(2)
+        .join()
+        .toUpperCase();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Profile',
+            style: TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF333333),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Avatar + name + email
+          Center(
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: const Color(0xFFE5E5E5),
+                  child: Text(
+                    initials,
+                    style: const TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF777777),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  fullName,
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF333333),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'user@example.com',
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
+                    fontSize: 8.5,
+                    color: Color(0xFFAAAAAA),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Menu items
+          const _ProfileMenuItem(icon: Icons.person_outline_rounded, label: 'Personal Information'),
+          const _ProfileMenuItem(icon: Icons.credit_card_rounded, label: 'Payment Methods'),
+          const _ProfileMenuItem(icon: Icons.lock_outline_rounded, label: 'Security'),
+          const _ProfileMenuItem(icon: Icons.notifications_none_rounded, label: 'Notifications'),
+          const _ProfileMenuItem(icon: Icons.help_outline_rounded, label: 'Help & Support'),
+          const SizedBox(height: 10),
+          const _ProfileMenuItem(
+            icon: Icons.logout_rounded,
+            label: 'Log Out',
+            isDestructive: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  
 
   Widget _buildSectionHeader({
     required String title,
@@ -1061,6 +1446,185 @@ class _VtuServiceItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FinanceSummaryTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _FinanceSummaryTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F7F7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E5E5), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF777777)),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF333333),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: 7.5,
+              color: Color(0xFFAAAAAA),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TransactionItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String amount;
+  final bool isCredit;
+
+  const _TransactionItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.amount,
+    required this.isCredit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F7F7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E5E5), width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(color: const Color(0xFFE5E5E5), width: 1),
+            ),
+            child: Icon(icon, size: 14, color: const Color(0xFF777777)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'DMSans',
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF444444),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontFamily: 'DMSans',
+                    fontSize: 7.5,
+                    color: Color(0xFFAAAAAA),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (amount.isNotEmpty)
+            Text(
+              amount,
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                color: isCredit ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileMenuItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDestructive;
+
+  const _ProfileMenuItem({
+    required this.icon,
+    required this.label,
+    this.isDestructive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDestructive ? const Color(0xFFFDEDED) : const Color(0xFFF7F7F7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDestructive ? const Color(0xFFF5C6C6) : const Color(0xFFE5E5E5),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 15,
+            color: isDestructive ? const Color(0xFFC62828) : const Color(0xFF777777),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+                color: isDestructive ? const Color(0xFFC62828) : const Color(0xFF444444),
+              ),
+            ),
+          ),
+          if (!isDestructive)
+            const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Color(0xFFBBBBBB)),
+        ],
+      ),
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -30,7 +32,13 @@ class _AppRoot extends StatefulWidget {
 }
 
 class _AppRootState extends State<_AppRoot> {
+  final _scaffoldKey = GlobalKey<ScaffoldMessengerState>();
   bool? _firebaseOk;
+  bool _showOfflineHint = false;
+  bool _initializing = false;
+  Timer? _hintTimer;
+  Timer? _fallbackTimer;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
   @override
   void initState() {
@@ -38,12 +46,83 @@ class _AppRootState extends State<_AppRoot> {
     _initFirebase();
   }
 
+  @override
+  void dispose() {
+    _hintTimer?.cancel();
+    _fallbackTimer?.cancel();
+    _connectivitySub?.cancel();
+    super.dispose();
+  }
+
   Future<void> _initFirebase() async {
-    if (mounted) setState(() => _firebaseOk = null);
+    if (_initializing) return;
+    _initializing = true;
+
+    _hintTimer?.cancel();
+    _fallbackTimer?.cancel();
+    _connectivitySub?.cancel();
+    if (mounted) setState(() { _firebaseOk = null; _showOfflineHint = false; });
+
+    // Quick connectivity check — don't block on it, just use it for the snackbar hint
+    try {
+      final results = await Connectivity().checkConnectivity().timeout(const Duration(seconds: 2));
+      final noConnection = results.every((r) => r == ConnectivityResult.none);
+      if (noConnection && mounted && _firebaseOk == null) {
+        setState(() => _showOfflineHint = true);
+        _scaffoldKey.currentState?.showSnackBar(
+          const SnackBar(
+            content: Text('No internet connection. Please turn on your data or Wi-Fi.'),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (_) {
+      // Connectivity check failed — assume no connection
+      if (mounted && _firebaseOk == null) {
+        setState(() => _showOfflineHint = true);
+        _scaffoldKey.currentState?.showSnackBar(
+          const SnackBar(
+            content: Text('No internet connection. Please turn on your data or Wi-Fi.'),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+
+    // Listen for connectivity changes — auto-retry Firebase when back online
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      final hasConnection = results.any((r) => r != ConnectivityResult.none);
+      if (hasConnection && mounted && _firebaseOk == null && !_initializing) {
+        _initFirebase();
+      }
+    });
+
+    // After 1 second, if still not ready, show snackbar
+    _hintTimer = Timer(const Duration(seconds: 1), () {
+      if (mounted && _firebaseOk == null && !_showOfflineHint) {
+        setState(() => _showOfflineHint = true);
+        _scaffoldKey.currentState?.showSnackBar(
+          const SnackBar(
+            content: Text('No internet connection. Please turn on your data or Wi-Fi.'),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    });
+
+    // After 10 seconds, if still not ready, fall back to Networkerror
+    // Must be longer than Firebase.initializeApp timeout (8s) to avoid race condition
+    _fallbackTimer = Timer(const Duration(seconds: 10), () {
+      if (mounted && _firebaseOk == null && !_initializing) {
+        _connectivitySub?.cancel();
+        setState(() => _firebaseOk = false);
+      }
+    });
+
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
-      ).timeout(const Duration(seconds: 10));
+      ).timeout(const Duration(seconds: 8));
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
       await PushNotificationService.instance.init();
       await AppNotifications.ensureSubscriptions();
@@ -53,9 +132,25 @@ class _AppRootState extends State<_AppRoot> {
           await MonnifyConfig.loadFromFirestore();
         }
       });
-      if (mounted) setState(() => _firebaseOk = true);
+      _hintTimer?.cancel();
+      _fallbackTimer?.cancel();
+      _connectivitySub?.cancel();
+      _initializing = false;
+      if (mounted) {
+        setState(() => _firebaseOk = true);
+        // If we're stuck on Networkerror page, navigate to Login
+        final nav = Navigator.of(context);
+        if (nav.canPop()) {
+          nav.pushReplacement(MaterialPageRoute(builder: (_) => const Loginpage()));
+        }
+      }
     } catch (_) {
-      if (mounted) setState(() => _firebaseOk = false);
+      _hintTimer?.cancel();
+      _fallbackTimer?.cancel();
+      _initializing = false;
+      if (mounted && _firebaseOk == null) {
+        setState(() => _firebaseOk = false);
+      }
     }
   }
 
@@ -64,6 +159,7 @@ class _AppRootState extends State<_AppRoot> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
+      scaffoldMessengerKey: _scaffoldKey,
       home: Loadingpage(firebaseOk: _firebaseOk, onRetry: _initFirebase),
     );
   }
