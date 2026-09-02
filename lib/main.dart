@@ -5,61 +5,105 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'auth_page/login.dart';
+import 'auth_page/networkerror.dart';
 import 'firebase_options.dart';
 import 'service/monnify_config.dart';
 import 'service/push_notification_service.dart';
 import 'service/app_notifications.dart';
 import 'theme/app_theme.dart';
 
-/// Background handler for FCM - must be top-level.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // System shows notification automatically for `notification` payload in background.
-  // For data-only, you could show local notification here with flutter_local_notifications.
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  // Register background handler BEFORE runApp
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  // Init push (permissions, local channel, foreground handler, token) — runs full-time for entire app lifecycle
-  await PushNotificationService.instance.init();
-  // Global topics for full-time delivery (user-specific added after auth via AppNotifications.ensureSubscriptions)
-  await AppNotifications.ensureSubscriptions();
-   // Monnify — load contract/keys from Firestore config/monnify (allows rotation without rebuild)
-  // First attempt runs before auth (may fail with permission-denied — see log 13:00:27.991).
-  // Retry automatically when user signs in via authStateChanges + ensureConfigured() in MonnifyService.
-  await MonnifyConfig.loadFromFirestore();
-  FirebaseAuth.instance.authStateChanges().listen((user) async {
-    if (user != null && !MonnifyConfig.isConfigured) {
+  runApp(const _AppRoot());
+}
+
+class _AppRoot extends StatefulWidget {
+  const _AppRoot();
+
+  @override
+  State<_AppRoot> createState() => _AppRootState();
+}
+
+class _AppRootState extends State<_AppRoot> {
+  bool? _firebaseOk;
+
+  @override
+  void initState() {
+    super.initState();
+    _initFirebase();
+  }
+
+  Future<void> _initFirebase() async {
+    if (mounted) setState(() => _firebaseOk = null);
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      ).timeout(const Duration(seconds: 10));
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      await PushNotificationService.instance.init();
+      await AppNotifications.ensureSubscriptions();
       await MonnifyConfig.loadFromFirestore();
+      FirebaseAuth.instance.authStateChanges().listen((user) async {
+        if (user != null && !MonnifyConfig.isConfigured) {
+          await MonnifyConfig.loadFromFirestore();
+        }
+      });
+      if (mounted) setState(() => _firebaseOk = true);
+    } catch (_) {
+      if (mounted) setState(() => _firebaseOk = false);
     }
-  });
-  runApp(
-    MaterialApp(
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
-      home: const Loadingpage(),
-    ),
-  );
+      home: Loadingpage(firebaseOk: _firebaseOk, onRetry: _initFirebase),
+    );
+  }
 }
 
 class Loadingpage extends StatefulWidget {
-  const Loadingpage({super.key});
+  final bool? firebaseOk;
+  final Future<void> Function() onRetry;
+  const Loadingpage({super.key, required this.firebaseOk, required this.onRetry});
 
   @override
   State<Loadingpage> createState() => _LoadingpageState();
 }
 
 class _LoadingpageState extends State<Loadingpage> {
+  bool _navigated = false;
+
+  @override
+  void didUpdateWidget(covariant Loadingpage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.firebaseOk != null && !_navigated) {
+      _navigate();
+    }
+  }
+
+  void _navigate() {
+    if (!mounted || _navigated) return;
+    _navigated = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final destination = widget.firebaseOk == true
+          ? MaterialPageRoute(builder: (_) => const Loginpage())
+          : MaterialPageRoute(builder: (_) => Networkerror(onRetry: widget.onRetry));
+      Navigator.of(context).pushReplacement(destination);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
-
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -68,12 +112,9 @@ class _LoadingpageState extends State<Loadingpage> {
     );
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
 
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const Loginpage()),
-      );
-    });
+    if (widget.firebaseOk != null) {
+      _navigate();
+    }
   }
 
   @override
@@ -164,7 +205,7 @@ class _LoadingpageState extends State<Loadingpage> {
                   const SizedBox(height: 50),
                   Text(
                     'Welcome to Regentspace',
-                    style: TextStyle(fontFamily: 'DMSans', 
+                    style: TextStyle(fontFamily: 'DMSans',
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
                       height: 1.1,
@@ -175,7 +216,7 @@ class _LoadingpageState extends State<Loadingpage> {
                   const SizedBox(height: 6),
                   Text(
                     'Are you ready to take off?',
-                    style: TextStyle(fontFamily: 'DMSans', 
+                    style: TextStyle(fontFamily: 'DMSans',
                       fontSize: 13.5,
                       fontWeight: FontWeight.w400,
                       letterSpacing: 0.1,
