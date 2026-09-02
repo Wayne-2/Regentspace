@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,7 @@ class _NotificationPageState extends State<NotificationPage> {
 
   final Set<String> _selected = {};
   bool get _selectionMode => _selected.isNotEmpty;
+  Timer? _longPressTimer;
 
   @override
   void initState() {
@@ -28,6 +30,12 @@ class _NotificationPageState extends State<NotificationPage> {
         await NotificationStore.markAllRead(uid);
       } catch (_) {}
     });
+  }
+
+  @override
+  void dispose() {
+    _longPressTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _deleteSelected() async {
@@ -75,7 +83,7 @@ class _NotificationPageState extends State<NotificationPage> {
     final uid = _uid;
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 253, 244, 255),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -83,7 +91,6 @@ class _NotificationPageState extends State<NotificationPage> {
         centerTitle: true,
         leading: Container(
           margin: const EdgeInsets.only(left: 8),
-          decoration: BoxDecoration(color: const Color(0xFFEAC5F7), borderRadius: BorderRadius.circular(10)),
           child: IconButton(icon: const Icon(Icons.arrow_back, color: Color.fromARGB(255, 78, 6, 102), size: 20), onPressed: () => Navigator.pop(context)),
         ),
         title: Text(
@@ -92,10 +99,9 @@ class _NotificationPageState extends State<NotificationPage> {
         ),
         actions: [
           if (_selectionMode)
-            IconButton(
-              icon: const Icon(Icons.delete_rounded, color: Colors.red),
+            TextButton(
               onPressed: _deleteSelected,
-              tooltip: 'Delete selected',
+              child: const Text('Delete', style: TextStyle(fontFamily: 'DMSans', fontSize: 14, fontWeight: FontWeight.w700, color: Colors.red)),
             ),
           if (_selectionMode)
             IconButton(
@@ -140,46 +146,36 @@ class _NotificationPageState extends State<NotificationPage> {
                       final isUnread = !n.isRead;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: Dismissible(
-                          key: ValueKey(n.id),
-                          direction: DismissDirection.horizontal,
-                          dismissThresholds: const {DismissDirection.startToEnd: 0.22, DismissDirection.endToStart: 0.22},
-                          background: Container(
-                            alignment: Alignment.centerLeft,
-                            padding: const EdgeInsets.symmetric(horizontal: 18),
-                            decoration: BoxDecoration(color: const Color(0xFF740690).withOpacity(0.10), borderRadius: BorderRadius.circular(16)),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded, color: const Color(0xFF740690), size: 20),
-                                const SizedBox(width: 8),
-                                Text(isSelected ? 'Deselect' : 'Slide to select', style: const TextStyle(fontFamily: 'DMSans', fontSize: 12, color: Color(0xFF740690), fontWeight: FontWeight.w600)),
-                              ],
-                            ),
-                          ),
-                          secondaryBackground: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.symmetric(horizontal: 18),
-                            decoration: BoxDecoration(color: const Color(0xFF740690).withOpacity(0.10), borderRadius: BorderRadius.circular(16)),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Text(isSelected ? 'Deselect' : 'Slide to select', style: const TextStyle(fontFamily: 'DMSans', fontSize: 12, color: Color(0xFF740690), fontWeight: FontWeight.w600)),
-                                const SizedBox(width: 8),
-                                Icon(isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded, color: const Color(0xFF740690), size: 20),
-                              ],
-                            ),
-                          ),
-                          confirmDismiss: (dir) async {
-                            _toggleSelect(n.id);
-                            return false;
+                        child: GestureDetector(
+                          onLongPressStart: (_) {
+                            _longPressTimer?.cancel();
+                            _longPressTimer = Timer(const Duration(seconds: 1), () {
+                              HapticFeedback.heavyImpact();
+                              if (!_selected.contains(n.id)) {
+                                _toggleSelect(n.id);
+                              }
+                            });
                           },
-                          child: GestureDetector(
-                            onTap: () {
-                              if (_selectionMode) _toggleSelect(n.id);
-                            },
-                            child: AnimatedContainer(
+                          onLongPressEnd: (_) {
+                            _longPressTimer?.cancel();
+                            _longPressTimer = null;
+                          },
+                          onLongPressCancel: () {
+                            _longPressTimer?.cancel();
+                            _longPressTimer = null;
+                          },
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                if (_selectionMode) _toggleSelect(n.id);
+                              },
+                              onLongPress: () {
+                                HapticFeedback.mediumImpact();
+                                _toggleSelect(n.id);
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               decoration: BoxDecoration(
                                 color: isSelected
@@ -189,7 +185,7 @@ class _NotificationPageState extends State<NotificationPage> {
                                         : const Color.fromRGBO(255, 178, 255, 0.12),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: isSelected ? const Color(0xFF740690) : isUnread ? const Color(0xFF740690).withOpacity(0.14) : Colors.transparent, width: isSelected ? 1.5 : 1),
-                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 4))],
+
                               ),
                               child: ListTile(
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -237,14 +233,16 @@ class _NotificationPageState extends State<NotificationPage> {
                                       Text(n.body.isEmpty ? (n.data['body']?.toString() ?? '') : n.body, style: const TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black54, height: 1.3)),
                                       const SizedBox(height: 4),
                                       Text(_timeAgo(n.timestamp), style: const TextStyle(fontFamily: 'DMSans', fontSize: 11, color: Colors.black45)),
-                                      const SizedBox(height: 2),
-                                      Text('Slide to select', style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: Colors.black.withOpacity(0.35), fontStyle: FontStyle.italic)),
+                                      // const SizedBox(height: 2),
+                                      // if (!_selectionMode)
+                                        // Text('Hold to select', style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: Colors.black.withOpacity(0.35), fontStyle: FontStyle.italic)),
                                     ],
                                   ),
                                 ),
                               ),
                             ),
                           ),
+                        ),
                         ),
                       );
                     },

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../theme/app_theme.dart';
 import '../../service/user_repository.dart';
 import '../../auth_page/verificationpage.dart';
 import '../../service/auth_service.dart';
@@ -99,7 +100,34 @@ class _DashboardState extends State<Dashboard> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 253, 244, 255),
+      backgroundColor: const Color.fromARGB(255, 254, 252, 255),
+      appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: const Color.fromARGB(255, 254, 252, 255),
+        centerTitle: false,
+        title: Text(
+          'Regentspace',
+          style: AppTextStyles.headline(color: AppColors.primaryDark),
+        ),
+        actions: [
+          GestureDetector(
+            onTap: () {},
+            child: Container(
+              width: 40,
+              height: 40,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: const BoxDecoration(
+                color: AppColors.primarySoft,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.support_agent_rounded, size: 22, color: AppColors.accent),
+            ),
+          ),
+          _NotificationIcon(uid: uid),
+          const SizedBox(width: 12),
+        ],
+      ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _onRefresh,
@@ -114,82 +142,6 @@ class _DashboardState extends State<Dashboard> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  SvgPicture.asset(
-                    'assets/icons/profile-1.svg',
-                    height: 36,
-                    width: 36,
-                  ),
-                  const SizedBox(width: 10),
-                  // Search bar - flexible
-                  Expanded(
-                    child: Container(
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEAC5F7),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 10),
-                            child: SvgPicture.asset(
-                              'assets/icons/search.svg',
-                              height: 16,
-                              width: 16,
-                            ),
-                          ),
-                          Expanded(
-                            child: TextField(
-                              style: const TextStyle(fontSize: 13),
-                              decoration: InputDecoration(
-                                hintText: 'Search Regentspace',
-                                hintStyle: TextStyle(fontSize: 12.5, color: Color.fromARGB(255, 25, 27, 35), fontWeight: FontWeight.w400),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: BorderSide.none,
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: BorderSide.none,
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                isDense: true,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-
-                  // Action buttons
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 17,
-                        backgroundColor: const Color(0xFFEAC5F7),
-                        child: SvgPicture.asset(
-                          'assets/icons/customer-care.svg',
-                          width: 18,
-                          height: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Notification icon with unread badge and navigation
-                      _NotificationIcon(uid: uid),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
               // ── Email verification / phone missing banner ──
               _VerificationBanner(uid: uid),
               const SizedBox(height: 12),
@@ -291,44 +243,83 @@ class _DashboardState extends State<Dashboard> {
               Row(
                 children: [
                   Expanded(
-                    child: InkWell(
-                      onTap: () {},
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 11),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEAC5F7),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset('assets/icons/refresh.svg', width: 18, height: 18),
-                            const SizedBox(width: 6),
-                            const Text('View History', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color.fromARGB(255, 78, 6, 102))),
-                          ],
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {},
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(255, 252, 244, 255),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFEAC5F7), width: 1),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.history_rounded, size: 19, color: AppColors.textSecondary),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('View History', style: AppTextStyles.label(color: AppColors.textPrimary)),
+                                    const SizedBox(height: 1),
+                                    Text('Transactions & activity', style: AppTextStyles.caption(color: AppColors.textTertiary)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: InkWell(
-                      onTap: _showAddMoneySheet,
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 11),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEAC5F7),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset('assets/icons/add_money.svg', width: 18, height: 18),
-                            const SizedBox(width: 6),
-                            const Text('Add Money', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color.fromARGB(255, 78, 6, 102))),
-                          ],
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _showAddMoneySheet,
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.add_rounded, size: 19, color: Colors.white),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Add Money', style: AppTextStyles.label(color: Colors.white)),
+                                    const SizedBox(height: 1),
+                                    Text('Top up wallet', style: AppTextStyles.caption(color: Colors.white.withValues(alpha: 0.7))),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -686,10 +677,14 @@ class _NotificationIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationPage())),
-      child: CircleAvatar(
-        radius: 17,
-        backgroundColor: const Color(0xFFEAC5F7),
-        child: SvgPicture.asset('assets/icons/nofication.svg', width: 18, height: 18),
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: const BoxDecoration(
+          color: AppColors.primarySoft,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.notifications_outlined, size: 22, color: AppColors.accent),
       ),
     );
     if (uid == null) return icon;
@@ -709,8 +704,9 @@ class _NotificationIcon extends StatelessWidget {
                 width: 10,
                 height: 10,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFE53935),
+                  color: AppColors.error,
                   shape: BoxShape.circle,
+                  border: Border.fromBorderSide(BorderSide(color: Colors.white, width: 1.5)),
                 ),
               ),
             ),
@@ -752,8 +748,6 @@ class _AddMoneySheet extends StatefulWidget {
 }
 
 class _AddMoneySheetState extends State<_AddMoneySheet> {
-  bool _showCardView = false;
-
   void _copy(BuildContext context, String text, String label) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$label copied'), backgroundColor: const Color(0xFF740690), duration: const Duration(seconds: 1)));
@@ -770,7 +764,7 @@ class _AddMoneySheetState extends State<_AddMoneySheet> {
     final uid = widget.uid;
     return Container(
       decoration: const BoxDecoration(
-        color: Color.fromARGB(255, 253, 244, 255),
+        color: Color.fromARGB(255, 255, 255, 255),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -839,146 +833,59 @@ class _AddMoneySheetState extends State<_AddMoneySheet> {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // View toggle
-                            Row(
-                              children: [
-                                ChoiceChip(
-                                  label: const Text('List', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, fontWeight: FontWeight.w600)),
-                                  selected: !_showCardView,
-                                  selectedColor: const Color(0xFF740690),
-                                  labelStyle: TextStyle(color: !_showCardView ? Colors.white : const Color(0xFF740690)),
-                                  backgroundColor: const Color(0xFFEAC5F7),
-                                  onSelected: (v) => setState(() => _showCardView = false),
-                                ),
-                                const SizedBox(width: 8),
-                                ChoiceChip(
-                                  label: const Text('Card', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, fontWeight: FontWeight.w600)),
-                                  selected: _showCardView,
-                                  selectedColor: const Color(0xFF740690),
-                                  labelStyle: TextStyle(color: _showCardView ? Colors.white : const Color(0xFF740690)),
-                                  backgroundColor: const Color(0xFFEAC5F7),
-                                  onSelected: (v) => setState(() => _showCardView = true),
-                                ),
-                                const Spacer(),
-                                TextButton.icon(
-                                  onPressed: () => _copyAll(bankName, acctNo, acctName),
-                                  icon: const Icon(Icons.copy_all_rounded, size: 16, color: Color(0xFF740690)),
-                                  label: const Text('Copy all', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, color: Color(0xFF740690), fontWeight: FontWeight.w600)),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            if (_showCardView)
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(18),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(colors: [Color(0xFF740690), Color(0xFF9C27B0)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: [BoxShadow(color: const Color(0xFF740690).withOpacity(0.28), blurRadius: 12, offset: const Offset(0, 6))],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(bankName, style: const TextStyle(fontFamily: 'DMSans', color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
-                                        const Icon(Icons.account_balance_rounded, color: Colors.white70, size: 20),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 18),
-                                    Text(acctNo, style: const TextStyle(fontFamily: 'DMSans', color: Colors.white, fontWeight: FontWeight.w800, fontSize: 20, letterSpacing: 1.2)),
-                                    const SizedBox(height: 6),
-                                    Text(acctName, style: const TextStyle(fontFamily: 'DMSans', color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
-                                    const SizedBox(height: 14),
-                                    Row(
-                                      children: [
-                                        InkWell(
-                                          onTap: () => _copy(context, acctNo, 'Account number'),
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-                                            child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.copy_rounded, size: 14, color: Color(0xFF740690)), SizedBox(width: 6), Text('Copy number', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF740690)))]),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        InkWell(
-                                          onTap: () => _copy(context, bankName, 'Bank name'),
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.18), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white30)),
-                                            child: const Text('Copy bank', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              )
-                            else
-                              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                                stream: (acctRef == null || acctRef.isEmpty) ? null : FirebaseFirestore.instance.collection('monnify_reserved_accounts').doc(acctRef).snapshots(),
-                                builder: (context, acctSnap) {
-                                  final acctData = acctSnap.data?.data();
-                                  final accounts = (acctData?['accounts'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-                                  final listToShow = accounts.isNotEmpty
-                                      ? accounts
-                                      : [
-                                          {'bankName': bankName, 'accountNumber': acctNo, 'bankCode': primary?['bankCode'] ?? ''}
-                                        ];
-                                  return Column(
-                                    children: listToShow.map((a) {
-                                      final bName = (a['bankName'] as String?) ?? bankName;
-                                      final aNo = (a['accountNumber'] as String?) ?? acctNo;
-                                      return Container(
-                                        margin: const EdgeInsets.only(bottom: 10),
-                                        padding: const EdgeInsets.all(14),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(16),
-                                          border: Border.all(color: Colors.black.withOpacity(0.04)),
-                                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 4))],
-                                        ),
-                                        child: Row(
+                            // Bank details container
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFEAC5F7)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 38,
+                                        height: 38,
+                                        decoration: BoxDecoration(color: const Color(0xFFF3E5F5), borderRadius: BorderRadius.circular(10)),
+                                        child: const Icon(Icons.account_balance_rounded, size: 18, color: Color(0xFF740690)),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Container(
-                                              width: 38,
-                                              height: 38,
-                                              decoration: BoxDecoration(color: const Color(0xFFF3E5F5), borderRadius: BorderRadius.circular(10)),
-                                              child: const Icon(Icons.account_balance_rounded, size: 18, color: Color(0xFF740690)),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(bName, style: const TextStyle(fontFamily: 'DMSans', fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF2E0342))),
-                                                  const SizedBox(height: 2),
-                                                  Text(aNo, style: const TextStyle(fontFamily: 'DMSans', fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F), letterSpacing: 0.4)),
-                                                  const SizedBox(height: 2),
-                                                  Text(acctName, style: TextStyle(fontFamily: 'DMSans', fontSize: 11, color: Colors.black.withOpacity(0.55))),
-                                                ],
-                                              ),
-                                            ),
-                                            InkWell(
-                                              onTap: () => _copy(context, aNo, 'Account number'),
-                                              borderRadius: BorderRadius.circular(10),
-                                              child: Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                                decoration: BoxDecoration(color: const Color(0xFF740690), borderRadius: BorderRadius.circular(10)),
-                                                child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.copy_rounded, size: 14, color: Colors.white), SizedBox(width: 4), Text('Copy', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white))]),
-                                              ),
-                                            ),
+                                            Text(bankName, style: const TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF2E0342))),
+                                            const SizedBox(height: 2),
+                                            Text(acctNo, style: const TextStyle(fontFamily: 'DMSans', fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F), letterSpacing: 0.4)),
+                                            const SizedBox(height: 2),
+                                            Text(acctName, style: TextStyle(fontFamily: 'DMSans', fontSize: 11, color: Colors.black.withOpacity(0.55))),
                                           ],
                                         ),
-                                      );
-                                    }).toList(),
-                                  );
-                                },
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: OutlinedButton.icon(
+                                      onPressed: () => _copy(context, acctNo, 'Account number'),
+                                      icon: const Icon(Icons.copy_rounded, size: 14),
+                                      label: const Text('Copy account number', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, fontWeight: FontWeight.w600)),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: const Color(0xFF740690),
+                                        side: const BorderSide(color: Color(0xFF740690)),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        padding: const EdgeInsets.symmetric(vertical: 10),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
+                            ),
                             const SizedBox(height: 14),
                             // Suggestions / tips
                             Container(
