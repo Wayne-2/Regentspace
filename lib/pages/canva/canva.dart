@@ -9,6 +9,17 @@ class Regentcanva extends StatefulWidget {
 }
 
 class _RegentcanvaState extends State<Regentcanva> {
+  bool _isEditMode = false;
+  String? _selectedElementId;
+
+  void _onElementTap(String id) {
+    setState(() => _selectedElementId = _selectedElementId == id ? null : id);
+  }
+
+  void _clearSelection() {
+    if (_selectedElementId != null) setState(() => _selectedElementId = null);
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -32,10 +43,52 @@ class _RegentcanvaState extends State<Regentcanva> {
                 ),
                 child: Row(
                   children: [
-                    _buildTab('Select'),
-                    _buildTab('Color'),
-                    _buildTab('Text'),
-                    _buildTab('Templates'),
+                    const SizedBox(width: 12),
+                    // View / Edit toggle
+                    GestureDetector(
+                      onTap: () => setState(() => _isEditMode = !_isEditMode),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: _isEditMode ? AppColors.primary : const Color(0xFFE5E5E5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _isEditMode ? Icons.edit_rounded : Icons.visibility_rounded,
+                              size: 14,
+                              color: _isEditMode ? Colors.white : const Color(0xFF777777),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              _isEditMode ? 'Edit' : 'View',
+                              style: TextStyle(
+                                fontFamily: 'DMSans',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: _isEditMode ? Colors.white : const Color(0xFF777777),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    // Toolbar options
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildToolbarOption(icon: Icons.palette_outlined, label: 'Color', isActive: _isEditMode),
+                          _buildToolbarOption(icon: Icons.text_fields_rounded, label: 'Text', isActive: _isEditMode),
+                          _buildToolbarOption(icon: Icons.wallpaper_outlined, label: 'Background', isActive: _isEditMode),
+                          _buildToolbarOption(icon: Icons.category_outlined, label: 'Object', isActive: _isEditMode),
+                          _buildToolbarOption(icon: Icons.dashboard_outlined, label: 'Templates', isActive: _isEditMode),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -285,21 +338,69 @@ class _RegentcanvaState extends State<Regentcanva> {
   }
 
   // ================================================================
-  // TAB
+  // TOOLBAR OPTION
   // ================================================================
 
-  Widget _buildTab(String title) {
-    return Expanded(
-      child: Center(
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontFamily: 'DMSans',
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF555555),
+  Widget _buildToolbarOption({
+    required IconData icon,
+    required String label,
+    required bool isActive,
+  }) {
+    return GestureDetector(
+      onTap: isActive ? () {} : null,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: isActive ? AppColors.primary : const Color(0xFFBBBBBB),
           ),
-        ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: 9,
+              fontWeight: FontWeight.w500,
+              color: isActive ? AppColors.primary : const Color(0xFFBBBBBB),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ================================================================
+  // SELECTABLE WRAPPER
+  // ================================================================
+
+  Widget _selectable({
+    required String id,
+    required Widget child,
+    bool fullWidth = false,
+  }) {
+    final isSelected = _selectedElementId == id;
+    return GestureDetector(
+      onTap: _isEditMode ? () => _onElementTap(id) : null,
+      child: Container(
+        width: fullWidth ? double.infinity : null,
+        decoration: isSelected
+            ? BoxDecoration(
+                border: Border.all(color: AppColors.primary, width: 1.5),
+                borderRadius: BorderRadius.circular(4),
+              )
+            : _isEditMode
+                ? BoxDecoration(
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.25),
+                      width: 1,
+                    ),
+                    borderRadius: BorderRadius.circular(4),
+                  )
+                : null,
+        child: child,
       ),
     );
   }
@@ -338,11 +439,14 @@ class _RegentcanvaState extends State<Regentcanva> {
               
 
               // Simulated screen
-                            // Simulated screen
               Expanded(
-                child: Container(
-                  color: const Color(0xFFF7F7F7),
-                  child: _buildScreenContent(index),
+                child: GestureDetector(
+                  onTap: _clearSelection,
+                  behavior: HitTestBehavior.translucent,
+                  child: Container(
+                    color: const Color(0xFFF7F7F7),
+                    child: _buildScreenContent(index),
+                  ),
                 ),
               ),
               // Device bottom area
@@ -410,47 +514,56 @@ class _RegentcanvaState extends State<Regentcanva> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // App icon placeholder
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: const Color(0xFFE0E0E0),
-                  width: 1,
+            _selectable(
+              id: 'intro_icon',
+              child: Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: const Color(0xFFE0E0E0),
+                    width: 1,
+                  ),
                 ),
-              ),
-              child: const Icon(
-                Icons.image_outlined,
-                size: 28,
-                color: Color(0xFFB0B0B0),
+                child: const Icon(
+                  Icons.image_outlined,
+                  size: 28,
+                  color: Color(0xFFB0B0B0),
+                ),
               ),
             ),
             const SizedBox(height: 16),
 
             // App name placeholder
-            const Text(
-              'App Name',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'DMSans',
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF444444),
+            _selectable(
+              id: 'intro_title',
+              child: const Text(
+                'App Name',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF444444),
+                ),
               ),
             ),
             const SizedBox(height: 6),
 
             // App description placeholder (smaller, lighter)
-            const Text(
-              'A short description of what this app does goes here.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'DMSans',
-                fontSize: 11.5,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFFAAAAAA),
+            _selectable(
+              id: 'intro_description',
+              child: const Text(
+                'A short description of what this app does goes here.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFFAAAAAA),
+                ),
               ),
             ),
           ],
@@ -466,100 +579,116 @@ class _RegentcanvaState extends State<Regentcanva> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Logo + app name row
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: const Color(0xFFE0E0E0),
-                    width: 1,
+          _selectable(
+            id: 'login_logo',
+            child: Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFFE0E0E0),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.image_outlined,
+                    size: 14,
+                    color: Color(0xFFB0B0B0),
                   ),
                 ),
-                child: const Icon(
-                  Icons.image_outlined,
-                  size: 14,
-                  color: Color(0xFFB0B0B0),
+                const SizedBox(width: 8),
+                const Text(
+                  'App Name',
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF444444),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'App Name',
-                style: TextStyle(
-                  fontFamily: 'DMSans',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF444444),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 28),
 
           // "Login" heading
-          const Text(
-            'Login',
-            style: TextStyle(
-              fontFamily: 'DMSans',
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF333333),
+          _selectable(
+            id: 'login_heading',
+            child: const Text(
+              'Login',
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF333333),
+              ),
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Welcome back, please sign in',
-            style: TextStyle(
-              fontFamily: 'DMSans',
-              fontSize: 10,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFFAAAAAA),
+          _selectable(
+            id: 'login_subtitle',
+            child: const Text(
+              'Welcome back, please sign in',
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 10,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFFAAAAAA),
+              ),
             ),
           ),
           const SizedBox(height: 20),
 
           // Email field placeholder
-          _buildLoginField(label: 'Email', hint: 'you@example.com'),
+          _selectable(id: 'login_email', fullWidth: true, child: _buildLoginField(label: 'Email', hint: 'you@example.com')),
           const SizedBox(height: 12),
 
           // Password field placeholder
-          _buildLoginField(label: 'Password', hint: '••••••••'),
+          _selectable(id: 'login_password', fullWidth: true, child: _buildLoginField(label: 'Password', hint: '••••••••')),
           const SizedBox(height: 8),
 
           // Forgot password
-          const Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Forgot password?',
-              style: TextStyle(
-                fontFamily: 'DMSans',
-                fontSize: 9.5,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFFB0B0B0),
+          _selectable(
+            id: 'login_forgot',
+            child: const Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                'Forgot password?',
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFFB0B0B0),
+                ),
               ),
             ),
           ),
           const SizedBox(height: 20),
 
           // Login button placeholder
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFDDDDDD),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Center(
-              child: Text(
-                'Log In',
-                style: TextStyle(
-                  fontFamily: 'DMSans',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF666666),
+          _selectable(
+            id: 'login_button',
+            fullWidth: true,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDDDDD),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Center(
+                child: Text(
+                  'Log In',
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF666666),
+                  ),
                 ),
               ),
             ),
@@ -567,28 +696,31 @@ class _RegentcanvaState extends State<Regentcanva> {
           const SizedBox(height: 16),
 
           // Sign up prompt
-          Center(
-            child: RichText(
-              text: const TextSpan(
-                children: [
-                  TextSpan(
-                    text: "Don't have an account? ",
-                    style: TextStyle(
-                      fontFamily: 'DMSans',
-                      fontSize: 10,
-                      color: Color(0xFFAAAAAA),
+          _selectable(
+            id: 'login_signup',
+            child: Center(
+              child: RichText(
+                text: const TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "Don't have an account? ",
+                      style: TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 10,
+                        color: Color(0xFFAAAAAA),
+                      ),
                     ),
-                  ),
-                  TextSpan(
-                    text: 'Sign up',
-                    style: TextStyle(
-                      fontFamily: 'DMSans',
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF999999),
+                    TextSpan(
+                      text: 'Sign up',
+                      style: TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF999999),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -604,104 +736,120 @@ class _RegentcanvaState extends State<Regentcanva> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Logo + app name row
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: const Color(0xFFE0E0E0),
-                    width: 1,
+          _selectable(
+            id: 'signup_logo',
+            child: Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFFE0E0E0),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.image_outlined,
+                    size: 14,
+                    color: Color(0xFFB0B0B0),
                   ),
                 ),
-                child: const Icon(
-                  Icons.image_outlined,
-                  size: 14,
-                  color: Color(0xFFB0B0B0),
+                const SizedBox(width: 8),
+                const Text(
+                  'App Name',
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF444444),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'App Name',
-                style: TextStyle(
-                  fontFamily: 'DMSans',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF444444),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 28),
 
-          // "Login" heading
-          const Text(
-            'Create Account',
-            style: TextStyle(
-              fontFamily: 'DMSans',
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF333333),
+          // "Create Account" heading
+          _selectable(
+            id: 'signup_heading',
+            child: const Text(
+              'Create Account',
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF333333),
+              ),
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Welcome user, fill the follow',
-            style: TextStyle(
-              fontFamily: 'DMSans',
-              fontSize: 10,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFFAAAAAA),
+          _selectable(
+            id: 'signup_subtitle',
+            child: const Text(
+              'Welcome user, fill the follow',
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 10,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFFAAAAAA),
+              ),
             ),
           ),
           const SizedBox(height: 20),
 
           // Email field placeholder
-          _buildLoginField(label: 'Email', hint: 'you@example.com'),
+          _selectable(id: 'signup_email', fullWidth: true, child: _buildLoginField(label: 'Email', hint: 'you@example.com')),
           const SizedBox(height: 12),
 
           // Password field placeholder
-          _buildLoginField(label: 'Password', hint: '••••••••'),
+          _selectable(id: 'signup_password', fullWidth: true, child: _buildLoginField(label: 'Password', hint: '••••••••')),
           const SizedBox(height: 8),
 
-          // Password field placeholder
-          _buildLoginField(label: 'Confirm Password', hint: '••••••••'),
+          // Confirm Password field placeholder
+          _selectable(id: 'signup_confirm', fullWidth: true, child: _buildLoginField(label: 'Confirm Password', hint: '••••••••')),
           const SizedBox(height: 8),
 
           // Forgot password
-          const Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Forgot password?',
-              style: TextStyle(
-                fontFamily: 'DMSans',
-                fontSize: 9.5,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFFB0B0B0),
+          _selectable(
+            id: 'signup_forgot',
+            child: const Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                'Forgot password?',
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFFB0B0B0),
+                ),
               ),
             ),
           ),
           const SizedBox(height: 20),
 
-          // Login button placeholder
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFDDDDDD),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Center(
-              child: Text(
-                'Log In',
-                style: TextStyle(
-                  fontFamily: 'DMSans',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF666666),
+          // Sign up button placeholder
+          _selectable(
+            id: 'signup_button',
+            fullWidth: true,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDDDDD),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Center(
+                child: Text(
+                  'Log In',
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF666666),
+                  ),
                 ),
               ),
             ),
@@ -709,28 +857,31 @@ class _RegentcanvaState extends State<Regentcanva> {
           const SizedBox(height: 16),
 
           // Sign up prompt
-          Center(
-            child: RichText(
-              text: const TextSpan(
-                children: [
-                  TextSpan(
-                    text: "Don't have an account? ",
-                    style: TextStyle(
-                      fontFamily: 'DMSans',
-                      fontSize: 10,
-                      color: Color(0xFFAAAAAA),
+          _selectable(
+            id: 'signup_login',
+            child: Center(
+              child: RichText(
+                text: const TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "Don't have an account? ",
+                      style: TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 10,
+                        color: Color(0xFFAAAAAA),
+                      ),
                     ),
-                  ),
-                  TextSpan(
-                    text: 'Sign up',
-                    style: TextStyle(
-                      fontFamily: 'DMSans',
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF999999),
+                    TextSpan(
+                      text: 'Sign up',
+                      style: TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF999999),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -795,186 +946,196 @@ class _RegentcanvaState extends State<Regentcanva> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Greeting row: avatar + hello/name column
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: const Color(0xFFE5E5E5),
-                child: Text(
-                  initials,
-                  style: const TextStyle(
-                    fontFamily: 'DMSans',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF777777),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hello again',
-                    style: TextStyle(
-                      fontFamily: 'DMSans',
-                      fontSize: 7,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFFAAAAAA),
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    fullName,
-                    style: TextStyle(
-                      fontFamily: 'DMSans',
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF333333),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-          // Wallet banner
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 89, 88, 88),
-              borderRadius: BorderRadius.circular(14),
-            ),
+          _selectable(
+            id: 'home_greeting',
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              
               children: [
-                Expanded(
-                  child: Column(
-                    
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Virtual Wallet ',
-                            style: TextStyle(
-                              fontFamily: 'DMSans',
-                              fontSize: 8.5,
-                              color: Color(0xFFAAAAAA),
-                            ),
-                          ),
-                          const SizedBox(width: 1),
-                           const Text(
-                            ':',
-                            style: TextStyle(
-                              fontFamily: 'DMSans',
-                              fontSize: 8.5,
-                              color: Color(0xFFAAAAAA),
-                            ),
-                          ),
-                          const SizedBox(width: 1),
-                          const Text(
-                            ' 0123456789',
-                            style: TextStyle(
-                              fontFamily: 'DMSans',
-                              fontSize: 8.5,
-                              color: Color(0xFFAAAAAA),
-                            ),
-                          ),
-                         
-                        ],
-                      ),
-                     
-                      const SizedBox(height: 5),
-                      const Text(
-                        '₦0.00',
-                        style: TextStyle(
-                          fontFamily: 'DMSans',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                       const Text(
-                        'Available Balance',
-                        style: TextStyle(
-                          fontFamily: 'DMSans',
-                          fontSize: 8.5,
-                          color: Color(0xFFAAAAAA),
-                        ),
-                      ),
-                    ],
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: const Color(0xFFE5E5E5),
+                  child: Text(
+                    initials,
+                    style: const TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF777777),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.add_circle_outline_rounded,
-                        size: 16,
-                        color: Color(0xFF2E2E2E),
+                const SizedBox(width: 10),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hello again',
+                      style: TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 7,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFFAAAAAA),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Add money',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'DMSans',
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF2E2E2E),
-                          height: 1.1,
-                        ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      fullName,
+                      style: TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF333333),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: 18),
 
+          // Wallet banner
+          _selectable(
+            id: 'home_wallet',
+            fullWidth: true,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 89, 88, 88),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              'Account No ',
+                              style: TextStyle(
+                                fontFamily: 'DMSans',
+                                fontSize: 8.5,
+                                color: Color(0xFFAAAAAA),
+                              ),
+                            ),
+                            const SizedBox(width: 1),
+                            const Text(
+                              ':',
+                              style: TextStyle(
+                                fontFamily: 'DMSans',
+                                fontSize: 8.5,
+                                color: Color(0xFFAAAAAA),
+                              ),
+                            ),
+                            const SizedBox(width: 1),
+                            const Text(
+                              ' 0123456789',
+                              style: TextStyle(
+                                fontFamily: 'DMSans',
+                                fontSize: 8.5,
+                                color: Color(0xFFAAAAAA),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        const Text(
+                          '₦0.00',
+                          style: TextStyle(
+                            fontFamily: 'DMSans',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        const Text(
+                          'Available Balance',
+                          style: TextStyle(
+                            fontFamily: 'DMSans',
+                            fontSize: 8.5,
+                            color: Color(0xFFAAAAAA),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.add_circle_outline_rounded,
+                          size: 16,
+                          color: Color(0xFF2E2E2E),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Add money',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'DMSans',
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2E2E2E),
+                            height: 1.1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+
           // VTU services list
-          const Text(
-            'Services',
-            style: TextStyle(
-              fontFamily: 'DMSans',
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF444444),
+          _selectable(
+            id: 'home_services_title',
+            child: const Text(
+              'Services',
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF444444),
+              ),
             ),
           ),
           const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 8,
-            children: const [
-              _VtuServiceItem(icon: Icons.phone_android_rounded, label: 'Airtime'),
-              _VtuServiceItem(icon: Icons.wifi_rounded, label: 'Data'),
-              _VtuServiceItem(icon: Icons.bolt_rounded, label: 'Electricity'),
-              _VtuServiceItem(icon: Icons.tv_rounded, label: 'Cable TV'),
-              _VtuServiceItem(icon: Icons.school_rounded, label: 'Education'),
-              _VtuServiceItem(icon: Icons.sports_soccer_rounded, label: 'Betting'),
-              _VtuServiceItem(icon: Icons.water_drop_rounded, label: 'Water'),
-              _VtuServiceItem(icon: Icons.more_horiz_rounded, label: 'More'),
-            ],
+          _selectable(
+            id: 'home_services_grid',
+            fullWidth: true,
+            child: GridView.count(
+              crossAxisCount: 4,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 8,
+              children: const [
+                _VtuServiceItem(icon: Icons.phone_android_rounded, label: 'Airtime'),
+                _VtuServiceItem(icon: Icons.wifi_rounded, label: 'Data'),
+                _VtuServiceItem(icon: Icons.bolt_rounded, label: 'Electricity'),
+                _VtuServiceItem(icon: Icons.tv_rounded, label: 'Cable TV'),
+                _VtuServiceItem(icon: Icons.school_rounded, label: 'Education'),
+                _VtuServiceItem(icon: Icons.sports_soccer_rounded, label: 'Betting'),
+                _VtuServiceItem(icon: Icons.water_drop_rounded, label: 'Water'),
+                _VtuServiceItem(icon: Icons.more_horiz_rounded, label: 'More'),
+              ],
+            ),
           ),
         ],
       ),
@@ -987,121 +1148,52 @@ class _RegentcanvaState extends State<Regentcanva> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Finance',
-            style: TextStyle(
-              fontFamily: 'DMSans',
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF333333),
+          _selectable(
+            id: 'finance_heading',
+            child: const Text(
+              'Finance',
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF333333),
+              ),
             ),
           ),
           const SizedBox(height: 2),
-          const Text(
-            'Track your balance and spending',
-            style: TextStyle(
-              fontFamily: 'DMSans',
-              fontSize: 8.5,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFFAAAAAA),
+          _selectable(
+            id: 'finance_subtitle',
+            child: const Text(
+              'Track your balance and spending',
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 8.5,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFFAAAAAA),
+              ),
             ),
           ),
           const SizedBox(height: 16),
 
           // Balance summary row
-          Row(
-            children: [
-              Expanded(
-                child: _FinanceSummaryTile(
-                  label: 'Balance',
-                  value: '₦0.00',
-                  icon: Icons.account_balance_wallet_rounded,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _FinanceSummaryTile(
-                  label: 'This Month',
-                  value: '₦0.00',
-                  icon: Icons.trending_down_rounded,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-          // Current plan card
-          const Text(
-            'Current Plan',
-            style: TextStyle(
-              fontFamily: 'DMSans',
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF444444),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 89, 88, 88),
-              borderRadius: BorderRadius.circular(14),
-            ),
+          _selectable(
+            id: 'finance_summary',
+            fullWidth: true,
             child: Row(
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'No Active Plan',
-                            style: TextStyle(
-                              fontFamily: 'DMSans',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Subscribe to a data or cable plan',
-                        style: TextStyle(
-                          fontFamily: 'DMSans',
-                          fontSize: 8,
-                          color: Color(0xFFAAAAAA),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Renews: —',
-                        style: TextStyle(
-                          fontFamily: 'DMSans',
-                          fontSize: 7.5,
-                          color: Color(0xFF999999),
-                        ),
-                      ),
-                    ],
+                  child: _FinanceSummaryTile(
+                    label: 'Balance',
+                    value: '₦0.00',
+                    icon: Icons.account_balance_wallet_rounded,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    'Manage',
-                    style: TextStyle(
-                      fontFamily: 'DMSans',
-                      fontSize: 8,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2E2E2E),
-                    ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _FinanceSummaryTile(
+                    label: 'This Month',
+                    value: '₦0.00',
+                    icon: Icons.trending_down_rounded,
                   ),
                 ),
               ],
@@ -1109,23 +1201,116 @@ class _RegentcanvaState extends State<Regentcanva> {
           ),
           const SizedBox(height: 18),
 
-          // Transactions
-          const Text(
-            'Recent Transactions',
-            style: TextStyle(
-              fontFamily: 'DMSans',
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF444444),
+          // Current plan card
+          _selectable(
+            id: 'finance_plan_title',
+            child: const Text(
+              'Current Plan',
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF444444),
+              ),
             ),
           ),
           const SizedBox(height: 10),
-          const _TransactionItem(
-            icon: Icons.wifi_rounded,
-            title: 'Data Purchase',
-            subtitle: 'No transactions yet',
-            amount: '',
-            isCredit: false,
+          _selectable(
+            id: 'finance_plan_card',
+            fullWidth: true,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 89, 88, 88),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              'No Active Plan',
+                              style: TextStyle(
+                                fontFamily: 'DMSans',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Subscribe to a data or cable plan',
+                          style: TextStyle(
+                            fontFamily: 'DMSans',
+                            fontSize: 8,
+                            color: Color(0xFFAAAAAA),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Renews: —',
+                          style: TextStyle(
+                            fontFamily: 'DMSans',
+                            fontSize: 7.5,
+                            color: Color(0xFF999999),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'Manage',
+                      style: TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2E2E2E),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Transactions
+          _selectable(
+            id: 'finance_transactions_title',
+            child: const Text(
+              'Recent Transactions',
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF444444),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _selectable(
+            id: 'finance_transactions_list',
+            fullWidth: true,
+            child: const _TransactionItem(
+              icon: Icons.wifi_rounded,
+              title: 'Data Purchase',
+              subtitle: 'No transactions yet',
+              amount: '',
+              isCredit: false,
+            ),
           ),
         ],
       ),
@@ -1148,70 +1333,77 @@ class _RegentcanvaState extends State<Regentcanva> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Profile',
-            style: TextStyle(
-              fontFamily: 'DMSans',
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF333333),
+          _selectable(
+            id: 'profile_heading',
+            child: const Text(
+              'Profile',
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF333333),
+              ),
             ),
           ),
           const SizedBox(height: 16),
 
           // Avatar + name + email
-          Center(
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: const Color(0xFFE5E5E5),
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      fontFamily: 'DMSans',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF777777),
+          _selectable(
+            id: 'profile_avatar',
+            fullWidth: true,
+            child: Center(
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: const Color(0xFFE5E5E5),
+                    child: Text(
+                      initials,
+                      style: const TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF777777),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  fullName,
-                  style: TextStyle(
-                    fontFamily: 'DMSans',
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF333333),
+                  const SizedBox(height: 8),
+                  const Text(
+                    fullName,
+                    style: TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF333333),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'user@example.com',
-                  style: TextStyle(
-                    fontFamily: 'DMSans',
-                    fontSize: 8.5,
-                    color: Color(0xFFAAAAAA),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'user@example.com',
+                    style: TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: 8.5,
+                      color: Color(0xFFAAAAAA),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 20),
 
           // Menu items
-          const _ProfileMenuItem(icon: Icons.person_outline_rounded, label: 'Personal Information'),
-          const _ProfileMenuItem(icon: Icons.credit_card_rounded, label: 'Payment Methods'),
-          const _ProfileMenuItem(icon: Icons.lock_outline_rounded, label: 'Security'),
-          const _ProfileMenuItem(icon: Icons.notifications_none_rounded, label: 'Notifications'),
-          const _ProfileMenuItem(icon: Icons.help_outline_rounded, label: 'Help & Support'),
+          _selectable(id: 'profile_personal', fullWidth: true, child: const _ProfileMenuItem(icon: Icons.person_outline_rounded, label: 'Personal Information')),
+          _selectable(id: 'profile_payment', fullWidth: true, child: const _ProfileMenuItem(icon: Icons.credit_card_rounded, label: 'Payment Methods')),
+          _selectable(id: 'profile_security', fullWidth: true, child: const _ProfileMenuItem(icon: Icons.lock_outline_rounded, label: 'Security')),
+          _selectable(id: 'profile_notifications', fullWidth: true, child: const _ProfileMenuItem(icon: Icons.notifications_none_rounded, label: 'Notifications')),
+          _selectable(id: 'profile_help', fullWidth: true, child: const _ProfileMenuItem(icon: Icons.help_outline_rounded, label: 'Help & Support')),
           const SizedBox(height: 10),
-          const _ProfileMenuItem(
+          _selectable(id: 'profile_logout', fullWidth: true, child: const _ProfileMenuItem(
             icon: Icons.logout_rounded,
             label: 'Log Out',
             isDestructive: true,
-          ),
+          )),
         ],
       ),
     );
