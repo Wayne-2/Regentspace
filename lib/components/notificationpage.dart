@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,12 +21,15 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   void initState() {
     super.initState();
+    // Initialize Hive and start Firestore listener
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final uid = _uid;
       if (uid == null) return;
+      await NotificationStore.initLocal();
+      NotificationStore.startFirestoreListener(uid);
       await Future.delayed(const Duration(milliseconds: 350));
       try {
-        await NotificationStore.markAllRead(uid);
+        await NotificationStore.markAllReadLocal(uid);
       } catch (_) {}
     });
   }
@@ -35,6 +37,7 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   void dispose() {
     _longPressTimer?.cancel();
+    NotificationStore.stopFirestoreListener();
     super.dispose();
   }
 
@@ -45,9 +48,7 @@ class _NotificationPageState extends State<NotificationPage> {
     final count = toDelete.length;
     setState(() => _selected.clear());
     try {
-      for (final id in toDelete) {
-        await NotificationStore.deleteForUser(uid, id);
-      }
+      await NotificationStore.deleteMultiple(uid, toDelete);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$count notification${count > 1 ? 's' : ''} deleted'), backgroundColor: const Color(0xFF740690)));
     } catch (e) {
@@ -59,11 +60,9 @@ class _NotificationPageState extends State<NotificationPage> {
   Future<void> _onRefresh() async {
     final uid = _uid;
     if (uid != null) {
-      try {
-        await FirebaseFirestore.instance.collection('users').doc(uid).collection('notifications').get(const GetOptions(source: Source.server));
-      } catch (_) {}
+      await NotificationStore.syncFromFirestore(uid);
     }
-    await Future.delayed(const Duration(milliseconds: 700));
+    await Future.delayed(const Duration(milliseconds: 300));
     if (mounted) setState(() {});
   }
 
@@ -114,19 +113,9 @@ class _NotificationPageState extends State<NotificationPage> {
       body: uid == null
           ? _buildFallback()
           : StreamBuilder<List<AppNotification>>(
-              stream: NotificationStore.watchForUser(uid),
+              stream: NotificationStore.localStream,
+              initialData: NotificationStore.items,
               builder: (context, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF740690)));
-                }
-                if (snap.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text('Failed to load notifications:\n${snap.error}', textAlign: TextAlign.center, style: const TextStyle(fontFamily: 'DMSans', color: Colors.red)),
-                    ),
-                  );
-                }
                 final notifications = snap.data ?? [];
                 if (notifications.isEmpty) return _emptyState();
                 return RefreshIndicator(
@@ -233,9 +222,6 @@ class _NotificationPageState extends State<NotificationPage> {
                                       Text(n.body.isEmpty ? (n.data['body']?.toString() ?? '') : n.body, style: const TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black54, height: 1.3)),
                                       const SizedBox(height: 4),
                                       Text(_timeAgo(n.timestamp), style: const TextStyle(fontFamily: 'DMSans', fontSize: 11, color: Colors.black45)),
-                                      // const SizedBox(height: 2),
-                                      // if (!_selectionMode)
-                                        // Text('Hold to select', style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: Colors.black.withOpacity(0.35), fontStyle: FontStyle.italic)),
                                     ],
                                   ),
                                 ),

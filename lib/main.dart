@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'auth_page/login.dart';
 import 'auth_page/networkerror.dart';
@@ -12,6 +13,7 @@ import 'firebase_options.dart';
 import 'service/monnify_config.dart';
 import 'service/push_notification_service.dart';
 import 'service/app_notifications.dart';
+import 'service/notification_store.dart';
 import 'theme/app_theme.dart';
 
 @pragma('vm:entry-point')
@@ -21,6 +23,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await NotificationStore.initLocal();
   runApp(const _AppRoot());
 }
 

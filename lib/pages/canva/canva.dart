@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../service/app_notifications.dart';
 import '../../theme/app_theme.dart';
 
 class Regentcanva extends StatefulWidget {
@@ -52,6 +54,61 @@ class _RegentcanvaState extends State<Regentcanva> {
   final Map<String, Color> _containerBackgrounds = {};
   final Map<int, Color> _screenBackgrounds = {};
 
+  // Undo / Redo history
+  final List<Map<String, dynamic>> _undoStack = [];
+  final List<Map<String, dynamic>> _redoStack = [];
+  static const int _maxHistory = 50;
+
+  Map<String, dynamic> _snapshot() => {
+    'elementColors': Map<String, Color>.from(_elementColors),
+    'containerBackgrounds': Map<String, Color>.from(_containerBackgrounds),
+    'screenBackgrounds': Map<int, Color>.from(_screenBackgrounds),
+    'elementTexts': Map<String, String>.from(_elementTexts),
+    'appIconImage': _appIconImage != null ? Uint8List.fromList(_appIconImage!) : null,
+  };
+
+  void _restoreSnapshot(Map<String, dynamic> s) {
+    _elementColors
+      ..clear()
+      ..addAll(Map<String, Color>.from(s['elementColors']));
+    _containerBackgrounds
+      ..clear()
+      ..addAll(Map<String, Color>.from(s['containerBackgrounds']));
+    _screenBackgrounds
+      ..clear()
+      ..addAll(Map<int, Color>.from(s['screenBackgrounds']));
+    _elementTexts
+      ..clear()
+      ..addAll(Map<String, String>.from(s['elementTexts']));
+    _appIconImage = s['appIconImage'] as Uint8List?;
+  }
+
+  void _pushUndo() {
+    if (_undoStack.length >= _maxHistory) _undoStack.removeAt(0);
+    _undoStack.add(_snapshot());
+    _redoStack.clear();
+  }
+
+  void _undo() {
+    if (_undoStack.isEmpty) return;
+    _redoStack.add(_snapshot());
+    _restoreSnapshot(_undoStack.removeLast());
+    setState(() {});
+  }
+
+  void _redo() {
+    if (_redoStack.isEmpty) return;
+    _undoStack.add(_snapshot());
+    _restoreSnapshot(_redoStack.removeLast());
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProgress();
+  }
+
   // Element classification helpers
   bool _isImageElement(String id) => id == 'intro_icon' || id == 'login_logo' || id == 'signup_logo';
   bool _isTextElement(String id) => id.contains('title') || id.contains('heading') || id.contains('subtitle') ||
@@ -59,9 +116,7 @@ class _RegentcanvaState extends State<Regentcanva> {
       id.contains('button') || id.contains('signup') || id.contains('login') && !id.contains('logo') ||
       id == 'home_services_title' || id == 'finance_heading' || id == 'finance_subtitle' ||
       id == 'finance_plan_title' || id == 'finance_transactions_title' || id == 'profile_heading' ||
-      id == 'home_wallet' || id == 'finance_plan_card' || id == 'finance_summary' ||
-      id == 'profile_personal' || id == 'profile_payment' || id == 'profile_security' ||
-      id == 'profile_notifications' || id == 'profile_help' || id == 'profile_logout' ||
+      id == 'finance_summary' ||
       id.contains('_text') || id.contains('_icon') || id.contains('_amount') ||
       id.contains('_subtitle') || id.contains('_renew') || id.contains('_label');
   bool _isContainerElement(String id) => id.contains('wallet') || id.contains('plan_card') ||
@@ -88,7 +143,7 @@ class _RegentcanvaState extends State<Regentcanva> {
 
     switch (action) {
       case 'Color':
-        if (_isTextElement(id)) {
+        if (_isTextElement(id) || id == 'home_wallet' || id == 'finance_plan_card' || id == 'profile_personal' || id == 'profile_payment' || id == 'profile_security' || id == 'profile_notifications' || id == 'profile_help' || id == 'profile_logout') {
           _showColorPicker(forText: true);
         } else if (_isContainerElement(id)) {
           _showColorPicker(forText: false);
@@ -114,6 +169,7 @@ class _RegentcanvaState extends State<Regentcanva> {
         ? (_elementColors[id] ?? _getDefaultTextColor(id))
         : (_containerBackgrounds[id] ?? const Color(0xFFF7F7F7));
 
+    _pushUndo();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -163,6 +219,7 @@ class _RegentcanvaState extends State<Regentcanva> {
 
   void _showTextEditor(String id) {
     final controller = TextEditingController(text: _getTextForElement(id) ?? '');
+    _pushUndo();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -199,6 +256,7 @@ class _RegentcanvaState extends State<Regentcanva> {
     final currentColor = isScreen
         ? (_screenBackgrounds[int.parse(id.split('_')[1])] ?? const Color(0xFFF7F7F7))
         : (_containerBackgrounds[id] ?? const Color(0xFFF7F7F7));
+    _pushUndo();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -234,6 +292,7 @@ class _RegentcanvaState extends State<Regentcanva> {
   }
 
   void _showObjectDropdown(String id) {
+    _pushUndo();
     showDialog(
       context: context,
       builder: (ctx) => SimpleDialog(
@@ -276,6 +335,164 @@ class _RegentcanvaState extends State<Regentcanva> {
         ],
       ),
     );
+  }
+
+  // ================================================================
+  // HIVE PERSISTENCE
+  // ================================================================
+
+  static const String _boxName = 'canva_progress';
+
+  Future<void> _saveProgress() async {
+    final box = await Hive.openBox(_boxName);
+
+    // Save element colors (convert Color to int)
+    final colorMap = <String, int>{};
+    _elementColors.forEach((key, value) {
+      colorMap[key] = value.toARGB32();
+    });
+    await box.put('elementColors', colorMap);
+
+    // Save container backgrounds
+    final bgMap = <String, int>{};
+    _containerBackgrounds.forEach((key, value) {
+      bgMap[key] = value.toARGB32();
+    });
+    await box.put('containerBackgrounds', bgMap);
+
+    // Save screen backgrounds (convert int key to string for Hive)
+    final screenMap = <String, int>{};
+    _screenBackgrounds.forEach((key, value) {
+      screenMap[key.toString()] = value.toARGB32();
+    });
+    await box.put('screenBackgrounds', screenMap);
+
+    // Save element texts
+    await box.put('elementTexts', _elementTexts);
+
+    // Save app icon image (Uint8List)
+    if (_appIconImage != null) {
+      await box.put('appIconImage', _appIconImage);
+    } else {
+      await box.delete('appIconImage');
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Progress saved successfully'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Color(0xFF0D9229),
+        ),
+      );
+      AppNotifications.canvaProjectSaved(projectName: 'Your Design');
+    }
+  }
+
+  Future<void> _revertProgress() async {
+    final box = await Hive.openBox(_boxName);
+    await box.clear();
+
+    _pushUndo();
+    setState(() {
+      _elementColors.clear();
+      _containerBackgrounds.clear();
+      _screenBackgrounds.clear();
+      _appIconImage = null;
+      _appIcon = Icons.image_outlined;
+
+      // Restore default texts
+      _elementTexts
+        ..clear()
+        ..addAll({
+          'intro_title': 'App Name',
+          'intro_description': 'A short description of what this app does goes here.',
+          'login_heading': 'Login',
+          'login_subtitle': 'Welcome back, please sign in',
+          'login_email_label': 'Email',
+          'login_email_hint': 'you@example.com',
+          'login_password_label': 'Password',
+          'login_password_hint': '••••••••',
+          'login_forgot': 'Forgot password?',
+          'login_button': 'Log In',
+          'login_signup': "Don't have an account? Sign up",
+          'signup_heading': 'Create Account',
+          'signup_subtitle': 'Welcome user, fill the follow',
+          'signup_email_label': 'Email',
+          'signup_email_hint': 'you@example.com',
+          'signup_password_label': 'Password',
+          'signup_password_hint': '••••••••',
+          'signup_confirm_label': 'Confirm Password',
+          'signup_confirm_hint': '••••••••',
+          'signup_forgot': 'Forgot password?',
+          'signup_button': 'Log In',
+          'signup_login': "Don't have an account? Sign up",
+          'home_services_title': 'Services',
+          'finance_heading': 'Finance',
+          'finance_subtitle': 'Track your balance and spending',
+          'finance_plan_title': 'Current Plan',
+          'finance_transactions_title': 'Recent Transactions',
+          'profile_heading': 'Profile',
+        });
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Progress reverted to default'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Color(0xFFE53935),
+        ),
+      );
+    }
+  }
+
+  Future<void> _loadProgress() async {
+    final box = await Hive.openBox(_boxName);
+
+    // Load element colors
+    final colorMap = box.get('elementColors');
+    if (colorMap != null) {
+      final map = Map<String, int>.from(colorMap);
+      map.forEach((key, value) {
+        _elementColors[key] = Color(value);
+      });
+    }
+
+    // Load container backgrounds
+    final bgMap = box.get('containerBackgrounds');
+    if (bgMap != null) {
+      final map = Map<String, int>.from(bgMap);
+      map.forEach((key, value) {
+        _containerBackgrounds[key] = Color(value);
+      });
+    }
+
+    // Load screen backgrounds
+    final screenMap = box.get('screenBackgrounds');
+    if (screenMap != null) {
+      final map = Map<String, int>.from(screenMap);
+      map.forEach((key, value) {
+        _screenBackgrounds[int.parse(key)] = Color(value);
+      });
+    }
+
+    // Load element texts
+    final texts = box.get('elementTexts');
+    if (texts != null) {
+      _elementTexts
+        ..clear()
+        ..addAll(Map<String, String>.from(texts));
+    }
+
+    // Load app icon image
+    final imageData = box.get('appIconImage');
+    if (imageData != null) {
+      _appIconImage = Uint8List.fromList(List<int>.from(imageData));
+      _appIcon = Icons.image;
+    }
+
+    if (mounted) setState(() {});
   }
 
   // ================================================================
@@ -326,7 +543,10 @@ class _RegentcanvaState extends State<Regentcanva> {
                     const SizedBox(width: 12),
                     // View / Edit toggle
                     GestureDetector(
-                      onTap: () => setState(() => _isEditMode = !_isEditMode),
+                      onTap: () => setState(() {
+                        _isEditMode = !_isEditMode;
+                        if (!_isEditMode) _selectedElementId = null;
+                      }),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
@@ -369,14 +589,14 @@ class _RegentcanvaState extends State<Regentcanva> {
                                 icon: Icons.palette_outlined,
                                 label: 'Color',
                                 isActive: _isEditMode,
-                                isAvailable: hasSelection && (_isTextElement(id) || _isContainerElement(id)) && !id.startsWith('screen_'),
+                                isAvailable: hasSelection && ((_isTextElement(id) && !_isImageElement(id)) || _isContainerElement(id) || id == 'home_wallet' || id == 'finance_plan_card' || id == 'profile_personal' || id == 'profile_payment' || id == 'profile_security' || id == 'profile_notifications' || id == 'profile_help' || id == 'profile_logout') && !id.startsWith('screen_') && !_isImageElement(id),
                                 onTap: () => _onToolbarTap('Color'),
                               ),
                               _buildToolbarOption(
                                 icon: Icons.text_fields_rounded,
                                 label: 'Text',
                                 isActive: _isEditMode,
-                                isAvailable: hasSelection && _isTextElement(id),
+                                isAvailable: hasSelection && _isTextElement(id) && !_isImageElement(id),
                                 onTap: () => _onToolbarTap('Text'),
                               ),
                               _buildToolbarOption(
@@ -443,9 +663,26 @@ class _RegentcanvaState extends State<Regentcanva> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionHeader(
-                      title: 'Regentspace Canvas',
-                      subtitle: 'Design and generate your app',
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildSectionHeader(
+                            title: 'Regentspace Canvas',
+                            subtitle: 'Design and generate your app',
+                          ),
+                        ),
+                        _buildUndoRedoButton(
+                          icon: Icons.undo_rounded,
+                          isEnabled: _undoStack.isNotEmpty,
+                          onTap: _undo,
+                        ),
+                        const SizedBox(width: 6),
+                        _buildUndoRedoButton(
+                          icon: Icons.redo_rounded,
+                          isEnabled: _redoStack.isNotEmpty,
+                          onTap: _redo,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 20),
                     _buildActionButton(
@@ -462,7 +699,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                           child: _buildCompactButton(
                             icon: Icons.save_rounded,
                             label: 'Save',
-                            onTap: () {},
+                            onTap: _saveProgress,
                             isDestructive: false,
                           ),
                         ),
@@ -471,7 +708,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                           child: _buildCompactButton(
                             icon: Icons.undo_rounded,
                             label: 'Revert',
-                            onTap: () {},
+                            onTap: _revertProgress,
                             isDestructive: true,
                           ),
                         ),
@@ -1605,12 +1842,15 @@ class _RegentcanvaState extends State<Regentcanva> {
           _selectable(
             id: 'finance_transactions_list',
             fullWidth: true,
-            child: const _TransactionItem(
+            child: _TransactionItem(
               icon: Icons.wifi_rounded,
               title: 'Data Purchase',
               subtitle: 'No transactions yet',
               amount: '',
               isCredit: false,
+              iconColor: _elementColors['finance_transactions_list_icon'],
+              bgColor: _containerBackgrounds['finance_transactions_list'],
+              textColor: _elementColors['finance_transactions_list_text'],
             ),
           ),
         ],
@@ -1749,6 +1989,33 @@ class _RegentcanvaState extends State<Regentcanva> {
           style: AppTextStyles.body(color: AppColors.textTertiary),
         ),
       ],
+    );
+  }
+
+  Widget _buildUndoRedoButton({
+    required IconData icon,
+    required bool isEnabled,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: isEnabled ? onTap : null,
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: isEnabled ? const Color(0xFFF7F7F7) : const Color(0xFFFAFAFA),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isEnabled ? AppColors.border : const Color(0xFFEEEEEE),
+            width: 1,
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 16,
+          color: isEnabled ? AppColors.textSecondary : const Color(0xFFCCCCCC),
+        ),
+      ),
     );
   }
 
@@ -2031,6 +2298,9 @@ class _TransactionItem extends StatelessWidget {
   final String subtitle;
   final String amount;
   final bool isCredit;
+  final Color? iconColor;
+  final Color? bgColor;
+  final Color? textColor;
 
   const _TransactionItem({
     required this.icon,
@@ -2038,6 +2308,9 @@ class _TransactionItem extends StatelessWidget {
     required this.subtitle,
     required this.amount,
     required this.isCredit,
+    this.iconColor,
+    this.bgColor,
+    this.textColor,
   });
 
   @override
@@ -2046,7 +2319,7 @@ class _TransactionItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
+        color: bgColor ?? const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E5E5), width: 1),
       ),
@@ -2060,7 +2333,7 @@ class _TransactionItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(9),
               border: Border.all(color: const Color(0xFFE5E5E5), width: 1),
             ),
-            child: Icon(icon, size: 14, color: const Color(0xFF777777)),
+            child: Icon(icon, size: 14, color: iconColor ?? const Color(0xFF777777)),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -2069,20 +2342,20 @@ class _TransactionItem extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'DMSans',
                     fontSize: 9.5,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF444444),
+                    color: textColor ?? const Color(0xFF444444),
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'DMSans',
                     fontSize: 7.5,
-                    color: Color(0xFFAAAAAA),
+                    color: textColor ?? const Color(0xFFAAAAAA),
                   ),
                 ),
               ],
