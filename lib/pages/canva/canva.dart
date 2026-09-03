@@ -59,6 +59,9 @@ class _RegentcanvaState extends State<Regentcanva> {
       id.contains('button') || id.contains('signup') || id.contains('login') && !id.contains('logo') ||
       id == 'home_services_title' || id == 'finance_heading' || id == 'finance_subtitle' ||
       id == 'finance_plan_title' || id == 'finance_transactions_title' || id == 'profile_heading' ||
+      id == 'home_wallet' || id == 'finance_plan_card' || id == 'finance_summary' ||
+      id == 'profile_personal' || id == 'profile_payment' || id == 'profile_security' ||
+      id == 'profile_notifications' || id == 'profile_help' || id == 'profile_logout' ||
       id.contains('_text') || id.contains('_icon') || id.contains('_amount') ||
       id.contains('_subtitle') || id.contains('_renew') || id.contains('_label');
   bool _isContainerElement(String id) => id.contains('wallet') || id.contains('plan_card') ||
@@ -146,6 +149,12 @@ class _RegentcanvaState extends State<Regentcanva> {
   }
 
   Color _getDefaultTextColor(String id) {
+    if (id == 'home_wallet' || id == 'finance_plan_card') {
+      return const Color(0xFFAAAAAA);
+    }
+    if (id == 'finance_summary') {
+      return const Color(0xFF777777);
+    }
     if (id.contains('subtitle') || id.contains('description') || id.contains('hint') || id.contains('forgot')) {
       return const Color(0xFFAAAAAA);
     }
@@ -360,7 +369,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                                 icon: Icons.palette_outlined,
                                 label: 'Color',
                                 isActive: _isEditMode,
-                                isAvailable: hasSelection && (_isTextElement(id) || _isContainerElement(id)),
+                                isAvailable: hasSelection && (_isTextElement(id) || _isContainerElement(id)) && !id.startsWith('screen_'),
                                 onTap: () => _onToolbarTap('Color'),
                               ),
                               _buildToolbarOption(
@@ -1273,7 +1282,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                               style: TextStyle(
                                 fontFamily: 'DMSans',
                                 fontSize: 8.5,
-                                color: _elementColors['home_wallet_label'] ?? const Color(0xFFAAAAAA),
+                                color: _elementColors['home_wallet'] ?? _elementColors['home_wallet_label'] ?? const Color(0xFFAAAAAA),
                               ),
                             ),
                             const SizedBox(width: 1),
@@ -1282,7 +1291,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                               style: TextStyle(
                                 fontFamily: 'DMSans',
                                 fontSize: 8.5,
-                                color: _elementColors['home_wallet_label'] ?? const Color(0xFFAAAAAA),
+                                color: _elementColors['home_wallet'] ?? _elementColors['home_wallet_label'] ?? const Color(0xFFAAAAAA),
                               ),
                             ),
                             const SizedBox(width: 1),
@@ -1291,7 +1300,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                               style: TextStyle(
                                 fontFamily: 'DMSans',
                                 fontSize: 8.5,
-                                color: _elementColors['home_wallet_label'] ?? const Color(0xFFAAAAAA),
+                                color: _elementColors['home_wallet'] ?? _elementColors['home_wallet_label'] ?? const Color(0xFFAAAAAA),
                               ),
                             ),
                           ],
@@ -1312,7 +1321,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                           style: TextStyle(
                             fontFamily: 'DMSans',
                             fontSize: 8.5,
-                            color: _elementColors['home_wallet_label'] ?? const Color(0xFFAAAAAA),
+                            color: _elementColors['home_wallet'] ?? _elementColors['home_wallet_label'] ?? const Color(0xFFAAAAAA),
                           ),
                         ),
                       ],
@@ -1368,42 +1377,62 @@ class _RegentcanvaState extends State<Regentcanva> {
             ),
           ),
           const SizedBox(height: 10),
-          _selectable(
-            id: 'home_services_grid',
-            fullWidth: true,
-            child: GridView.count(
-              crossAxisCount: 4,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 8,
-              children: [
-                _VtuServiceItem(icon: Icons.phone_android_rounded, label: 'Airtime',
+          GridView.count(
+            crossAxisCount: 4,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 8,
+            children: [
+              _selectable(
+                id: 'service_airtime',
+                child: _VtuServiceItem(icon: Icons.phone_android_rounded, label: 'Airtime',
                   iconColor: _elementColors['service_airtime_icon'], bgColor: _containerBackgrounds['service_airtime'],
                   textColor: _elementColors['service_airtime_text']),
-                _VtuServiceItem(icon: Icons.wifi_rounded, label: 'Data',
+              ),
+              _selectable(
+                id: 'service_data',
+                child: _VtuServiceItem(icon: Icons.wifi_rounded, label: 'Data',
                   iconColor: _elementColors['service_data_icon'], bgColor: _containerBackgrounds['service_data'],
                   textColor: _elementColors['service_data_text']),
-                _VtuServiceItem(icon: Icons.bolt_rounded, label: 'Electricity',
+              ),
+              _selectable(
+                id: 'service_electricity',
+                child: _VtuServiceItem(icon: Icons.bolt_rounded, label: 'Electricity',
                   iconColor: _elementColors['service_electricity_icon'], bgColor: _containerBackgrounds['service_electricity'],
                   textColor: _elementColors['service_electricity_text']),
-                _VtuServiceItem(icon: Icons.tv_rounded, label: 'Cable TV',
+              ),
+              _selectable(
+                id: 'service_cable',
+                child: _VtuServiceItem(icon: Icons.tv_rounded, label: 'Cable TV',
                   iconColor: _elementColors['service_cable_icon'], bgColor: _containerBackgrounds['service_cable'],
                   textColor: _elementColors['service_cable_text']),
-                _VtuServiceItem(icon: Icons.school_rounded, label: 'Education',
+              ),
+              _selectable(
+                id: 'service_education',
+                child: _VtuServiceItem(icon: Icons.school_rounded, label: 'Education',
                   iconColor: _elementColors['service_education_icon'], bgColor: _containerBackgrounds['service_education'],
                   textColor: _elementColors['service_education_text']),
-                _VtuServiceItem(icon: Icons.sports_soccer_rounded, label: 'Betting',
+              ),
+              _selectable(
+                id: 'service_betting',
+                child: _VtuServiceItem(icon: Icons.sports_soccer_rounded, label: 'Betting',
                   iconColor: _elementColors['service_betting_icon'], bgColor: _containerBackgrounds['service_betting'],
                   textColor: _elementColors['service_betting_text']),
-                _VtuServiceItem(icon: Icons.water_drop_rounded, label: 'Water',
+              ),
+              _selectable(
+                id: 'service_water',
+                child: _VtuServiceItem(icon: Icons.water_drop_rounded, label: 'Water',
                   iconColor: _elementColors['service_water_icon'], bgColor: _containerBackgrounds['service_water'],
                   textColor: _elementColors['service_water_text']),
-                _VtuServiceItem(icon: Icons.more_horiz_rounded, label: 'More',
+              ),
+              _selectable(
+                id: 'service_more',
+                child: _VtuServiceItem(icon: Icons.more_horiz_rounded, label: 'More',
                   iconColor: _elementColors['service_more_icon'], bgColor: _containerBackgrounds['service_more'],
                   textColor: _elementColors['service_more_text']),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1454,6 +1483,8 @@ class _RegentcanvaState extends State<Regentcanva> {
                     label: 'Balance',
                     value: '₦0.00',
                     icon: Icons.account_balance_wallet_rounded,
+                    iconColor: _elementColors['finance_summary'],
+                    textColor: _elementColors['finance_summary'],
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1462,6 +1493,8 @@ class _RegentcanvaState extends State<Regentcanva> {
                     label: 'This Month',
                     value: '₦0.00',
                     icon: Icons.trending_down_rounded,
+                    iconColor: _elementColors['finance_summary'],
+                    textColor: _elementColors['finance_summary'],
                   ),
                 ),
               ],
@@ -1507,7 +1540,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                                 fontFamily: 'DMSans',
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: _elementColors['finance_plan_card_title'] ?? Colors.white,
+                                color: _elementColors['finance_plan_card'] ?? _elementColors['finance_plan_card_title'] ?? Colors.white,
                               ),
                             ),
                           ],
@@ -1518,7 +1551,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                           style: TextStyle(
                             fontFamily: 'DMSans',
                             fontSize: 8,
-                            color: _elementColors['finance_plan_card_subtitle'] ?? const Color(0xFFAAAAAA),
+                            color: _elementColors['finance_plan_card'] ?? _elementColors['finance_plan_card_subtitle'] ?? const Color(0xFFAAAAAA),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -1527,7 +1560,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                           style: TextStyle(
                             fontFamily: 'DMSans',
                             fontSize: 7.5,
-                            color: _elementColors['finance_plan_card_renew'] ?? const Color(0xFF999999),
+                            color: _elementColors['finance_plan_card'] ?? _elementColors['finance_plan_card_renew'] ?? const Color(0xFF999999),
                           ),
                         ),
                       ],
@@ -1663,34 +1696,34 @@ class _RegentcanvaState extends State<Regentcanva> {
           // Menu items
           _selectable(id: 'profile_personal', fullWidth: true, child: _ProfileMenuItem(
             icon: Icons.person_outline_rounded, label: 'Personal Information',
-            bgColor: _containerBackgrounds['profile_personal'], iconColor: _elementColors['profile_personal_icon'],
-            textColor: _elementColors['profile_personal_text'],
+            bgColor: _containerBackgrounds['profile_personal'], iconColor: _elementColors['profile_personal'],
+            textColor: _elementColors['profile_personal'],
           )),
           _selectable(id: 'profile_payment', fullWidth: true, child: _ProfileMenuItem(
             icon: Icons.credit_card_rounded, label: 'Payment Methods',
-            bgColor: _containerBackgrounds['profile_payment'], iconColor: _elementColors['profile_payment_icon'],
-            textColor: _elementColors['profile_payment_text'],
+            bgColor: _containerBackgrounds['profile_payment'], iconColor: _elementColors['profile_payment'],
+            textColor: _elementColors['profile_payment'],
           )),
           _selectable(id: 'profile_security', fullWidth: true, child: _ProfileMenuItem(
             icon: Icons.lock_outline_rounded, label: 'Security',
-            bgColor: _containerBackgrounds['profile_security'], iconColor: _elementColors['profile_security_icon'],
-            textColor: _elementColors['profile_security_text'],
+            bgColor: _containerBackgrounds['profile_security'], iconColor: _elementColors['profile_security'],
+            textColor: _elementColors['profile_security'],
           )),
           _selectable(id: 'profile_notifications', fullWidth: true, child: _ProfileMenuItem(
             icon: Icons.notifications_none_rounded, label: 'Notifications',
-            bgColor: _containerBackgrounds['profile_notifications'], iconColor: _elementColors['profile_notifications_icon'],
-            textColor: _elementColors['profile_notifications_text'],
+            bgColor: _containerBackgrounds['profile_notifications'], iconColor: _elementColors['profile_notifications'],
+            textColor: _elementColors['profile_notifications'],
           )),
           _selectable(id: 'profile_help', fullWidth: true, child: _ProfileMenuItem(
             icon: Icons.help_outline_rounded, label: 'Help & Support',
-            bgColor: _containerBackgrounds['profile_help'], iconColor: _elementColors['profile_help_icon'],
-            textColor: _elementColors['profile_help_text'],
+            bgColor: _containerBackgrounds['profile_help'], iconColor: _elementColors['profile_help'],
+            textColor: _elementColors['profile_help'],
           )),
           const SizedBox(height: 10),
           _selectable(id: 'profile_logout', fullWidth: true, child: _ProfileMenuItem(
             icon: Icons.logout_rounded, label: 'Log Out', isDestructive: true,
-            bgColor: _containerBackgrounds['profile_logout'], iconColor: _elementColors['profile_logout_icon'],
-            textColor: _elementColors['profile_logout_text'],
+            bgColor: _containerBackgrounds['profile_logout'], iconColor: _elementColors['profile_logout'],
+            textColor: _elementColors['profile_logout'],
           )),
         ],
       ),
@@ -1943,11 +1976,15 @@ class _FinanceSummaryTile extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
+  final Color? iconColor;
+  final Color? textColor;
 
   const _FinanceSummaryTile({
     required this.label,
     required this.value,
     required this.icon,
+    this.iconColor,
+    this.textColor,
   });
 
   @override
@@ -1962,24 +1999,24 @@ class _FinanceSummaryTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF777777)),
+          Icon(icon, size: 16, color: iconColor ?? const Color(0xFF777777)),
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'DMSans',
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF333333),
+              color: textColor ?? const Color(0xFF333333),
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'DMSans',
               fontSize: 7.5,
-              color: Color(0xFFAAAAAA),
+              color: textColor ?? const Color(0xFFAAAAAA),
             ),
           ),
         ],
