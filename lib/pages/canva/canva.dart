@@ -1,4 +1,7 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/app_theme.dart';
 
 class Regentcanva extends StatefulWidget {
@@ -12,12 +15,280 @@ class _RegentcanvaState extends State<Regentcanva> {
   bool _isEditMode = false;
   String? _selectedElementId;
 
+  // Editable state
+  IconData _appIcon = Icons.image_outlined;
+  Uint8List? _appIconImage;
+  final Map<String, String> _elementTexts = {
+    'intro_title': 'App Name',
+    'intro_description': 'A short description of what this app does goes here.',
+    'login_heading': 'Login',
+    'login_subtitle': 'Welcome back, please sign in',
+    'login_email_label': 'Email',
+    'login_email_hint': 'you@example.com',
+    'login_password_label': 'Password',
+    'login_password_hint': '••••••••',
+    'login_forgot': 'Forgot password?',
+    'login_button': 'Log In',
+    'login_signup': "Don't have an account? Sign up",
+    'signup_heading': 'Create Account',
+    'signup_subtitle': 'Welcome user, fill the follow',
+    'signup_email_label': 'Email',
+    'signup_email_hint': 'you@example.com',
+    'signup_password_label': 'Password',
+    'signup_password_hint': '••••••••',
+    'signup_confirm_label': 'Confirm Password',
+    'signup_confirm_hint': '••••••••',
+    'signup_forgot': 'Forgot password?',
+    'signup_button': 'Log In',
+    'signup_login': "Don't have an account? Sign up",
+    'home_services_title': 'Services',
+    'finance_heading': 'Finance',
+    'finance_subtitle': 'Track your balance and spending',
+    'finance_plan_title': 'Current Plan',
+    'finance_transactions_title': 'Recent Transactions',
+    'profile_heading': 'Profile',
+  };
+  final Map<String, Color> _elementColors = {};
+  final Map<String, Color> _containerBackgrounds = {};
+  final Map<int, Color> _screenBackgrounds = {};
+
+  // Element classification helpers
+  bool _isImageElement(String id) => id == 'intro_icon' || id == 'login_logo' || id == 'signup_logo';
+  bool _isTextElement(String id) => id.contains('title') || id.contains('heading') || id.contains('subtitle') ||
+      id.contains('description') || id.contains('label') || id.contains('hint') || id.contains('forgot') ||
+      id.contains('button') || id.contains('signup') || id.contains('login') && !id.contains('logo') ||
+      id == 'home_services_title' || id == 'finance_heading' || id == 'finance_subtitle' ||
+      id == 'finance_plan_title' || id == 'finance_transactions_title' || id == 'profile_heading' ||
+      id.contains('_text') || id.contains('_icon') || id.contains('_amount') ||
+      id.contains('_subtitle') || id.contains('_renew') || id.contains('_label');
+  bool _isContainerElement(String id) => id.contains('wallet') || id.contains('plan_card') ||
+      id.contains('button') || id.contains('services_grid') || id.contains('summary') ||
+      id.contains('transactions_list') || id.startsWith('screen_') || id.contains('service_') ||
+      id.contains('profile_') || id.contains('email') || id.contains('password') || id.contains('confirm');
+
+  String? _getTextForElement(String id) {
+    if (_elementTexts.containsKey(id)) return _elementTexts[id];
+    return null;
+  }
+
   void _onElementTap(String id) {
     setState(() => _selectedElementId = _selectedElementId == id ? null : id);
   }
 
-  void _clearSelection() {
-    if (_selectedElementId != null) setState(() => _selectedElementId = null);
+  // ================================================================
+  // TOOLBAR ACTIONS
+  // ================================================================
+
+  void _onToolbarTap(String action) {
+    if (_selectedElementId == null || !_isEditMode) return;
+    final id = _selectedElementId!;
+
+    switch (action) {
+      case 'Color':
+        if (_isTextElement(id)) {
+          _showColorPicker(forText: true);
+        } else if (_isContainerElement(id)) {
+          _showColorPicker(forText: false);
+        }
+        break;
+      case 'Text':
+        if (_isTextElement(id)) {
+          _showTextEditor(id);
+        }
+        break;
+      case 'Background':
+        if (_isContainerElement(id)) _showBackgroundColorPicker(id);
+        break;
+      case 'Object':
+        if (_isImageElement(id)) _showObjectDropdown(id);
+        break;
+    }
+  }
+
+  void _showColorPicker({required bool forText}) {
+    final id = _selectedElementId!;
+    final currentColor = forText
+        ? (_elementColors[id] ?? _getDefaultTextColor(id))
+        : (_containerBackgrounds[id] ?? const Color(0xFFF7F7F7));
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(forText ? 'Text Color' : 'Container Color', style: const TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, fontSize: 16)),
+        content: SingleChildScrollView(
+          child: ColorPicker(
+            pickerColor: currentColor,
+            onColorChanged: (color) {
+              setState(() {
+                if (forText) {
+                  _elementColors[id] = color;
+                } else {
+                  _containerBackgrounds[id] = color;
+                }
+              });
+            },
+            pickerAreaHeightPercent: 0.8,
+            enableAlpha: false,
+            displayThumbColor: false,
+            paletteType: PaletteType.hsvWithHue,
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(fontFamily: 'DMSans'))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Done', style: TextStyle(fontFamily: 'DMSans')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getDefaultTextColor(String id) {
+    if (id.contains('subtitle') || id.contains('description') || id.contains('hint') || id.contains('forgot')) {
+      return const Color(0xFFAAAAAA);
+    }
+    return const Color(0xFF444444);
+  }
+
+  void _showTextEditor(String id) {
+    final controller = TextEditingController(text: _getTextForElement(id) ?? '');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Text', style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, fontSize: 16)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: const TextStyle(fontFamily: 'DMSans', fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Enter new text',
+            hintStyle: const TextStyle(fontFamily: 'DMSans', color: AppColors.textHint),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(fontFamily: 'DMSans'))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+            onPressed: () {
+              setState(() => _elementTexts[id] = controller.text);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Save', style: TextStyle(fontFamily: 'DMSans')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBackgroundColorPicker(String id) {
+    final isScreen = id.startsWith('screen_');
+    final currentColor = isScreen
+        ? (_screenBackgrounds[int.parse(id.split('_')[1])] ?? const Color(0xFFF7F7F7))
+        : (_containerBackgrounds[id] ?? const Color(0xFFF7F7F7));
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isScreen ? 'Screen Background' : 'Background Color', style: const TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, fontSize: 16)),
+        content: SingleChildScrollView(
+          child: ColorPicker(
+            pickerColor: currentColor,
+            onColorChanged: (color) {
+              setState(() {
+                if (isScreen) {
+                  _screenBackgrounds[int.parse(id.split('_')[1])] = color;
+                } else {
+                  _containerBackgrounds[id] = color;
+                }
+              });
+            },
+            pickerAreaHeightPercent: 0.8,
+            enableAlpha: false,
+            displayThumbColor: false,
+            paletteType: PaletteType.hsvWithHue,
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(fontFamily: 'DMSans'))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Done', style: TextStyle(fontFamily: 'DMSans')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showObjectDropdown(String id) {
+    showDialog(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Object', style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, fontSize: 16)),
+        children: [
+          SimpleDialogOption(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final picker = ImagePicker();
+              final picked = await picker.pickImage(source: ImageSource.gallery);
+              if (picked != null) {
+                final bytes = await picked.readAsBytes();
+                setState(() {
+                  _appIconImage = bytes;
+                  _appIcon = Icons.image;
+                });
+              }
+            },
+            child: Row(children: [
+              Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary, size: 20),
+              const SizedBox(width: 12),
+              const Text('Add Image', style: TextStyle(fontFamily: 'DMSans', fontSize: 14)),
+            ]),
+          ),
+          if (_appIconImage != null)
+            SimpleDialogOption(
+              onPressed: () {
+                Navigator.pop(ctx);
+                setState(() {
+                  _appIconImage = null;
+                  _appIcon = Icons.image_outlined;
+                });
+              },
+              child: Row(children: [
+                Icon(Icons.remove_circle_outline, color: AppColors.error, size: 20),
+                const SizedBox(width: 12),
+                const Text('Remove Image', style: TextStyle(fontFamily: 'DMSans', fontSize: 14)),
+              ]),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ================================================================
+  // APP ICON WIDGET (synced across intro, login, signup)
+  // ================================================================
+
+  Widget _buildAppIcon({double size = 28, double borderRadius = 8}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+      ),
+      child: _appIconImage != null
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(borderRadius),
+              child: Image.memory(_appIconImage!, fit: BoxFit.cover),
+            )
+          : Icon(_appIcon, size: size * 0.5, color: const Color(0xFFB0B0B0)),
+    );
   }
 
   @override
@@ -78,15 +349,51 @@ class _RegentcanvaState extends State<Regentcanva> {
                     const SizedBox(width: 6),
                     // Toolbar options
                     Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildToolbarOption(icon: Icons.palette_outlined, label: 'Color', isActive: _isEditMode),
-                          _buildToolbarOption(icon: Icons.text_fields_rounded, label: 'Text', isActive: _isEditMode),
-                          _buildToolbarOption(icon: Icons.wallpaper_outlined, label: 'Background', isActive: _isEditMode),
-                          _buildToolbarOption(icon: Icons.category_outlined, label: 'Object', isActive: _isEditMode),
-                          _buildToolbarOption(icon: Icons.dashboard_outlined, label: 'Templates', isActive: _isEditMode),
-                        ],
+                      child: Builder(
+                        builder: (ctx) {
+                          final id = _selectedElementId;
+                          final hasSelection = id != null && _isEditMode;
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildToolbarOption(
+                                icon: Icons.palette_outlined,
+                                label: 'Color',
+                                isActive: _isEditMode,
+                                isAvailable: hasSelection && (_isTextElement(id) || _isContainerElement(id)),
+                                onTap: () => _onToolbarTap('Color'),
+                              ),
+                              _buildToolbarOption(
+                                icon: Icons.text_fields_rounded,
+                                label: 'Text',
+                                isActive: _isEditMode,
+                                isAvailable: hasSelection && _isTextElement(id),
+                                onTap: () => _onToolbarTap('Text'),
+                              ),
+                              _buildToolbarOption(
+                                icon: Icons.wallpaper_outlined,
+                                label: 'Background',
+                                isActive: _isEditMode,
+                                isAvailable: hasSelection && _isContainerElement(id),
+                                onTap: () => _onToolbarTap('Background'),
+                              ),
+                              _buildToolbarOption(
+                                icon: Icons.category_outlined,
+                                label: 'Object',
+                                isActive: _isEditMode,
+                                isAvailable: hasSelection && _isImageElement(id),
+                                onTap: () => _onToolbarTap('Object'),
+                              ),
+                              _buildToolbarOption(
+                                icon: Icons.dashboard_outlined,
+                                label: 'Templates',
+                                isActive: _isEditMode,
+                                isAvailable: false,
+                                onTap: () {},
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -345,18 +652,21 @@ class _RegentcanvaState extends State<Regentcanva> {
     required IconData icon,
     required String label,
     required bool isActive,
+    required bool isAvailable,
+    required VoidCallback onTap,
   }) {
+    final color = !isActive
+        ? const Color(0xFFBBBBBB)
+        : isAvailable
+            ? AppColors.primary
+            : const Color(0xFFCCCCCC);
     return GestureDetector(
-      onTap: isActive ? () {} : null,
+      onTap: isAvailable ? onTap : null,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: isActive ? AppColors.primary : const Color(0xFFBBBBBB),
-          ),
+          Icon(icon, size: 18, color: color),
           const SizedBox(height: 2),
           Text(
             label,
@@ -364,7 +674,7 @@ class _RegentcanvaState extends State<Regentcanva> {
               fontFamily: 'DMSans',
               fontSize: 9,
               fontWeight: FontWeight.w500,
-              color: isActive ? AppColors.primary : const Color(0xFFBBBBBB),
+              color: color,
             ),
           ),
         ],
@@ -440,11 +750,11 @@ class _RegentcanvaState extends State<Regentcanva> {
 
               // Simulated screen
               Expanded(
-                child: GestureDetector(
-                  onTap: _clearSelection,
-                  behavior: HitTestBehavior.translucent,
+                child: _selectable(
+                  id: 'screen_$index',
+                  fullWidth: true,
                   child: Container(
-                    color: const Color(0xFFF7F7F7),
+                    color: _screenBackgrounds[index] ?? const Color(0xFFF7F7F7),
                     child: _buildScreenContent(index),
                   ),
                 ),
@@ -507,6 +817,8 @@ class _RegentcanvaState extends State<Regentcanva> {
   }
 
   Widget _buildAppIntroScreen() {
+    final titleColor = _elementColors['intro_title'] ?? const Color(0xFF444444);
+    final descColor = _elementColors['intro_description'] ?? const Color(0xFFAAAAAA);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -516,53 +828,37 @@ class _RegentcanvaState extends State<Regentcanva> {
             // App icon placeholder
             _selectable(
               id: 'intro_icon',
-              child: Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: const Color(0xFFE0E0E0),
-                    width: 1,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.image_outlined,
-                  size: 28,
-                  color: Color(0xFFB0B0B0),
-                ),
-              ),
+              child: _buildAppIcon(size: 72, borderRadius: 18),
             ),
             const SizedBox(height: 16),
 
             // App name placeholder
             _selectable(
               id: 'intro_title',
-              child: const Text(
-                'App Name',
+              child: Text(
+                _getTextForElement('intro_title') ?? 'App Name',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'DMSans',
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF444444),
+                  color: titleColor,
                 ),
               ),
             ),
             const SizedBox(height: 6),
 
-            // App description placeholder (smaller, lighter)
+            // App description placeholder
             _selectable(
               id: 'intro_description',
-              child: const Text(
-                'A short description of what this app does goes here.',
+              child: Text(
+                _getTextForElement('intro_description') ?? '',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'DMSans',
                   fontSize: 11.5,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFFAAAAAA),
+                  color: descColor,
                 ),
               ),
             ),
@@ -583,31 +879,15 @@ class _RegentcanvaState extends State<Regentcanva> {
             id: 'login_logo',
             child: Row(
               children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFFE0E0E0),
-                      width: 1,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.image_outlined,
-                    size: 14,
-                    color: Color(0xFFB0B0B0),
-                  ),
-                ),
+                _buildAppIcon(size: 28, borderRadius: 8),
                 const SizedBox(width: 8),
-                const Text(
-                  'App Name',
+                Text(
+                  _getTextForElement('intro_title') ?? 'App Name',
                   style: TextStyle(
                     fontFamily: 'DMSans',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF444444),
+                    color: _elementColors['intro_title'] ?? const Color(0xFF444444),
                   ),
                 ),
               ],
@@ -618,58 +898,66 @@ class _RegentcanvaState extends State<Regentcanva> {
           // "Login" heading
           _selectable(
             id: 'login_heading',
-            child: const Text(
-              'Login',
+            child: Text(
+              _getTextForElement('login_heading') ?? 'Login',
               style: TextStyle(
                 fontFamily: 'DMSans',
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF333333),
+                color: _elementColors['login_heading'] ?? const Color(0xFF333333),
               ),
             ),
           ),
           const SizedBox(height: 4),
           _selectable(
             id: 'login_subtitle',
-            child: const Text(
-              'Welcome back, please sign in',
+            child: Text(
+              _getTextForElement('login_subtitle') ?? '',
               style: TextStyle(
                 fontFamily: 'DMSans',
                 fontSize: 10,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFFAAAAAA),
+                color: _elementColors['login_subtitle'] ?? const Color(0xFFAAAAAA),
               ),
             ),
           ),
           const SizedBox(height: 20),
 
-          // Email field placeholder
-          _selectable(id: 'login_email', fullWidth: true, child: _buildLoginField(label: 'Email', hint: 'you@example.com')),
+          // Email field
+          _selectable(id: 'login_email', fullWidth: true, child: _buildLoginField(
+            label: _getTextForElement('login_email_label') ?? 'Email',
+            hint: _getTextForElement('login_email_hint') ?? '',
+            elementId: 'login_email',
+          )),
           const SizedBox(height: 12),
 
-          // Password field placeholder
-          _selectable(id: 'login_password', fullWidth: true, child: _buildLoginField(label: 'Password', hint: '••••••••')),
+          // Password field
+          _selectable(id: 'login_password', fullWidth: true, child: _buildLoginField(
+            label: _getTextForElement('login_password_label') ?? 'Password',
+            hint: _getTextForElement('login_password_hint') ?? '',
+            elementId: 'login_password',
+          )),
           const SizedBox(height: 8),
 
           // Forgot password
           _selectable(
             id: 'login_forgot',
-            child: const Align(
+            child: Align(
               alignment: Alignment.centerRight,
               child: Text(
-                'Forgot password?',
+                _getTextForElement('login_forgot') ?? '',
                 style: TextStyle(
                   fontFamily: 'DMSans',
                   fontSize: 9.5,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFFB0B0B0),
+                  color: _elementColors['login_forgot'] ?? const Color(0xFFB0B0B0),
                 ),
               ),
             ),
           ),
           const SizedBox(height: 20),
 
-          // Login button placeholder
+          // Login button
           _selectable(
             id: 'login_button',
             fullWidth: true,
@@ -677,17 +965,17 @@ class _RegentcanvaState extends State<Regentcanva> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFDDDDDD),
+                color: _containerBackgrounds['login_button'] ?? const Color(0xFFDDDDDD),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
-                  'Log In',
+                  _getTextForElement('login_button') ?? 'Log In',
                   style: TextStyle(
                     fontFamily: 'DMSans',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF666666),
+                    color: _elementColors['login_button'] ?? const Color(0xFF666666),
                   ),
                 ),
               ),
@@ -699,27 +987,12 @@ class _RegentcanvaState extends State<Regentcanva> {
           _selectable(
             id: 'login_signup',
             child: Center(
-              child: RichText(
-                text: const TextSpan(
-                  children: [
-                    TextSpan(
-                      text: "Don't have an account? ",
-                      style: TextStyle(
-                        fontFamily: 'DMSans',
-                        fontSize: 10,
-                        color: Color(0xFFAAAAAA),
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'Sign up',
-                      style: TextStyle(
-                        fontFamily: 'DMSans',
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF999999),
-                      ),
-                    ),
-                  ],
+              child: Text(
+                _getTextForElement('login_signup') ?? '',
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 10,
+                  color: _elementColors['login_signup'] ?? const Color(0xFFAAAAAA),
                 ),
               ),
             ),
@@ -740,31 +1013,15 @@ class _RegentcanvaState extends State<Regentcanva> {
             id: 'signup_logo',
             child: Row(
               children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFFE0E0E0),
-                      width: 1,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.image_outlined,
-                    size: 14,
-                    color: Color(0xFFB0B0B0),
-                  ),
-                ),
+                _buildAppIcon(size: 28, borderRadius: 8),
                 const SizedBox(width: 8),
-                const Text(
-                  'App Name',
+                Text(
+                  _getTextForElement('intro_title') ?? 'App Name',
                   style: TextStyle(
                     fontFamily: 'DMSans',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF444444),
+                    color: _elementColors['intro_title'] ?? const Color(0xFF444444),
                   ),
                 ),
               ],
@@ -775,62 +1032,74 @@ class _RegentcanvaState extends State<Regentcanva> {
           // "Create Account" heading
           _selectable(
             id: 'signup_heading',
-            child: const Text(
-              'Create Account',
+            child: Text(
+              _getTextForElement('signup_heading') ?? 'Create Account',
               style: TextStyle(
                 fontFamily: 'DMSans',
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF333333),
+                color: _elementColors['signup_heading'] ?? const Color(0xFF333333),
               ),
             ),
           ),
           const SizedBox(height: 4),
           _selectable(
             id: 'signup_subtitle',
-            child: const Text(
-              'Welcome user, fill the follow',
+            child: Text(
+              _getTextForElement('signup_subtitle') ?? '',
               style: TextStyle(
                 fontFamily: 'DMSans',
                 fontSize: 10,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFFAAAAAA),
+                color: _elementColors['signup_subtitle'] ?? const Color(0xFFAAAAAA),
               ),
             ),
           ),
           const SizedBox(height: 20),
 
-          // Email field placeholder
-          _selectable(id: 'signup_email', fullWidth: true, child: _buildLoginField(label: 'Email', hint: 'you@example.com')),
+          // Email field
+          _selectable(id: 'signup_email', fullWidth: true, child: _buildLoginField(
+            label: _getTextForElement('signup_email_label') ?? 'Email',
+            hint: _getTextForElement('signup_email_hint') ?? '',
+            elementId: 'signup_email',
+          )),
           const SizedBox(height: 12),
 
-          // Password field placeholder
-          _selectable(id: 'signup_password', fullWidth: true, child: _buildLoginField(label: 'Password', hint: '••••••••')),
+          // Password field
+          _selectable(id: 'signup_password', fullWidth: true, child: _buildLoginField(
+            label: _getTextForElement('signup_password_label') ?? 'Password',
+            hint: _getTextForElement('signup_password_hint') ?? '',
+            elementId: 'signup_password',
+          )),
           const SizedBox(height: 8),
 
-          // Confirm Password field placeholder
-          _selectable(id: 'signup_confirm', fullWidth: true, child: _buildLoginField(label: 'Confirm Password', hint: '••••••••')),
+          // Confirm Password field
+          _selectable(id: 'signup_confirm', fullWidth: true, child: _buildLoginField(
+            label: _getTextForElement('signup_confirm_label') ?? 'Confirm Password',
+            hint: _getTextForElement('signup_confirm_hint') ?? '',
+            elementId: 'signup_confirm',
+          )),
           const SizedBox(height: 8),
 
           // Forgot password
           _selectable(
             id: 'signup_forgot',
-            child: const Align(
+            child: Align(
               alignment: Alignment.centerRight,
               child: Text(
-                'Forgot password?',
+                _getTextForElement('signup_forgot') ?? '',
                 style: TextStyle(
                   fontFamily: 'DMSans',
                   fontSize: 9.5,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFFB0B0B0),
+                  color: _elementColors['signup_forgot'] ?? const Color(0xFFB0B0B0),
                 ),
               ),
             ),
           ),
           const SizedBox(height: 20),
 
-          // Sign up button placeholder
+          // Sign up button
           _selectable(
             id: 'signup_button',
             fullWidth: true,
@@ -838,17 +1107,17 @@ class _RegentcanvaState extends State<Regentcanva> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFDDDDDD),
+                color: _containerBackgrounds['signup_button'] ?? const Color(0xFFDDDDDD),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
-                  'Log In',
+                  _getTextForElement('signup_button') ?? 'Log In',
                   style: TextStyle(
                     fontFamily: 'DMSans',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF666666),
+                    color: _elementColors['signup_button'] ?? const Color(0xFF666666),
                   ),
                 ),
               ),
@@ -860,27 +1129,12 @@ class _RegentcanvaState extends State<Regentcanva> {
           _selectable(
             id: 'signup_login',
             child: Center(
-              child: RichText(
-                text: const TextSpan(
-                  children: [
-                    TextSpan(
-                      text: "Don't have an account? ",
-                      style: TextStyle(
-                        fontFamily: 'DMSans',
-                        fontSize: 10,
-                        color: Color(0xFFAAAAAA),
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'Sign up',
-                      style: TextStyle(
-                        fontFamily: 'DMSans',
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF999999),
-                      ),
-                    ),
-                  ],
+              child: Text(
+                _getTextForElement('signup_login') ?? '',
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 10,
+                  color: _elementColors['signup_login'] ?? const Color(0xFFAAAAAA),
                 ),
               ),
             ),
@@ -890,17 +1144,21 @@ class _RegentcanvaState extends State<Regentcanva> {
     );
   }
 
-  Widget _buildLoginField({required String label, required String hint}) {
+  Widget _buildLoginField({required String label, required String hint, String? elementId}) {
+    final labelColor = elementId != null ? (_elementColors['${elementId}_label'] ?? const Color(0xFF888888)) : const Color(0xFF888888);
+    final bgColor = elementId != null ? (_containerBackgrounds[elementId] ?? Colors.white) : Colors.white;
+    final borderColor = elementId != null ? (_containerBackgrounds['${elementId}_border'] ?? const Color(0xFFE0E0E0)) : const Color(0xFFE0E0E0);
+    final hintColor = elementId != null ? (_elementColors['${elementId}_hint'] ?? const Color(0xFFC0C0C0)) : const Color(0xFFC0C0C0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'DMSans',
             fontSize: 10,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF888888),
+            color: labelColor,
           ),
         ),
         const SizedBox(height: 4),
@@ -908,19 +1166,16 @@ class _RegentcanvaState extends State<Regentcanva> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: bgColor,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: const Color(0xFFE0E0E0),
-              width: 1,
-            ),
+            border: Border.all(color: borderColor, width: 1),
           ),
           child: Text(
             hint,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'DMSans',
               fontSize: 10.5,
-              color: Color(0xFFC0C0C0),
+              color: hintColor,
             ),
           ),
         ),
@@ -1001,7 +1256,7 @@ class _RegentcanvaState extends State<Regentcanva> {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 89, 88, 88),
+                color: _containerBackgrounds['home_wallet'] ?? const Color.fromARGB(255, 89, 88, 88),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -1013,51 +1268,51 @@ class _RegentcanvaState extends State<Regentcanva> {
                       children: [
                         Row(
                           children: [
-                            const Text(
+                            Text(
                               'Account No ',
                               style: TextStyle(
                                 fontFamily: 'DMSans',
                                 fontSize: 8.5,
-                                color: Color(0xFFAAAAAA),
+                                color: _elementColors['home_wallet_label'] ?? const Color(0xFFAAAAAA),
                               ),
                             ),
                             const SizedBox(width: 1),
-                            const Text(
+                            Text(
                               ':',
                               style: TextStyle(
                                 fontFamily: 'DMSans',
                                 fontSize: 8.5,
-                                color: Color(0xFFAAAAAA),
+                                color: _elementColors['home_wallet_label'] ?? const Color(0xFFAAAAAA),
                               ),
                             ),
                             const SizedBox(width: 1),
-                            const Text(
+                            Text(
                               ' 0123456789',
                               style: TextStyle(
                                 fontFamily: 'DMSans',
                                 fontSize: 8.5,
-                                color: Color(0xFFAAAAAA),
+                                color: _elementColors['home_wallet_label'] ?? const Color(0xFFAAAAAA),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 5),
-                        const Text(
+                        Text(
                           '₦0.00',
                           style: TextStyle(
                             fontFamily: 'DMSans',
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: _elementColors['home_wallet_amount'] ?? Colors.white,
                           ),
                         ),
                         const SizedBox(height: 1),
-                        const Text(
+                        Text(
                           'Available Balance',
                           style: TextStyle(
                             fontFamily: 'DMSans',
                             fontSize: 8.5,
-                            color: Color(0xFFAAAAAA),
+                            color: _elementColors['home_wallet_label'] ?? const Color(0xFFAAAAAA),
                           ),
                         ),
                       ],
@@ -1065,23 +1320,20 @@ class _RegentcanvaState extends State<Regentcanva> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: _containerBackgrounds['home_wallet_button'] ?? Colors.white,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.add_circle_outline_rounded,
                           size: 16,
-                          color: Color(0xFF2E2E2E),
+                          color: _elementColors['home_wallet_button_text'] ?? const Color(0xFF2E2E2E),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           'Add money',
                           textAlign: TextAlign.center,
@@ -1089,7 +1341,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                             fontFamily: 'DMSans',
                             fontSize: 8.5,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF2E2E2E),
+                            color: _elementColors['home_wallet_button_text'] ?? const Color(0xFF2E2E2E),
                             height: 1.1,
                           ),
                         ),
@@ -1125,15 +1377,31 @@ class _RegentcanvaState extends State<Regentcanva> {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 8,
-              children: const [
-                _VtuServiceItem(icon: Icons.phone_android_rounded, label: 'Airtime'),
-                _VtuServiceItem(icon: Icons.wifi_rounded, label: 'Data'),
-                _VtuServiceItem(icon: Icons.bolt_rounded, label: 'Electricity'),
-                _VtuServiceItem(icon: Icons.tv_rounded, label: 'Cable TV'),
-                _VtuServiceItem(icon: Icons.school_rounded, label: 'Education'),
-                _VtuServiceItem(icon: Icons.sports_soccer_rounded, label: 'Betting'),
-                _VtuServiceItem(icon: Icons.water_drop_rounded, label: 'Water'),
-                _VtuServiceItem(icon: Icons.more_horiz_rounded, label: 'More'),
+              children: [
+                _VtuServiceItem(icon: Icons.phone_android_rounded, label: 'Airtime',
+                  iconColor: _elementColors['service_airtime_icon'], bgColor: _containerBackgrounds['service_airtime'],
+                  textColor: _elementColors['service_airtime_text']),
+                _VtuServiceItem(icon: Icons.wifi_rounded, label: 'Data',
+                  iconColor: _elementColors['service_data_icon'], bgColor: _containerBackgrounds['service_data'],
+                  textColor: _elementColors['service_data_text']),
+                _VtuServiceItem(icon: Icons.bolt_rounded, label: 'Electricity',
+                  iconColor: _elementColors['service_electricity_icon'], bgColor: _containerBackgrounds['service_electricity'],
+                  textColor: _elementColors['service_electricity_text']),
+                _VtuServiceItem(icon: Icons.tv_rounded, label: 'Cable TV',
+                  iconColor: _elementColors['service_cable_icon'], bgColor: _containerBackgrounds['service_cable'],
+                  textColor: _elementColors['service_cable_text']),
+                _VtuServiceItem(icon: Icons.school_rounded, label: 'Education',
+                  iconColor: _elementColors['service_education_icon'], bgColor: _containerBackgrounds['service_education'],
+                  textColor: _elementColors['service_education_text']),
+                _VtuServiceItem(icon: Icons.sports_soccer_rounded, label: 'Betting',
+                  iconColor: _elementColors['service_betting_icon'], bgColor: _containerBackgrounds['service_betting'],
+                  textColor: _elementColors['service_betting_text']),
+                _VtuServiceItem(icon: Icons.water_drop_rounded, label: 'Water',
+                  iconColor: _elementColors['service_water_icon'], bgColor: _containerBackgrounds['service_water'],
+                  textColor: _elementColors['service_water_text']),
+                _VtuServiceItem(icon: Icons.more_horiz_rounded, label: 'More',
+                  iconColor: _elementColors['service_more_icon'], bgColor: _containerBackgrounds['service_more'],
+                  textColor: _elementColors['service_more_text']),
               ],
             ),
           ),
@@ -1222,7 +1490,7 @@ class _RegentcanvaState extends State<Regentcanva> {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 89, 88, 88),
+                color: _containerBackgrounds['finance_plan_card'] ?? const Color.fromARGB(255, 89, 88, 88),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -1233,33 +1501,33 @@ class _RegentcanvaState extends State<Regentcanva> {
                       children: [
                         Row(
                           children: [
-                            const Text(
+                            Text(
                               'No Active Plan',
                               style: TextStyle(
                                 fontFamily: 'DMSans',
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                                color: _elementColors['finance_plan_card_title'] ?? Colors.white,
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           'Subscribe to a data or cable plan',
                           style: TextStyle(
                             fontFamily: 'DMSans',
                             fontSize: 8,
-                            color: Color(0xFFAAAAAA),
+                            color: _elementColors['finance_plan_card_subtitle'] ?? const Color(0xFFAAAAAA),
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Renews: —',
                           style: TextStyle(
                             fontFamily: 'DMSans',
                             fontSize: 7.5,
-                            color: Color(0xFF999999),
+                            color: _elementColors['finance_plan_card_renew'] ?? const Color(0xFF999999),
                           ),
                         ),
                       ],
@@ -1268,16 +1536,16 @@ class _RegentcanvaState extends State<Regentcanva> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: _containerBackgrounds['finance_plan_card_button'] ?? Colors.white,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Manage',
                       style: TextStyle(
                         fontFamily: 'DMSans',
                         fontSize: 8,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF2E2E2E),
+                        color: _elementColors['finance_plan_card_button_text'] ?? const Color(0xFF2E2E2E),
                       ),
                     ),
                   ),
@@ -1393,16 +1661,36 @@ class _RegentcanvaState extends State<Regentcanva> {
           const SizedBox(height: 20),
 
           // Menu items
-          _selectable(id: 'profile_personal', fullWidth: true, child: const _ProfileMenuItem(icon: Icons.person_outline_rounded, label: 'Personal Information')),
-          _selectable(id: 'profile_payment', fullWidth: true, child: const _ProfileMenuItem(icon: Icons.credit_card_rounded, label: 'Payment Methods')),
-          _selectable(id: 'profile_security', fullWidth: true, child: const _ProfileMenuItem(icon: Icons.lock_outline_rounded, label: 'Security')),
-          _selectable(id: 'profile_notifications', fullWidth: true, child: const _ProfileMenuItem(icon: Icons.notifications_none_rounded, label: 'Notifications')),
-          _selectable(id: 'profile_help', fullWidth: true, child: const _ProfileMenuItem(icon: Icons.help_outline_rounded, label: 'Help & Support')),
+          _selectable(id: 'profile_personal', fullWidth: true, child: _ProfileMenuItem(
+            icon: Icons.person_outline_rounded, label: 'Personal Information',
+            bgColor: _containerBackgrounds['profile_personal'], iconColor: _elementColors['profile_personal_icon'],
+            textColor: _elementColors['profile_personal_text'],
+          )),
+          _selectable(id: 'profile_payment', fullWidth: true, child: _ProfileMenuItem(
+            icon: Icons.credit_card_rounded, label: 'Payment Methods',
+            bgColor: _containerBackgrounds['profile_payment'], iconColor: _elementColors['profile_payment_icon'],
+            textColor: _elementColors['profile_payment_text'],
+          )),
+          _selectable(id: 'profile_security', fullWidth: true, child: _ProfileMenuItem(
+            icon: Icons.lock_outline_rounded, label: 'Security',
+            bgColor: _containerBackgrounds['profile_security'], iconColor: _elementColors['profile_security_icon'],
+            textColor: _elementColors['profile_security_text'],
+          )),
+          _selectable(id: 'profile_notifications', fullWidth: true, child: _ProfileMenuItem(
+            icon: Icons.notifications_none_rounded, label: 'Notifications',
+            bgColor: _containerBackgrounds['profile_notifications'], iconColor: _elementColors['profile_notifications_icon'],
+            textColor: _elementColors['profile_notifications_text'],
+          )),
+          _selectable(id: 'profile_help', fullWidth: true, child: _ProfileMenuItem(
+            icon: Icons.help_outline_rounded, label: 'Help & Support',
+            bgColor: _containerBackgrounds['profile_help'], iconColor: _elementColors['profile_help_icon'],
+            textColor: _elementColors['profile_help_text'],
+          )),
           const SizedBox(height: 10),
-          _selectable(id: 'profile_logout', fullWidth: true, child: const _ProfileMenuItem(
-            icon: Icons.logout_rounded,
-            label: 'Log Out',
-            isDestructive: true,
+          _selectable(id: 'profile_logout', fullWidth: true, child: _ProfileMenuItem(
+            icon: Icons.logout_rounded, label: 'Log Out', isDestructive: true,
+            bgColor: _containerBackgrounds['profile_logout'], iconColor: _elementColors['profile_logout_icon'],
+            textColor: _elementColors['profile_logout_text'],
           )),
         ],
       ),
@@ -1603,8 +1891,17 @@ class _RegentcanvaState extends State<Regentcanva> {
 class _VtuServiceItem extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color? iconColor;
+  final Color? bgColor;
+  final Color? textColor;
 
-  const _VtuServiceItem({required this.icon, required this.label});
+  const _VtuServiceItem({
+    required this.icon,
+    required this.label,
+    this.iconColor,
+    this.bgColor,
+    this.textColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1615,11 +1912,11 @@ class _VtuServiceItem extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: const Color(0xFFF7F7F7),
+            color: bgColor ?? const Color(0xFFF7F7F7),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xFFE5E5E5), width: 1),
           ),
-          child: Icon(icon, size: 16, color: const Color(0xFF777777)),
+          child: Icon(icon, size: 16, color: iconColor ?? const Color(0xFF777777)),
         ),
         const SizedBox(height: 5),
         SizedBox(
@@ -1629,11 +1926,11 @@ class _VtuServiceItem extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'DMSans',
               fontSize: 6,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF888888),
+              color: textColor ?? const Color(0xFF888888),
             ),
           ),
         ),
@@ -1774,33 +2071,36 @@ class _ProfileMenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isDestructive;
+  final Color? bgColor;
+  final Color? iconColor;
+  final Color? textColor;
 
   const _ProfileMenuItem({
     required this.icon,
     required this.label,
     this.isDestructive = false,
+    this.bgColor,
+    this.iconColor,
+    this.textColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final defaultBg = isDestructive ? const Color(0xFFFDEDED) : const Color(0xFFF7F7F7);
+    final defaultBorder = isDestructive ? const Color(0xFFF5C6C6) : const Color(0xFFE5E5E5);
+    final defaultIcon = isDestructive ? const Color(0xFFC62828) : const Color(0xFF777777);
+    final defaultText = isDestructive ? const Color(0xFFC62828) : const Color(0xFF444444);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: isDestructive ? const Color(0xFFFDEDED) : const Color(0xFFF7F7F7),
+        color: bgColor ?? defaultBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDestructive ? const Color(0xFFF5C6C6) : const Color(0xFFE5E5E5),
-          width: 1,
-        ),
+        border: Border.all(color: defaultBorder, width: 1),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 15,
-            color: isDestructive ? const Color(0xFFC62828) : const Color(0xFF777777),
-          ),
+          Icon(icon, size: 15, color: iconColor ?? defaultIcon),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -1809,7 +2109,7 @@ class _ProfileMenuItem extends StatelessWidget {
                 fontFamily: 'DMSans',
                 fontSize: 9.5,
                 fontWeight: FontWeight.w600,
-                color: isDestructive ? const Color(0xFFC62828) : const Color(0xFF444444),
+                color: textColor ?? defaultText,
               ),
             ),
           ),

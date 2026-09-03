@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import '../../components/userpfp.dart';
+import '../../theme/app_theme.dart';
 
 class UserList extends StatelessWidget {
   const UserList({super.key});
@@ -13,6 +13,13 @@ class UserList extends StatelessWidget {
     {'username': 'Ifeanyi Opara'},
     {'username': 'Ada Loveth'},
   ];
+
+  String _getInitials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty) return "?";
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +34,26 @@ class UserList extends StatelessWidget {
             padding: const EdgeInsets.only(right: 14),
             child: Column(
               children: [
-                UserAvatar(name: username, size: 44),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFDF4FF),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFEAC5F7), width: 1),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _getInitials(username),
+                      style: const TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 6),
                 SizedBox(
                   width: 64,
@@ -35,7 +61,12 @@ class UserList extends StatelessWidget {
                     username,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontFamily: 'DMSans', fontSize: 10.5, fontWeight: FontWeight.w600, color: const Color(0xFF1F1F1F)),
+                    style: const TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFFAAAAAA),
+                    ),
                   ),
                 ),
               ],
@@ -58,7 +89,10 @@ Widget shimmerUserItem() {
           child: Container(
             width: 45,
             height: 45,
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         ),
         const SizedBox(height: 5),

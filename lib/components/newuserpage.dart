@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class NewUsersPage extends StatelessWidget {
   const NewUsersPage({super.key});
@@ -10,18 +11,6 @@ class NewUsersPage extends StatelessWidget {
     {'username': 'Ifeanyi Opara', 'email': 'ifeanyi@example.com', 'created_at': 'Apr 17, 2025 - 11:20 AM'},
     {'username': 'Ada Loveth', 'email': 'ada@example.com', 'created_at': 'Apr 16, 2025 - 09:00 AM'},
   ];
-
-  Color getRandomColor(String name) {
-    final colors = [
-      const Color(0xFF4CAF50),
-      const Color(0xFF03A9F4),
-      const Color(0xFFFF9800),
-      const Color(0xFF9C27B0),
-      const Color(0xFFE91E63),
-      const Color(0xFF607D8B),
-    ];
-    return colors[name.hashCode % colors.length];
-  }
 
   String getInitials(String name) {
     final parts = name.split(' ');
@@ -52,23 +41,37 @@ class NewUsersPage extends StatelessWidget {
           final name = user['username']!;
           final email = user['email']!;
           final joined = user['created_at']!;
-          final color = getRandomColor(name);
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color.fromRGBO(255, 178, 255, 0.278),
+                color: const Color(0xFFFDF4FF),
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 4))],
+                border: Border.all(color: const Color(0xFFEAC5F7), width: 1),
               ),
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                leading: CircleAvatar(
-                  radius: 25,
-                  backgroundColor: color.withOpacity(0.1),
-                  child: Text(getInitials(name), style: TextStyle(fontFamily: 'DMSans', fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+                leading: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFEAC5F7), width: 1),
+                  ),
+                  child: Center(
+                    child: Text(
+                      getInitials(name),
+                      style: const TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
                 ),
-                title: Text(name, style: TextStyle(fontFamily: 'DMSans', fontSize: 15, fontWeight: FontWeight.w700, color: Colors.black87)),
+                title: Text(name, style: TextStyle(fontFamily: 'DMSans', fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.primary.withValues(alpha: 0.85))),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
