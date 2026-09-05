@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Tenant registry ───
+    // Each generated app is registered here with its config
+    match /apps/{appId} {
+      // Only the app owner (creator) can read/write app config
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && resource.data.createdBy == request.auth.uid;
+
+      // ─── App-specific data (all scoped under appId) ───
+
+      // User profiles for THIS generated app
+      match /users/{uid} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow create, update: if request.auth != null && request.auth.uid == uid;
+
+        // Monnify virtual accounts per user
+        match /monnifyAccounts/{ref} {
+          allow read, write: if request.auth != null && request.auth.uid == uid;
+        }
+
+        // Notifications per user
+        match /notifications/{notifId} {
+          allow read, write: if request.auth != null && request.auth.uid == uid;
+        }
+      }
+
+      // Global mirror for Monnify webhook lookups (within this app)
+      match /monnify_reserved_accounts/{ref} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null
+          && request.resource.data.uid == request.auth.uid;
+        allow update: if request.auth != null
+          && (resource.data.uid == request.auth.uid
+              || request.resource.data.uid == request.auth.uid);
+      }
+
+      // Monnify transactions (webhook writes via Admin SDK)
+      match /monnify_transactions/{id} {
+        allow read: if request.auth != null;
+        allow write: if false; // webhook only
+      }
+
+      // VTPass transactions
+      match /vtpass_transactions/{id} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        allow update, delete: if false; // webhook/admin only
+      }
+
+      // App-level config (Monnify keys, VTPass keys, etc.)
+      match /config/{configId} {
+        allow read: if request.auth != null;
+        allow write: if false; // set during build, read-only at runtime
+      }
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Regentspace Build Configuration",
+  "description": "JSON schema for the regentspace-builder code generator",
+  "type": "object",
+  "required": ["app", "screens"],
+  "properties": {
+    "app": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name of the application",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "description": {
+          "type": "string",
+          "description": "Short description of the application"
+        },
+        "packageName": {
+          "type": "string",
+          "description": "Android application ID (e.g., com.example.myapp)",
+          "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)*$"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version name (e.g., 1.0.0)",
+          "default": "1.0.0"
+        },
+        "versionCode": {
+          "type": "integer",
+          "description": "Integer version code for Android",
+          "default": 1
+        },
+        "fcmChannel": {
+          "type": "string",
+          "description": "Firebase Cloud Messaging default notification channel ID",
+          "default": "default_channel"
+        }
+      }
+    },
+    "firebase": {
+      "type": "object",
+      "description": "Firebase project configuration",
+      "properties": {
+        "projectId": { "type": "string" },
+        "projectNumber": { "type": "string" },
+        "storageBucket": { "type": "string" },
+        "appId": { "type": "string" },
+        "apiKey": { "type": "string", "description": "Firebase Web API key (from Firebase Console > Project Settings)" }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "description": "App-level theme overrides",
+      "properties": {
+        "primaryColor": { "type": "string", "description": "Hex color (e.g., #6C0090)" },
+        "accentColor": { "type": "string" },
+        "background": { "type": "string" }
+      }
+    },
+    "screens": {
+      "type": "array",
+      "description": "List of screen definitions",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["intro", "login", "signup", "home", "finance", "profile"]
+          },
+          "bg": {
+            "type": "string",
+            "description": "Screen background hex color"
+          },
+          "elements": {
+            "type": "object",
+            "description": "Per-element overrides keyed by element ID",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "text": { "type": "string" },
+                "color": { "type": "string", "description": "Hex color" },
+                "bg": { "type": "string", "description": "Hex color for container background" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "navigation": {
+      "type": "object",
+      "description": "Navigation configuration",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["bottom_nav", "drawer", "stack"],
+          "default": "bottom_nav"
+        },
+        "tabs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Screen types to include in navigation"
+        }
+      }
+    }
+  }
+}

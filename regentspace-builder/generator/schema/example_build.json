@@ -1,0 +1,154 @@
+{
+  "app": {
+    "id": "regentspace-builder",
+    "name": "RegentPay",
+    "description": "A modern VTU and bill payment application",
+    "packageName": "com.regent.regentpay",
+    "version": "1.0.0",
+    "versionCode": 1,
+    "fcmChannel": "regentpay_channel"
+  },
+  "firebase": {
+    "projectId": "regentspace-builder",
+    "projectNumber": "540697819834",
+    "storageBucket": "regentspace-builder.firebasestorage.app",
+    "appId": "1:540697819834:android:fea3c4853d6afb31c82083",
+    "apiKey": "AIzaSyDKvRGEE-9HcPtrJqrAlR0ZD4020BKa9NQ"
+  },
+  "theme": {
+    "primaryColor": "#6C0090",
+    "accentColor": "#740690",
+    "background": "#F5F5F7"
+  },
+  "screens": [
+    {
+      "type": "intro",
+      "bg": "#F7F7F7",
+      "elements": {
+        "intro_title": {
+          "text": "RegentPay",
+          "color": "#444444"
+        },
+        "intro_description": {
+          "text": "Fast, secure VTU and bill payments",
+          "color": "#AAAAAA"
+        }
+      }
+    },
+    {
+      "type": "login",
+      "bg": "#F7F7F7",
+      "elements": {
+        "login_heading": {
+          "text": "Welcome Back",
+          "color": "#333333"
+        },
+        "login_subtitle": {
+          "text": "Sign in to continue",
+          "color": "#AAAAAA"
+        },
+        "login_email_label": { "text": "Email Address" },
+        "login_email_hint": { "text": "you@regentpay.com" },
+        "login_password_label": { "text": "Password" },
+        "login_password_hint": { "text": "••••••••" },
+        "login_forgot": { "text": "Forgot password?", "color": "#B0B0B0" },
+        "login_button": {
+          "text": "Sign In",
+          "color": "#FFFFFF",
+          "bg": "#6C0090"
+        },
+        "login_signup": {
+          "text": "Don't have an account? Sign up",
+          "color": "#AAAAAA"
+        }
+      }
+    },
+    {
+      "type": "signup",
+      "bg": "#F7F7F7",
+      "elements": {
+        "signup_heading": {
+          "text": "Create Account",
+          "color": "#333333"
+        },
+        "signup_subtitle": {
+          "text": "Join RegentPay today",
+          "color": "#AAAAAA"
+        },
+        "signup_email_label": { "text": "Email Address" },
+        "signup_email_hint": { "text": "you@regentpay.com" },
+        "signup_password_label": { "text": "Password" },
+        "signup_password_hint": { "text": "••••••••" },
+        "signup_confirm_label": { "text": "Confirm Password" },
+        "signup_confirm_hint": { "text": "••••••••" },
+        "signup_button": {
+          "text": "Create Account",
+          "color": "#FFFFFF",
+          "bg": "#6C0090"
+        },
+        "signup_login": {
+          "text": "Already have an account? Sign in",
+          "color": "#AAAAAA"
+        }
+      }
+    },
+    {
+      "type": "home",
+      "bg": "#F7F7F7",
+      "elements": {
+        "home_wallet": {
+          "bg": "#595858",
+          "color": "#AAAAAA"
+        },
+        "home_wallet_amount": {
+          "text": "\u20A60.00",
+          "color": "#FFFFFF"
+        },
+        "home_services_title": {
+          "text": "Services",
+          "color": "#444444"
+        }
+      }
+    },
+    {
+      "type": "finance",
+      "bg": "#F7F7F7",
+      "elements": {
+        "finance_heading": {
+          "text": "Finance",
+          "color": "#333333"
+        },
+        "finance_subtitle": {
+          "text": "Track your balance and spending",
+          "color": "#AAAAAA"
+        },
+        "finance_plan_title": {
+          "text": "Current Plan",
+          "color": "#444444"
+        },
+        "finance_plan_card": {
+          "bg": "#595858",
+          "color": "#FFFFFF"
+        },
+        "finance_transactions_title": {
+          "text": "Recent Transactions",
+          "color": "#444444"
+        }
+      }
+    },
+    {
+      "type": "profile",
+      "bg": "#F7F7F7",
+      "elements": {
+        "profile_heading": {
+          "text": "Profile",
+          "color": "#333333"
+        }
+      }
+    }
+  ],
+  "navigation": {
+    "type": "bottom_nav",
+    "tabs": ["home", "finance", "profile"]
+  }
+}

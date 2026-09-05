@@ -1,0 +1,531 @@
+
+From RegentSpace canva, The user creates an application through my UI builder in the canva, and the run build produces the JSON representation of the necessary data. That JSON will eventually be sent to a remote build server.
+
+The build server will use Docker to provide an isolated Flutter/Android build environment. Inside the Docker image, I want to keep a Flutter project called:
+
+`regentspace-builder`
+
+This project is currently my base/template Flutter application, you can find it in './regentspace-builder'.
+
+The eventual pipeline is intended to be:
+
+User's visual builder from the  RegentSpace canva page
+↓
+Application JSON
+↓
+Build server
+↓
+Docker container
+↓
+regentspace-builder template
+↓
+JSON is interpreted/generated into Flutter code
+↓
+Flutter project is built
+↓
+APK
+↓
+Firebase Storage
+
+Your job right now is **NOT to write the Dockerfile**.
+
+Your first job is to thoroughly inspect the entire `regentspace-builder` project and determine how it should be converted into a reusable build template.
+
+---
+
+# PHASE 1 — UNDERSTAND THE PROJECT
+
+First inspect the entire project structure.
+
+Look at, where applicable:
+
+* `pubspec.yaml`
+* `lib/`
+* `lib/main.dart`
+* routing/navigation
+* state management
+* services
+* models
+* repositories
+* widgets
+* screens/pages
+* themes
+* assets
+* fonts
+* Android configuration
+* Gradle configuration
+* `android/app/build.gradle` or equivalent
+* `android/build.gradle`
+* `settings.gradle`
+* `gradle.properties`
+* `AndroidManifest.xml`
+* `proguard`/R8 configuration
+* Firebase configuration
+* platform-specific code
+* generated files
+* configuration files
+* environment/configuration files
+* tests
+* scripts
+* anything else that affects building the application
+
+Do not assume that a file is important or unimportant based only on its filename. Inspect its contents and determine how it participates in the application.
+
+---
+
+# PHASE 2 — CLASSIFY EVERYTHING
+
+After inspecting the project, classify its files/directories into these categories:
+
+## A. TEMPLATE / STATIC
+
+Things that should be permanently included in the Docker image and reused for every generated application.
+
+Examples might include:
+
+* Flutter runtime architecture
+* reusable widgets
+* application framework
+* build configuration
+* Android configuration
+* common dependencies
+* generator runtime
+* common assets
+* common fonts
+* shared services
+
+But do not assume these examples apply. Determine this from the actual project.
+
+---
+
+## B. GENERATED
+
+Things that should be generated or replaced based on the user's JSON.
+
+For each candidate, explain exactly why it should be generated.
+
+Examples could include:
+
+* screens
+* routes
+* UI widgets
+* theme configuration
+* application metadata
+* package name
+* application name
+* icons
+* assets
+* state definitions
+* navigation
+* generated Dart files
+
+Again, inspect the actual project before deciding.
+
+---
+
+## C. BUILD-TIME CONFIGURATION
+
+Things that should exist in the project but should be modified during the build process.
+
+Examples:
+
+* application/package ID
+* version
+* app name
+* launcher icon
+* signing configuration
+* environment variables
+* Firebase configuration
+* Android manifest values
+
+Determine which of these actually apply to this project.
+
+---
+
+## D. USER-PROVIDED
+
+Things that should eventually come from the user's application JSON or uploaded assets rather than being permanently embedded in the template.
+
+---
+
+## E. UNNECESSARY
+
+Files that should not be included in the Docker build context or production build environment.
+
+For example:
+
+* IDE metadata
+* local machine configuration
+* caches
+* build outputs
+* temporary files
+* `.dart_tool`
+* existing APKs
+* `.gradle`
+* `.idea`
+* logs
+* Git metadata
+
+Only classify something as unnecessary after inspecting whether it is actually required.
+
+---
+
+# PHASE 3 — TRACE THE APPLICATION ARCHITECTURE
+
+Do not only inspect files individually.
+
+Understand how the application works as a system.
+
+Determine:
+
+1. Where does application startup happen?
+2. What does `main.dart` initialize?
+3. How is routing handled?
+4. How is state managed?
+5. Where are screens defined?
+6. Where are reusable widgets defined?
+7. Where are models defined?
+8. Where are API/services defined?
+9. Where are assets loaded?
+10. Which files are tightly coupled to the current RegentSpace application?
+11. Which files could be reused by every generated application?
+12. Which files contain hardcoded application-specific information?
+13. Which files are candidates for code generation?
+14. Which parts should instead become a reusable runtime/framework?
+
+Trace important dependencies between these components.
+
+---
+
+# PHASE 4 — IDENTIFY THE GENERATION BOUNDARY
+
+I want you to determine the cleanest boundary between:
+
+**RegentSpace build framework**
+
+and
+
+**User-generated application**
+
+Think about this as a compiler architecture.
+
+The intended conceptual pipeline is:
+
+JSON
+↓
+Intermediate representation
+↓
+Code generator
+↓
+Flutter application
+↓
+APK
+
+Determine what the JSON should be responsible for controlling.
+
+For example, consider whether the JSON should control:
+
+* screens
+* widgets
+* layout
+* styling
+* colors
+* typography
+* navigation
+* interactions
+* application metadata
+* assets
+* state
+* API configuration
+
+Do not design the final JSON schema yet unless necessary. First determine what information the existing project architecture requires.
+
+---
+
+# PHASE 5 — RECOMMEND A PROJECT STRUCTURE
+
+Based on your inspection, propose the ideal structure for the build system.
+
+For example, it might conceptually become something like:
+
+regentspace-build-server/
+│
+├── Dockerfile
+├── build.sh
+├── generator/
+│   ├── ...
+│
+├── template/
+│   ├── android/
+│   ├── lib/
+│   ├── assets/
+│   ├── pubspec.yaml
+│   └── ...
+│
+└── ...
+
+But do NOT blindly use this example.
+
+Design the structure based on the actual `regentspace-builder` project.
+
+Clearly explain:
+
+* what gets moved
+* what stays where
+* what gets renamed
+* what gets split
+* what becomes generated
+* what remains static
+* what should be copied into the Docker image
+* what should only exist during a build
+
+---
+
+# PHASE 6 — DESIGN THE BUILD WORKSPACE
+
+Design what should happen when a build starts.
+
+I want something conceptually similar to:
+
+/opt/regentspace-template/
+← immutable template
+
+/workspace/
+← temporary build
+
+Then:
+
+1. Create isolated workspace.
+2. Copy template.
+3. Receive project JSON.
+4. Parse JSON.
+5. Generate/modify application code.
+6. Apply build-time configuration.
+7. Add user assets.
+8. Run dependency resolution.
+9. Run Flutter build.
+10. Locate APK.
+11. Return/upload APK.
+12. Destroy workspace.
+
+Tell me whether this workflow is appropriate for the actual project and what you would change.
+
+---
+
+# PHASE 7 — DOCKER BUILD CONTEXT
+
+Before writing a Dockerfile, determine exactly what the Docker build context should contain.
+
+Give me a proposed structure such as:
+
+docker-build-context/
+├── Dockerfile
+├── template/
+├── generator/
+├── scripts/
+└── ...
+
+Then explain:
+
+* what should be copied into the image at build time
+* what should NOT be copied into the image
+* what should be mounted or injected at runtime
+* what should come from Firebase
+* what should come from the build request
+* what should be downloaded during the image build
+* what should already be cached in the image
+
+Pay particular attention to Docker layer caching.
+
+I want the resulting image to avoid unnecessary work during each individual APK build.
+
+---
+
+# PHASE 8 — FIREBASE INTEGRATION BOUNDARY
+
+My backend is Firebase.
+
+Eventually:
+
+Firebase
+↓
+build request
+↓
+Docker build worker
+↓
+APK
+↓
+Firebase Storage
+
+Determine what information the Docker worker actually needs from Firebase.
+
+Separate:
+
+### Build-time input
+
+from:
+
+### Runtime Firebase responsibilities
+
+The Docker container should not unnecessarily contain Firebase credentials or access to my production backend.
+
+Identify any security concerns you see.
+
+---
+
+# PHASE 9 — FLAG PROBLEMS
+
+Be critical.
+
+If the current `regentspace-builder` architecture is not suitable for this model, tell me.
+
+Identify:
+
+* tightly coupled code
+* hardcoded values
+* problematic dependencies
+* code that will make generation difficult
+* files that should be refactored
+* build configuration problems
+* Firebase coupling
+* platform-specific assumptions
+* anything that will cause builds to fail in a clean Docker environment
+* anything that will make concurrent builds unsafe
+* anything that will make future scaling difficult
+
+Do not hide problems just because the project currently works locally.
+
+---
+
+# PHASE 10 — FINAL REPORT
+
+At the end, give me a structured report containing:
+
+## 1. Current Architecture
+
+Explain how `regentspace-builder` currently works.
+
+## 2. Template Components
+
+A table:
+
+| File/Directory | Keep in Template? | Why? |
+| -------------- | ----------------- | ---- |
+
+## 3. Generated Components
+
+| File/Directory | Generate/Modify? | Why? | Source of Data |
+| -------------- | ---------------- | ---- | -------------- |
+
+## 4. Build-Time Components
+
+| Component | Modification Required | How? |
+| --------- | --------------------- | ---- |
+
+## 5. Remove/Ignore
+
+| File/Directory | Reason |
+| -------------- | ------ |
+
+## 6. Recommended Build-System Structure
+
+Show the complete proposed directory tree.
+
+## 7. Build Pipeline
+
+Show the complete:
+
+JSON → generator → Flutter project → APK
+
+pipeline.
+
+## 8. Docker Context
+
+Show exactly what should go into the Docker build context.
+
+## 9. Runtime Workspace
+
+Show exactly what the container should look like when a build is running.
+
+## 10. Required Refactoring
+
+List changes that should be made to `regentspace-builder` before Dockerization.
+
+Rank them:
+
+* CRITICAL
+* HIGH
+* MEDIUM
+* LOW
+
+## 11. Risks
+
+List technical/security/build risks.
+
+## 12. Recommended Next Step
+
+Tell me exactly what should be done next.
+
+---
+
+# IMPORTANT RULES
+
+1. **Do not write the Dockerfile yet.**
+
+2. Do not start implementing the generator yet.
+
+3. Do not redesign the application unnecessarily.
+
+4. Do not assume a conventional Flutter architecture. Inspect the actual project.
+
+5. Do not assume every Dart file belongs in the generated application.
+
+6. Do not assume every Dart file belongs in the template.
+
+7. Follow imports/dependencies and actual usage when deciding.
+
+8. Pay special attention to hardcoded project-specific values.
+
+9. Pay special attention to anything that depends on Firebase.
+
+10. Pay special attention to Android package/application identifiers.
+
+11. Pay special attention to assets and fonts.
+
+12. Pay special attention to build reproducibility.
+
+13. Think about multiple users building simultaneously.
+
+14. Treat the template as immutable.
+
+15. Prefer deterministic builds.
+
+16. Prefer an architecture where:
+
+    Template
+    +
+    User JSON
+    +
+    User assets
+    ↓
+    Generated Flutter project
+    ↓
+    APK
+
+17. Do not make changes merely because they are "best practice." Every recommendation should be connected to the goal of turning this specific project into a reusable Flutter build template.
+
+18. If you cannot determine something from the project, explicitly say:
+
+    "The project does not provide enough evidence to determine this."
+
+    Do not guess.
+
+19. Separate your conclusions into:
+
+    * OBSERVED — directly supported by the project
+    * INFERRED — strongly suggested by the project
+    * RECOMMENDED — architectural recommendation
+
+20. At the end, stop.
+
+Wait for me to review your analysis before writing any Dockerfile, generator, build script, or other implementation code.
