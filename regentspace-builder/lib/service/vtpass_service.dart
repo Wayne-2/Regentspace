@@ -312,6 +312,7 @@ class VtpassService {
         'channel': transactions['channel'],
         'responseDescription': response['response_description'],
         'responseCode': response['code'],
+        'uid': FirebaseAuth.instance.currentUser?.uid ?? '',
         'raw': response,
         'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
@@ -321,11 +322,10 @@ class VtpassService {
     }
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> watchTransactions({int limit = 50}) {
-    return _tenant.vtpassTransactions
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .snapshots();
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchTransactions({String? uid, int limit = 50}) {
+    var query = _tenant.vtpassTransactions.orderBy('createdAt', descending: true).limit(limit);
+    if (uid != null) query = query.where('uid', isEqualTo: uid);
+    return query.snapshots();
   }
 
   static Future<void> handleWebhookEvent(Map<String, dynamic> event) async {

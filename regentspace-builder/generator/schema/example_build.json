@@ -6,7 +6,8 @@
     "packageName": "com.regent.regentpay",
     "version": "1.0.0",
     "versionCode": 1,
-    "fcmChannel": "regentpay_channel"
+    "fcmChannel": "regentpay_channel",
+    "iconBase64": "optional base64-encoded PNG/JPEG app icon from canva"
   },
   "firebase": {
     "projectId": "regentspace-builder",
@@ -47,10 +48,14 @@
           "text": "Sign in to continue",
           "color": "#AAAAAA"
         },
-        "login_email_label": { "text": "Email Address" },
-        "login_email_hint": { "text": "you@regentpay.com" },
-        "login_password_label": { "text": "Password" },
-        "login_password_hint": { "text": "••••••••" },
+        "login_email": { "bg": "#FFFFFF", "color": "#333333" },
+        "login_email_label": { "text": "Email Address", "color": "#666666" },
+        "login_email_hint": { "text": "you@regentpay.com", "color": "#AAAAAA" },
+        "login_email_border": { "color": "#E0E0E0" },
+        "login_password": { "bg": "#FFFFFF", "color": "#333333" },
+        "login_password_label": { "text": "Password", "color": "#666666" },
+        "login_password_hint": { "text": "••••••••", "color": "#AAAAAA" },
+        "login_password_border": { "color": "#E0E0E0" },
         "login_forgot": { "text": "Forgot password?", "color": "#B0B0B0" },
         "login_button": {
           "text": "Sign In",
@@ -104,10 +109,21 @@
           "text": "\u20A60.00",
           "color": "#FFFFFF"
         },
+        "home_wallet_label": { "color": "#AAAAAA" },
+        "home_wallet_button": { "bg": "#6C0090" },
+        "home_wallet_button_text": { "color": "#FFFFFF" },
         "home_services_title": {
           "text": "Services",
           "color": "#444444"
-        }
+        },
+        "service_airtime_icon": { "color": "#6C0090" },
+        "service_airtime_text": { "color": "#444444" },
+        "service_data_icon": { "color": "#6C0090" },
+        "service_data_text": { "color": "#444444" },
+        "service_electricity_icon": { "color": "#6C0090" },
+        "service_electricity_text": { "color": "#444444" },
+        "service_cable_icon": { "color": "#6C0090" },
+        "service_cable_text": { "color": "#444444" }
       }
     },
     {
@@ -122,6 +138,7 @@
           "text": "Track your balance and spending",
           "color": "#AAAAAA"
         },
+        "finance_summary": { "color": "#6C0090" },
         "finance_plan_title": {
           "text": "Current Plan",
           "color": "#444444"
@@ -130,10 +147,18 @@
           "bg": "#595858",
           "color": "#FFFFFF"
         },
+        "finance_plan_card_title": { "color": "#FFFFFF" },
+        "finance_plan_card_subtitle": { "color": "#AAAAAA" },
+        "finance_plan_card_renew": { "color": "#AAAAAA" },
+        "finance_plan_card_button": { "bg": "#6C0090" },
+        "finance_plan_card_button_text": { "color": "#FFFFFF" },
         "finance_transactions_title": {
           "text": "Recent Transactions",
           "color": "#444444"
-        }
+        },
+        "finance_transactions_list": { "bg": "#FFFFFF" },
+        "finance_transactions_list_icon": { "color": "#6C0090" },
+        "finance_transactions_list_text": { "color": "#444444" }
       }
     },
     {
@@ -143,7 +168,13 @@
         "profile_heading": {
           "text": "Profile",
           "color": "#333333"
-        }
+        },
+        "profile_personal": { "bg": "#FFFFFF", "color": "#444444" },
+        "profile_payment": { "bg": "#FFFFFF", "color": "#444444" },
+        "profile_security": { "bg": "#FFFFFF", "color": "#444444" },
+        "profile_notifications": { "bg": "#FFFFFF", "color": "#444444" },
+        "profile_help": { "bg": "#FFFFFF", "color": "#444444" },
+        "profile_logout": { "bg": "#FFFFFF", "color": "#E53935" }
       }
     }
   ],

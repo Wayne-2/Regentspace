@@ -12,6 +12,7 @@ import 'auth_page/networkerror.dart';
 import 'firebase_options.dart';
 import 'service/monnify_config.dart';
 import 'service/push_notification_service.dart';
+import 'service/build_tracker.dart';
 import 'service/app_notifications.dart';
 import 'service/notification_store.dart';
 import 'theme/app_theme.dart';
@@ -129,6 +130,7 @@ class _AppRootState extends State<_AppRoot> {
       ).timeout(const Duration(seconds: 8));
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
       await PushNotificationService.instance.init();
+      await BuildTracker.instance.init();
       await AppNotifications.ensureSubscriptions();
       await MonnifyConfig.loadFromFirestore();
       FirebaseAuth.instance.authStateChanges().listen((user) async {

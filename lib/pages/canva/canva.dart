@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../service/app_notifications.dart';
+import '../../service/build_tracker.dart';
+import '../../navigator.dart';
 import '../../theme/app_theme.dart';
 
 class Regentcanva extends StatefulWidget {
@@ -517,6 +520,107 @@ class _RegentcanvaState extends State<Regentcanva> {
     );
   }
 
+  // ================================================================
+  // BUILD SERVER INTEGRATION
+  // ================================================================
+
+  String _colorToHex(Color c) => '#${c.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
+
+  Map<String, dynamic> _generateBuildJson() {
+    final screenTypes = ['intro', 'login', 'signup', 'home', 'finance', 'profile'];
+
+    // Collect ALL element IDs from all maps so nothing is missed
+    final allElementIds = <String>{};
+    allElementIds.addAll(_elementTexts.keys);
+    allElementIds.addAll(_elementColors.keys);
+    allElementIds.addAll(_containerBackgrounds.keys);
+
+    final screens = <Map<String, dynamic>>[];
+    for (var i = 0; i < screenTypes.length; i++) {
+      final type = screenTypes[i];
+      final bg = _screenBackgrounds[i];
+      final elements = <String, dynamic>{};
+
+      for (final id in allElementIds) {
+        if (id.startsWith('${type}_') || (type == 'intro' && id.startsWith('intro_'))) {
+          final el = <String, dynamic>{};
+          if (_elementTexts.containsKey(id)) el['text'] = _elementTexts[id];
+          if (_elementColors.containsKey(id)) el['color'] = _colorToHex(_elementColors[id]!);
+          if (_containerBackgrounds.containsKey(id)) el['bg'] = _colorToHex(_containerBackgrounds[id]!);
+          if (el.isNotEmpty) elements[id] = el;
+        }
+      }
+
+      screens.add({
+        'type': type,
+        if (bg != null) 'bg': _colorToHex(bg),
+        'elements': elements,
+      });
+    }
+
+    // App icon as base64
+    String? iconBase64;
+    if (_appIconImage != null && _appIconImage!.isNotEmpty) {
+      iconBase64 = base64Encode(_appIconImage!);
+    }
+
+    final appName = _getTextForElement('intro_title') ?? 'My App';
+    final sanitizedName = appName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+
+    return {
+      'app': {
+        'id': sanitizedName.toLowerCase(),
+        'name': appName,
+        'description': _getTextForElement('intro_description') ?? '',
+        'packageName': 'com.regent.${sanitizedName.toLowerCase()}',
+        'version': '1.0.0',
+        'versionCode': 1,
+        'fcmChannel': '${sanitizedName.toLowerCase()}_channel',
+        if (iconBase64 != null) 'iconBase64': iconBase64,
+      },
+      'firebase': {
+        'projectId': 'regentspace-builder',
+        'projectNumber': '540697819834',
+        'storageBucket': 'regentspace-builder.firebasestorage.app',
+        'appId': '1:540697819834:android:fea3c4853d6afb31c82083',
+        'apiKey': 'AIzaSyDKvRGEE-9HcPtrJqrAlR0ZD4020BKa9NQ',
+      },
+      'theme': {
+        'primaryColor': '#6C0090',
+        'accentColor': '#740690',
+        'background': '#F5F5F7',
+      },
+      'screens': screens,
+    };
+  }
+
+  Future<void> _startBuild() async {
+    final json = _generateBuildJson();
+    final appName = json['app']['name'] ?? 'App';
+
+    try {
+      await BuildTracker.instance.submitBuild(json);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Building $appName... You\'ll be notified when ready.'),
+          backgroundColor: const Color(0xFF00875A),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      // Switch to dashboard tab
+      currentTabNotifier.value = 0;
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Build failed to start: $e'),
+          backgroundColor: const Color(0xFFC62828),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -767,9 +871,7 @@ class _RegentcanvaState extends State<Regentcanva> {
               isAvailable: true,
               onTap: () {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Building APK...'), backgroundColor: AppColors.primary),
-                );
+                _startBuild();
               },
             ),
             const SizedBox(height: 10),
@@ -1058,9 +1160,9 @@ class _RegentcanvaState extends State<Regentcanva> {
               color: Color(0xFF888888),
             ),
           ),
-        );
-    }
+    );
   }
+}
 
   Widget _buildAppIntroScreen() {
     final titleColor = _elementColors['intro_title'] ?? const Color(0xFF444444);

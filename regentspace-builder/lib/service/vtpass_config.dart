@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'app_tenant.dart';
 
-/// VTPass credentials — scoped per app-id via AppTenant.
-/// Firestore path: apps/{appId}/config/vtpass
+/// VTPass credentials — shared across all generated apps.
+/// Firestore path: apps/regentspace-builder/config/vtpass
 /// Keys from https://vtpass.com/account (live) or https://sandbox.vtpass.com/account (sandbox).
 class VtpassConfig {
   VtpassConfig._();
@@ -11,7 +11,7 @@ class VtpassConfig {
   static Map<String, dynamic>? _firestoreCache;
 
   static DocumentReference get _configDoc =>
-      AppTenant.current.config.doc('vtpass');
+      AppTenant.current.sharedConfig.doc('vtpass');
 
   /// Live: https://vtpass.com/api  Sandbox: https://sandbox.vtpass.com/api
   static String get baseUrl {
@@ -53,12 +53,16 @@ class VtpassConfig {
 
   static Future<void> loadFromFirestore() async {
     try {
+      final path = 'apps/${AppTenant.platformAppId}/config/vtpass';
+      if (kDebugMode) print('[VtpassConfig] Loading from Firestore: $path');
       final snap = await _configDoc.get();
       if (snap.exists && snap.data() != null) {
         _firestoreCache = snap.data() as Map<String, dynamic>;
         if (kDebugMode) {
-          debugPrint('[VtpassConfig] loaded from Firestore apps/${AppTenant.current.appId}/config/vtpass');
+          debugPrint('[VtpassConfig] LOADED from $path');
         }
+      } else {
+        if (kDebugMode) debugPrint('[VtpassConfig] DOC NOT FOUND at $path');
       }
     } catch (e) {
       if (kDebugMode) debugPrint('[VtpassConfig] Firestore load failed: $e');
@@ -72,7 +76,7 @@ class VtpassConfig {
 
   static void assertConfigured() {
     if (!isConfigured) {
-      debugPrint('[VtpassConfig] NOT CONFIGURED — set Firestore apps/${AppTenant.current.appId}/config/vtpass or use --dart-define');
+      debugPrint('[VtpassConfig] NOT CONFIGURED — set Firestore apps/${AppTenant.platformAppId}/config/vtpass or use --dart-define');
     }
   }
 }

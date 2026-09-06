@@ -2,9 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'app_tenant.dart';
 
-/// Monnify credentials — scoped per app-id via AppTenant.
+/// Monnify credentials — shared across all generated apps.
+/// Firestore path: apps/regentspace-builder/config/monnify
 /// Recommended priority:
-/// 1) Firestore apps/{appId}/config/monnify (lets you rotate without app update)
+/// 1) Firestore apps/regentspace-builder/config/monnify (lets you rotate without app update)
 /// 2) --dart-define MONNIFY_* (CI/sandbox)
 /// 3) Fallback constants (sandbox placeholders — replace before prod).
 ///
@@ -16,7 +17,7 @@ class MonnifyConfig {
   static Map<String, dynamic>? _firestoreCache;
 
   static DocumentReference get _configDoc =>
-      AppTenant.current.config.doc('monnify');
+      AppTenant.current.sharedConfig.doc('monnify');
 
   static String get baseUrl {
     final fs = _firestoreCache?['baseUrl'] as String?;
@@ -65,17 +66,17 @@ class MonnifyConfig {
 
   static Future<void> loadFromFirestore() async {
     try {
+      final path = 'apps/${AppTenant.platformAppId}/config/monnify';
+      print('[MonnifyConfig] Loading from Firestore path: $path');
       final snap = await _configDoc.get();
       if (snap.exists && snap.data() != null) {
         _firestoreCache = snap.data() as Map<String, dynamic>;
-        if (kDebugMode) {
-          debugPrint('[MonnifyConfig] loaded from Firestore apps/${AppTenant.current.appId}/config/monnify');
-        }
+        print('[MonnifyConfig] LOADED OK — baseUrl=$baseUrl, apiKey=${apiKey.substring(0, apiKey.length > 8 ? 8 : apiKey.length)}..., contractCode=${contractCode.substring(0, contractCode.length > 4 ? 4 : contractCode.length)}..., useDirect=$useDirect');
       } else {
-        if (kDebugMode) debugPrint('[MonnifyConfig] Firestore config not found — using fallback');
+        print('[MonnifyConfig] DOC NOT FOUND at $path — create it in Firebase Console with fields: baseUrl, apiKey, secretKey, contractCode, useDirect');
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('[MonnifyConfig] Firestore load failed: $e — will retry after auth');
+      print('[MonnifyConfig] LOAD FAILED: $e');
     }
   }
 
@@ -87,9 +88,11 @@ class MonnifyConfig {
   static bool get isConfigured =>
       apiKey.isNotEmpty && secretKey.isNotEmpty && contractCode.isNotEmpty && baseUrl.isNotEmpty;
 
+  static String get debugStatus => 'MonnifyConfig[isConfigured=$isConfigured, baseUrl=$baseUrl, apiKey=${apiKey.isEmpty ? "EMPTY" : "${apiKey.substring(0, apiKey.length > 8 ? 8 : apiKey.length)}..."}, secretKey=${secretKey.isEmpty ? "EMPTY" : "SET"}, contractCode=${contractCode.isEmpty ? "EMPTY" : contractCode}]';
+
   static void assertConfigured() {
     if (!isConfigured) {
-      debugPrint('[MonnifyConfig] NOT CONFIGURED — set Firestore apps/${AppTenant.current.appId}/config/monnify or use --dart-define');
+      print('[MonnifyConfig] NOT CONFIGURED — $debugStatus');
     }
   }
 }

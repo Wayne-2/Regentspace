@@ -180,6 +180,27 @@ class PushNotificationService {
     await _local.show(8888, title, body, details, payload: 'test');
   }
 
+  /// Show a build completion notification
+  Future<void> showBuildNotification({required String appName, required String buildId}) async {
+    const androidDetails = AndroidNotificationDetails(
+      'regentspace_channel',
+      'Regentspace Notifications',
+      channelDescription: 'General notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/notification_display_icon',
+      color: Color(0xFF740690),
+    );
+    const details = NotificationDetails(android: androidDetails, iOS: DarwinNotificationDetails());
+    await _local.show(
+      buildId.hashCode,
+      'Build Complete',
+      '$appName is ready to download',
+      details,
+      payload: 'build:$buildId',
+    );
+  }
+
   Future<String?> getToken() => _fcm.getToken();
   Future<void> deleteToken() => _fcm.deleteToken();
   Future<void> subscribeToTopic(String topic) => _fcm.subscribeToTopic(topic);

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_theme.dart';
 import '../../service/user_repository.dart';
 import '../../auth_page/verificationpage.dart';
@@ -12,6 +13,7 @@ import '../../service/auth_service.dart';
 import '../../service/notification_store.dart';
 import '../../service/monnify_service.dart';
 import '../../service/monnify_config.dart';
+import '../../service/build_tracker.dart';
 import '../../components/notificationpage.dart';
 import 'newusertab.dart';
 
@@ -77,8 +79,8 @@ class _DashboardState extends State<Dashboard> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Refresh failed: $e'), backgroundColor: const Color(0xFF740690)));
-    }
   }
+}
 
   void _showAddMoneySheet() {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -486,6 +488,9 @@ class _DashboardState extends State<Dashboard> {
                 ),
               ),
               const SizedBox(height: 16),
+              // ── Build result banner ──
+              _BuildResultBanner(),
+              const SizedBox(height: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -500,7 +505,7 @@ class _DashboardState extends State<Dashboard> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  const UserList(),
+                  _UserListForGeneratedApp(uid: uid),
                 ],
               ),
               const SizedBox(height: 8),
@@ -963,6 +968,201 @@ class _TipRow extends StatelessWidget {
         const SizedBox(width: 6),
         Expanded(child: Text(text, style: TextStyle(fontFamily: 'DMSans', fontSize: 11.5, color: Colors.black.withOpacity(0.65), height: 1.3))),
       ],
+    );
+  }
+}
+
+class _BuildResultBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<List<BuildInfo>>(
+      valueListenable: BuildTracker.instance.builds,
+      builder: (context, builds, _) {
+        if (builds.isEmpty) return const SizedBox.shrink();
+
+        final latest = builds.first;
+        final isBuilding = latest.status == 'building';
+        final isCompleted = latest.status == 'completed';
+        final isFailed = latest.status == 'failed';
+
+        final bgColor = isCompleted
+            ? const Color(0xFFE8F5E9)
+            : isFailed
+                ? const Color(0xFFFFEBEE)
+                : const Color(0xFFF3E5F5);
+        final borderColor = isCompleted
+            ? const Color(0xFF00875A)
+            : isFailed
+                ? const Color(0xFFC62828)
+                : const Color(0xFF740690);
+        final iconColor = isCompleted
+            ? const Color(0xFF00875A)
+            : isFailed
+                ? const Color(0xFFC62828)
+                : const Color(0xFF740690);
+
+        final icon = isCompleted
+            ? Icons.check_circle_rounded
+            : isFailed
+                ? Icons.error_rounded
+                : Icons.build_rounded;
+
+        final title = isCompleted
+            ? 'Build Complete'
+            : isFailed
+                ? 'Build Failed'
+                : 'Building ${latest.appName}...';
+
+        final subtitle = isCompleted
+            ? '${latest.appName} is ready to download'
+            : isFailed
+                ? latest.error ?? 'An error occurred during build'
+                : 'This may take a few minutes';
+
+        final sizeText = latest.apkSize != null
+            ? '${(latest.apkSize! / 1024 / 1024).toStringAsFixed(1)} MB'
+            : '';
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: borderColor.withOpacity(0.3)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: borderColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: isBuilding
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: iconColor,
+                        ),
+                      )
+                    : Icon(icon, size: 19, color: iconColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w700, color: borderColor)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: TextStyle(fontFamily: 'DMSans', fontSize: 11, color: Colors.black.withOpacity(0.55))),
+                    if (sizeText.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(sizeText, style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: Colors.black.withOpacity(0.4))),
+                    ],
+                  ],
+                ),
+              ),
+              if (isCompleted && latest.downloadUrl != null) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () async {
+                    final url = Uri.parse('$kBuildServerUrl${latest.downloadUrl}');
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00875A),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.download_rounded, size: 14, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text('Download', style: TextStyle(fontFamily: 'DMSans', fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              if (isCompleted || isFailed) ...[
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: () => BuildTracker.instance.dismissBuild(0),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(Icons.close_rounded, size: 16, color: Colors.black.withOpacity(0.3)),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _UserListForGeneratedApp extends StatelessWidget {
+  final String? uid;
+  const _UserListForGeneratedApp({required this.uid});
+
+  @override
+  Widget build(BuildContext context) {
+    if (uid == null) return const UserList(appId: null);
+
+    return FutureBuilder<FirebaseFirestore>(
+      future: BuilderFirestore.instance,
+      builder: (context, dbSnap) {
+        if (dbSnap.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 76,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF740690))),
+          );
+        }
+        final db = dbSnap.data;
+        if (db == null) {
+          return const SizedBox(
+            height: 76,
+            child: Center(child: Text('Config error', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, color: Color(0xFFC62828)))),
+          );
+        }
+
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: db
+              .collection('apps')
+              .doc('regentspace-builder')
+              .collection('apps')
+              .where('createdBy', isEqualTo: uid)
+              .orderBy('createdAt', descending: true)
+              .limit(1)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox(
+                height: 76,
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF740690))),
+              );
+            }
+            final docs = snapshot.data?.docs ?? [];
+            if (docs.isEmpty) {
+              return const SizedBox(
+                height: 76,
+                child: Center(
+                  child: Text('No new user yet', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, color: Color(0xFFAAAAAA))),
+                ),
+              );
+            }
+            final appId = docs.first.id;
+            return UserList(appId: appId);
+          },
+        );
+      },
     );
   }
 }

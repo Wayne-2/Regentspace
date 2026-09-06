@@ -353,6 +353,7 @@ class BuildGenerator {
   void _generateBuildConfig(String path) {
     final buffer = StringBuffer()
       ..writeln('import \'dart:convert\';')
+      ..writeln('import \'dart:typed_data\';')
       ..writeln('import \'package:flutter/material.dart\';')
       ..writeln()
       ..writeln('/// Auto-generated build configuration.')
@@ -361,6 +362,7 @@ class BuildGenerator {
       ..writeln('  final String appId;')
       ..writeln('  final String appName;')
       ..writeln('  final String appDescription;')
+      ..writeln('  final Uint8List? appIconBytes;')
       ..writeln('  final Map<String, String> elementTexts;')
       ..writeln('  final Map<String, Color> elementColors;')
       ..writeln('  final Map<String, Color> containerBackgrounds;')
@@ -370,6 +372,7 @@ class BuildGenerator {
       ..writeln('    required this.appId,')
       ..writeln('    required this.appName,')
       ..writeln('    required this.appDescription,')
+      ..writeln('    this.appIconBytes,')
       ..writeln('    required this.elementTexts,')
       ..writeln('    required this.elementColors,')
       ..writeln('    required this.containerBackgrounds,')
@@ -410,10 +413,17 @@ class BuildGenerator {
       ..writeln('      }')
       ..writeln('    }')
       ..writeln()
+      ..writeln('    Uint8List? iconBytes;')
+      ..writeln('    final iconBase64 = app[\'iconBase64\'] as String?;')
+      ..writeln('    if (iconBase64 != null && iconBase64.isNotEmpty) {')
+      ..writeln('      iconBytes = base64Decode(iconBase64);')
+      ..writeln('    }')
+      ..writeln()
       ..writeln('    return BuildConfig(')
       ..writeln('      appId: app[\'id\'] as String? ?? \'default\',')
       ..writeln('      appName: app[\'name\'] as String? ?? \'App\',')
       ..writeln('      appDescription: app[\'description\'] as String? ?? \'\',')
+      ..writeln('      appIconBytes: iconBytes,')
       ..writeln('      elementTexts: elementTexts,')
       ..writeln('      elementColors: elementColors,')
       ..writeln('      containerBackgrounds: containerBackgrounds,')
@@ -441,6 +451,14 @@ class BuildGenerator {
       ..writeln()
       ..writeln('  Color getScreenBg(int index, {Color? fallback}) {')
       ..writeln('    return screenBackgrounds[index] ?? fallback ?? const Color(0xFFF7F7F7);')
+      ..writeln('  }')
+      ..writeln()
+      ..writeln('  /// Returns Image widget for the app icon, or fallback icon.')
+      ..writeln('  Widget appIcon({double size = 48, Color? color}) {')
+      ..writeln('    if (appIconBytes != null) {')
+      ..writeln('      return Image.memory(appIconBytes!, width: size, height: size, fit: BoxFit.contain);')
+      ..writeln('    }')
+      ..writeln('    return Icon(Icons.account_circle, size: size, color: color ?? getElementColor(\'intro_icon\'));')
       ..writeln('  }')
       ..writeln('}');
 
@@ -489,6 +507,7 @@ class BuildGenerator {
         ..writeln('import \'../service/notification_store.dart\';')
         ..writeln('import \'../service/monnify_service.dart\';')
         ..writeln('import \'../service/monnify_config.dart\';')
+        ..writeln('import \'../service/app_tenant.dart\';')
         ..writeln('import \'package:cloud_firestore/cloud_firestore.dart\';');
     }
 
@@ -590,7 +609,12 @@ class BuildGenerator {
       ..writeln('                    borderRadius: BorderRadius.circular(20),')
       ..writeln('                    border: Border.all(color: const Color(0xFFE0E0E0)),')
       ..writeln('                  ),')
-      ..writeln('                  child: const Icon(Icons.image_outlined, size: 36, color: Color(0xFFB0B0B0)),')
+      ..writeln('                  child: config.appIconBytes != null')
+      ..writeln('                      ? ClipRRect(')
+      ..writeln('                          borderRadius: BorderRadius.circular(20),')
+      ..writeln('                          child: Image.memory(config.appIconBytes!, width: 80, height: 80, fit: BoxFit.cover),')
+      ..writeln('                        )')
+      ..writeln('                      : const Icon(Icons.image_outlined, size: 36, color: Color(0xFFB0B0B0)),')
       ..writeln('                ),')
       ..writeln('                const SizedBox(height: 20),')
       ..writeln('                Text(')
@@ -655,6 +679,19 @@ class BuildGenerator {
             Text(label, style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: Color(0xFF555555))),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _bankInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontFamily: 'DMSans', fontSize: 12, color: Color(0xFF999999))),
+          Text(value, style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF333333))),
+        ],
       ),
     );
   }''';
@@ -774,80 +811,132 @@ class BuildGenerator {
                   builder: (context, userSnap) {
                     final userData = userSnap.data?.data();
                     final primaryAcct = userData?['primaryVirtualAccount'] as Map<String, dynamic>?;
-                    final accountNo = (primaryAcct?['accountNumber'] as String?) ?? '---';
+                    final accountNo = (primaryAcct?['accountNumber'] as String?) ?? '';
                     final bankName = (primaryAcct?['bankName'] as String?) ?? '';
-                    final balance = (userData?['balance'] as num?)?.toDouble() ?? 0.0;
-                    return Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: config.getContainerBg('home_wallet', fallback: const Color(0xFF595858)),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(children: [
-                                  Text('Account No ', style: TextStyle(fontFamily: 'DMSans', fontSize: 11, color: config.getElementColor('home_wallet', fallback: const Color(0xFFAAAAAA)))),
-                                  Text(': ', style: TextStyle(fontFamily: 'DMSans', fontSize: 11, color: config.getElementColor('home_wallet', fallback: const Color(0xFFAAAAAA)))),
-                                  Text(accountNo, style: TextStyle(fontFamily: 'DMSans', fontSize: 11, color: config.getElementColor('home_wallet', fallback: const Color(0xFFAAAAAA)))),
-                                  if (bankName.isNotEmpty) ...[
-                                    const SizedBox(width: 6),
-                                    Text('(\x24bankName)', style: TextStyle(fontFamily: 'DMSans', fontSize: 9, color: config.getElementColor('home_wallet', fallback: const Color(0xFF999999)))),
-                                  ],
-                                ]),
-                                const SizedBox(height: 5),
-                                Text('\\u20A6\x24{balance.toStringAsFixed(2)}',
-                                  style: TextStyle(fontFamily: 'DMSans', fontSize: 18, fontWeight: FontWeight.w700,
-                                    color: config.getElementColor('home_wallet_amount', fallback: Colors.white))),
-                                const SizedBox(height: 1),
-                                Text('Available Balance',
-                                  style: TextStyle(fontFamily: 'DMSans', fontSize: 11,
-                                    color: config.getElementColor('home_wallet', fallback: const Color(0xFFAAAAAA)))),
+                    final acctRef = (primaryAcct?['accountReference'] as String?) ?? '';
+                    final hasAccount = userData?['hasVirtualAccount'] == true && accountNo.isNotEmpty;
+
+                    if (!hasAccount) {
+                      return GestureDetector(
+                        onTap: () async {
+                          final user = AuthService().currentUser;
+                          if (user == null) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Setting up your virtual account...'), duration: Duration(seconds: 2)));
+                          try {
+                            if (!MonnifyConfig.isConfigured) await MonnifyConfig.ensureConfigured();
+                            print('[Home] MonnifyConfig.isConfigured=\x24{MonnifyConfig.isConfigured}');
+                            print('[Home] \x24{MonnifyConfig.debugStatus}');
+                            if (MonnifyConfig.isConfigured) {
+                              await MonnifyService.instance.createReservedAccount();
+                              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Account created!'), backgroundColor: Color(0xFF4CAF50)));
+                            } else {
+                              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Monnify not configured. Check Firestore config/monnify doc.')));
+                            }
+                          } catch (e) {
+                            print('[Home] Monnify creation FAILED: \x24e');
+                            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: \x24e'), duration: Duration(seconds: 8)));
+                          }
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: config.getContainerBg('home_wallet', fallback: const Color(0xFF595858)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(children: [
+                            Icon(Icons.account_balance_wallet_outlined, size: 16, color: Colors.white70),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text('Tap to set up your virtual account', style: TextStyle(fontFamily: 'DMSans', fontSize: 11, color: Colors.white70))),
+                            Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white54),
+                          ]),
+                        ),
+                      );
+                    }
+
+                    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: AppTenant.current.monnifyReservedAccounts.doc(acctRef).snapshots(),
+                      builder: (context, acctSnap) {
+                        final acctData = acctSnap.data?.data();
+                        final totalReceived = (acctData?['totalReceived'] as num?)?.toDouble() ?? 0.0;
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: config.getContainerBg('home_wallet', fallback: const Color(0xFF595858)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Row(children: [
+                              Text('Account No : \x24accountNo', style: TextStyle(fontFamily: 'DMSans', fontSize: 11, color: config.getElementColor('home_wallet', fallback: const Color(0xFFAAAAAA)))),
+                              if (bankName.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                Text('(\x24bankName)', style: TextStyle(fontFamily: 'DMSans', fontSize: 9, color: config.getElementColor('home_wallet', fallback: const Color(0xFF999999)))),
                               ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () async {
-                              final user = AuthService().currentUser;
-                              if (user == null) return;
-                              try {
-                                if (!MonnifyConfig.isConfigured) await MonnifyConfig.ensureConfigured();
-                                if (!MonnifyConfig.isConfigured) {
-                                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Monnify not configured')));
-                                  return;
-                                }
-                                final res = await MonnifyService.instance.createReservedAccount();
-                                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Virtual account created')));
-                              } catch (e) {
-                                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed: \x24e')));
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: config.getContainerBg('home_wallet_button', fallback: Colors.white),
-                                borderRadius: BorderRadius.circular(10),
+                            ]),
+                            const SizedBox(height: 5),
+                            Text('\\u20A6\x24{totalReceived.toStringAsFixed(2)}',
+                              style: TextStyle(fontFamily: 'DMSans', fontSize: 18, fontWeight: FontWeight.w700,
+                                color: config.getElementColor('home_wallet_amount', fallback: Colors.white))),
+                            const SizedBox(height: 1),
+                            Text('Available Balance', style: TextStyle(fontFamily: 'DMSans', fontSize: 11,
+                              color: config.getElementColor('home_wallet', fallback: const Color(0xFFAAAAAA)))),
+                            const SizedBox(height: 10),
+                            GestureDetector(
+                              onTap: () {
+                                showModalBottomSheet(context: context, isScrollControlled: true,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+                                  builder: (ctx) => DraggableScrollableSheet(
+                                    initialChildSize: 0.5, minChildSize: 0.3, maxChildSize: 0.8, expand: false,
+                                    builder: (ctx, scrollCtrl) => SingleChildScrollView(controller: scrollCtrl, padding: const EdgeInsets.all(20),
+                                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                        Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(2)))),
+                                        const SizedBox(height: 20),
+                                        Text('Add Money', style: TextStyle(fontFamily: 'DMSans', fontSize: 16, fontWeight: FontWeight.w700)),
+                                        const SizedBox(height: 6),
+                                        Text('Transfer to this account from your bank app', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, color: Color(0xFF999999))),
+                                        const SizedBox(height: 20),
+                                        _bankInfoRow('Bank Name', bankName),
+                                        _bankInfoRow('Account Number', accountNo),
+                                        _bankInfoRow('Account Name', (primaryAcct?['accountName'] as String?) ?? ''),
+                                        const SizedBox(height: 20),
+                                        SizedBox(width: double.infinity, height: 46,
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Account number copied')));
+                                              Navigator.pop(ctx);
+                                            },
+                                            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C0090), foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                                            child: Text('Copy Account Number', style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w600)),
+                                          )),
+                                      ]),
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: config.getContainerBg('home_wallet_button', fallback: Colors.white),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                  Icon(Icons.add_circle_outline_rounded, size: 16,
+                                    color: config.getElementColor('home_wallet_button_text', fallback: const Color(0xFF2E2E2E))),
+                                  const SizedBox(width: 4),
+                                  Text('Add money', style: TextStyle(fontFamily: 'DMSans', fontSize: 11, fontWeight: FontWeight.w600,
+                                    color: config.getElementColor('home_wallet_button_text', fallback: const Color(0xFF2E2E2E)))),
+                                ]),
                               ),
-                              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                Icon(Icons.add_circle_outline_rounded, size: 16,
-                                  color: config.getElementColor('home_wallet_button_text', fallback: const Color(0xFF2E2E2E))),
-                                const SizedBox(width: 4),
-                                Text('Add money', style: TextStyle(fontFamily: 'DMSans', fontSize: 11, fontWeight: FontWeight.w600,
-                                  color: config.getElementColor('home_wallet_button_text', fallback: const Color(0xFF2E2E2E)))),
-                              ]),
                             ),
-                          ),
-                        ],
-                      ),
+                          ]),
+                        );
+                      },
                     );
                   },
                 ),
@@ -954,7 +1043,7 @@ class BuildGenerator {
                   style: TextStyle(fontFamily: 'DMSans', fontSize: 14, fontWeight: FontWeight.w600, color: config.getElementColor('finance_transactions_title', fallback: const Color(0xFF444444)))),
                 const SizedBox(height: 10),
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: VtpassService.instance.watchTransactions(limit: 10),
+                  stream: VtpassService.instance.watchTransactions(uid: AuthService().currentUser?.uid, limit: 10),
                   builder: (context, txSnap) {
                     final docs = txSnap.data?.docs ?? [];
                     if (docs.isEmpty) {
@@ -1388,11 +1477,15 @@ class BuildGenerator {
 
   static const _loginScreenDart = r'''
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../config/build_config.dart';
 import '../service/auth_service.dart';
 import '../service/user_repository.dart';
 import '../service/app_notifications.dart';
+import '../service/push_notification_service.dart';
+import '../service/monnify_service.dart';
+import '../service/monnify_config.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -1428,7 +1521,30 @@ class _LoginScreenState extends State<LoginScreen> {
       final cred = await _auth.signIn(email: email, password: pass);
       await UserRepository.instance.ensureUserDoc(cred.user!);
       try { await AppNotifications.loginSuccess(user: cred.user!); } catch (_) {}
+      try { await PushNotificationService.instance.ensurePermissionAndToken(); } catch (_) {}
       try { await AppNotifications.ensureSubscriptions(user: cred.user!); } catch (_) {}
+      // Auto-create Monnify virtual account if needed
+      try {
+        final existing = await MonnifyService.instance.getUserAccountsOnce(cred.user!.uid);
+        if (existing.docs.isEmpty) {
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Setting up your virtual account...'), backgroundColor: Color(0xFF740690), duration: Duration(seconds: 3)),
+          );
+          if (!MonnifyConfig.isConfigured) await MonnifyConfig.ensureConfigured();
+          if (MonnifyConfig.isConfigured) {
+            final doc = await MonnifyService.instance.createReservedAccount(getAllAvailableBanks: true);
+            if (mounted) {
+              final bank = (doc['primaryBankName'] ?? 'your bank').toString();
+              final acct = (doc['primaryAccountNumber'] ?? '').toString();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(acct.isEmpty ? 'Virtual account ready at $bank' : 'Virtual account ready: $bank \u2022 $acct'), backgroundColor: Color(0xFF740690)),
+              );
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Auto virtual account failed: $e');
+      }
       if (mounted) Navigator.pushReplacementNamed(context, '/home');
     } on FirebaseAuthException catch (e) {
       setState(() { _error = e.message ?? 'Login failed'; _loading = false; });
@@ -1450,14 +1566,19 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               Row(
                 children: [
-                  Container(
+                   Container(
                     width: 32, height: 32,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Color(0xFFE0E0E0)),
                     ),
-                    child: Icon(Icons.apps_rounded, size: 18, color: Color(0xFFB0B0B0)),
+                    child: config.appIconBytes != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.memory(config.appIconBytes!, width: 32, height: 32, fit: BoxFit.cover),
+                          )
+                        : Icon(Icons.apps_rounded, size: 18, color: Color(0xFFB0B0B0)),
                   ),
                   const SizedBox(width: 10),
                   Text(
@@ -1571,11 +1692,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   static const _signupScreenDart = r'''
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../config/build_config.dart';
 import '../service/auth_service.dart';
 import '../service/user_repository.dart';
 import '../service/app_notifications.dart';
+import '../service/push_notification_service.dart';
+import '../service/monnify_service.dart';
+import '../service/monnify_config.dart';
 import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -1629,7 +1754,33 @@ class _SignupScreenState extends State<SignupScreen> {
         phone: '',
       );
       try { await AppNotifications.welcomeFirstTime(user: cred.user!, fallbackName: username); } catch (_) {}
+      try { await PushNotificationService.instance.ensurePermissionAndToken(); } catch (_) {}
       try { await AppNotifications.ensureSubscriptions(user: cred.user!); } catch (_) {}
+      // Auto-create Monnify virtual account
+      try {
+        final existing = await MonnifyService.instance.getUserAccountsOnce(cred.user!.uid);
+        if (existing.docs.isEmpty) {
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Virtual account is being created...'), backgroundColor: Color(0xFF740690), duration: Duration(seconds: 3)),
+          );
+          if (!MonnifyConfig.isConfigured) await MonnifyConfig.ensureConfigured();
+          if (MonnifyConfig.isConfigured) {
+            final doc = await MonnifyService.instance.createReservedAccount(getAllAvailableBanks: true);
+            if (mounted) {
+              final bank = (doc['primaryBankName'] ?? 'your bank').toString();
+              final acct = (doc['primaryAccountNumber'] ?? '').toString();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(acct.isEmpty ? 'Virtual account ready at $bank' : 'Virtual account ready: $bank \u2022 $acct'), backgroundColor: Color(0xFF740690)),
+              );
+            }
+          }
+        }
+      } catch (e) {
+        print('[Signup] Auto virtual account FAILED: \x24e');
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Virtual account failed: \x24e'), backgroundColor: Colors.orange.shade700, duration: Duration(seconds: 6)),
+        );
+      }
       if (mounted) Navigator.pushReplacementNamed(context, '/home');
     } on FirebaseAuthException catch (e) {
       setState(() { _error = e.message ?? 'Signup failed'; _loading = false; });
@@ -1651,14 +1802,19 @@ class _SignupScreenState extends State<SignupScreen> {
             children: [
               Row(
                 children: [
-                  Container(
+                   Container(
                     width: 32, height: 32,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Color(0xFFE0E0E0)),
                     ),
-                    child: Icon(Icons.apps_rounded, size: 18, color: Color(0xFFB0B0B0)),
+                    child: config.appIconBytes != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.memory(config.appIconBytes!, width: 32, height: 32, fit: BoxFit.cover),
+                          )
+                        : Icon(Icons.apps_rounded, size: 18, color: Color(0xFFB0B0B0)),
                   ),
                   const SizedBox(width: 10),
                   Text(

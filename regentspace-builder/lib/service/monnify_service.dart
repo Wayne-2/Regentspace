@@ -25,15 +25,17 @@ class MonnifyService {
     }
     MonnifyConfig.assertConfigured();
     if (!MonnifyConfig.isConfigured) {
-      throw Exception('Monnify NOT configured');
+      throw Exception('Monnify NOT configured — ${MonnifyConfig.debugStatus}');
     }
     final basic = base64Encode(utf8.encode('${MonnifyConfig.apiKey}:${MonnifyConfig.secretKey}'));
     final uri = Uri.parse('${MonnifyConfig.baseUrl}/api/v1/auth/login');
+    print('[Monnify] POST $uri');
     final res = await http.post(uri, headers: {'Authorization': 'Basic $basic'});
+    print('[Monnify] auth response ${res.statusCode}: ${res.body}');
     if (res.statusCode != 200) throw Exception('Monnify auth failed ${res.statusCode}: ${res.body}');
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     final token = (body['responseBody']?['accessToken'] ?? body['accessToken']) as String?;
-    if (token == null || token.isEmpty) throw Exception('No accessToken');
+    if (token == null || token.isEmpty) throw Exception('No accessToken in response: ${res.body}');
     _cachedToken = token;
     _tokenExpiry = DateTime.now().add(const Duration(minutes: 50));
     return token;
@@ -92,18 +94,47 @@ class MonnifyService {
     if (MonnifyConfig.useDirect) {
       final token = await _getAccessToken();
       final uri = Uri.parse('${MonnifyConfig.baseUrl}/api/v2/bank-transfer/reserved-accounts');
+      print('[Monnify] POST $uri payload=${jsonEncode(payload)}');
       final res = await http.post(uri, headers: _bearerHeaders(token), body: jsonEncode(payload));
+      print('[Monnify] create response ${res.statusCode}: ${res.body}');
+      // Handle duplicate accountReference gracefully
       if (res.statusCode == 400 && res.body.toLowerCase().contains('accountreference') && res.body.toLowerCase().contains('exist')) {
+        print('[Monnify] duplicate ref $ref — fetching existing from Firestore');
         final existing = await _tenant.monnifyAccounts(uid).limit(1).get();
         if (existing.docs.isNotEmpty) return existing.docs.first.data()!;
+        // Retry once with new timestamped ref
         final retryRef = 'REGENT_${uid}_${DateTime.now().millisecondsSinceEpoch}_R';
         final retryPayload = {...payload, 'accountReference': retryRef};
+        print('[Monnify] retry with $retryRef');
         final retryRes = await http.post(uri, headers: _bearerHeaders(token), body: jsonEncode(retryPayload));
+        print('[Monnify] retry response ${retryRes.statusCode}: ${retryRes.body}');
         if (retryRes.statusCode >= 200 && retryRes.statusCode < 300) {
           final retryDecoded = jsonDecode(retryRes.body) as Map<String, dynamic>;
           monnifyRes = (retryDecoded['responseBody'] as Map?)?.cast<String, dynamic>() ?? retryDecoded;
           return _saveAccount(monnifyRes, uid, ref: retryRef, email: email, name: name, resolvedAccountName: resolvedAccountName, currencyCode: currencyCode, cc: cc, bvn: bvn);
         }
+      }
+      // Handle R42 — customer already has max reserved accounts
+      if (res.statusCode == 400 && res.body.contains('R42')) {
+        print('[Monnify] R42 — customer limit reached, checking Firestore for existing account');
+        final existing = await _tenant.monnifyAccounts(uid).limit(1).get();
+        if (existing.docs.isNotEmpty) {
+          print('[Monnify] found existing account in Firestore');
+          return existing.docs.first.data()!;
+        }
+        // Also check monnify_reserved_accounts by email
+        final reservedExisting = await _tenant.monnifyReservedAccounts
+            .where('customerEmail', isEqualTo: email)
+            .limit(1)
+            .get();
+        if (reservedExisting.docs.isNotEmpty) {
+          final doc = reservedExisting.docs.first.data();
+          print('[Monnify] found existing reserved account by email');
+          // Mirror to user's monnifyAccounts for future reads
+          await _tenant.monnifyAccounts(uid).doc(doc['accountReference'] as String).set(doc, SetOptions(merge: true));
+          return doc;
+        }
+        throw Exception('Monnify: customer limit reached and no existing account found in Firestore. Contact support or check apps/${AppTenant.currentAppId}/monnify_reserved_accounts.');
       }
       final decoded = jsonDecode(res.body) as Map<String, dynamic>;
       if (res.statusCode < 200 || res.statusCode >= 300) throw Exception('Monnify create failed ${res.statusCode}: ${res.body}');
@@ -118,7 +149,7 @@ class MonnifyService {
     return _saveAccount(monnifyRes, uid, ref: ref, email: email, name: name, resolvedAccountName: resolvedAccountName, currencyCode: currencyCode, cc: cc, bvn: bvn);
   }
 
-  Map<String, dynamic> _saveAccount(
+  Future<Map<String, dynamic>> _saveAccount(
     Map<String, dynamic> monnifyRes,
     String uid, {
     required String ref,
@@ -128,7 +159,7 @@ class MonnifyService {
     required String currencyCode,
     required String cc,
     String? bvn,
-  }) {
+  }) async {
     final accounts = (monnifyRes['accounts'] as List?) ?? [];
     final primary = accounts.isNotEmpty ? (accounts.first as Map).cast<String, dynamic>() : <String, dynamic>{};
 
@@ -170,7 +201,7 @@ class MonnifyService {
       'virtualAccountCount': FieldValue.increment(1),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
-    batch.commit();
+    await batch.commit();
 
     if (kDebugMode) debugPrint('[Monnify] saved $accountRef for $uid');
     return doc;

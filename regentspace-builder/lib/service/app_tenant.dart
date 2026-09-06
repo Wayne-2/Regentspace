@@ -2,51 +2,68 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Multi-tenant service.
 /// Every generated app has a unique [appId] that scopes all Firestore access.
-/// This class is the single source of truth for the current app's tenant context.
+///
+/// Firestore structure (all under apps/regentspace-builder/):
+///   apps/regentspace-builder/config/monnify  — shared Monnify credentials
+///   apps/regentspace-builder/config/vtpass   — shared VTPass credentials
+///   apps/regentspace-builder/{appId}/                 — per-app document
+///   apps/regentspace-builder/{appId}/users/{uid}      — per-app user profiles
+///   apps/regentspace-builder/{appId}/monnify_reserved_accounts/ — per-app Monnify accounts
+///   apps/regentspace-builder/{appId}/vtpass_transactions/       — per-app VTPass transactions
 class AppTenant {
+  static const String platformAppId = 'regentspace-builder';
+
   final String appId;
   final FirebaseFirestore db;
 
   AppTenant({required this.appId, FirebaseFirestore? db})
       : db = db ?? FirebaseFirestore.instance;
 
-  // ─── Collection references (scoped by appId) ───
+  // ─── Platform root document ───
 
-  /// The app's own document: apps/{appId}
+  /// Platform root: apps/regentspace-builder
+  DocumentReference<Map<String, dynamic>> get platformDoc =>
+      db.collection('apps').doc(platformAppId);
+
+  // ─── Shared platform config (read-only for generated apps) ───
+
+  /// Shared config collection: apps/regentspace-builder/config
+  CollectionReference<Map<String, dynamic>> get sharedConfig =>
+      platformDoc.collection('config');
+
+  // ─── Per-app document root ───
+
+  /// The app's own document: apps/regentspace-builder/{appId}
   DocumentReference<Map<String, dynamic>> get appDoc =>
-      db.collection('apps').doc(appId);
+      platformDoc.collection('apps').doc(appId);
 
-  /// Users collection: apps/{appId}/users
+  /// Users collection: apps/regentspace-builder/{appId}/users
   CollectionReference<Map<String, dynamic>> get users =>
       appDoc.collection('users');
 
-  /// Single user: apps/{appId}/users/{uid}
+  /// Single user: apps/regentspace-builder/{appId}/users/{uid}
   DocumentReference<Map<String, dynamic>> userDoc(String uid) =>
       users.doc(uid);
 
-  /// Monnify accounts for a user: apps/{appId}/users/{uid}/monnifyAccounts
+  /// Monnify accounts for a user: apps/regentspace-builder/{appId}/users/{uid}/monnifyAccounts
   CollectionReference<Map<String, dynamic>> monnifyAccounts(String uid) =>
       userDoc(uid).collection('monnifyAccounts');
 
-  /// Notifications for a user: apps/{appId}/users/{uid}/notifications
+  /// Notifications for a user: apps/regentspace-builder/{appId}/users/{uid}/notifications
   CollectionReference<Map<String, dynamic>> notifications(String uid) =>
       userDoc(uid).collection('notifications');
 
-  /// Global Monnify reserved accounts mirror: apps/{appId}/monnify_reserved_accounts
+  /// Global Monnify reserved accounts mirror: apps/regentspace-builder/{appId}/monnify_reserved_accounts
   CollectionReference<Map<String, dynamic>> get monnifyReservedAccounts =>
       appDoc.collection('monnify_reserved_accounts');
 
-  /// Monnify transactions: apps/{appId}/monnify_transactions
+  /// Monnify transactions: apps/regentspace-builder/{appId}/monnify_transactions
   CollectionReference<Map<String, dynamic>> get monnifyTransactions =>
       appDoc.collection('monnify_transactions');
 
-  /// VTPass transactions: apps/{appId}/vtpass_transactions
+  /// VTPass transactions: apps/regentspace-builder/{appId}/vtpass_transactions
   CollectionReference<Map<String, dynamic>> get vtpassTransactions =>
       appDoc.collection('vtpass_transactions');
-
-  /// App config: apps/{appId}/config
-  CollectionReference<Map<String, dynamic>> get config =>
-      appDoc.collection('config');
 
   // ─── Helper: register a new app ───
 
@@ -76,6 +93,9 @@ class AppTenant {
   // ─── Static factory ───
 
   static AppTenant? _instance;
+
+  /// Returns the current app ID (must be initialized first).
+  static String get currentAppId => current.appId;
 
   static AppTenant init(String appId, {FirebaseFirestore? db}) {
     _instance = AppTenant(appId: appId, db: db);

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'app_tenant.dart';
 import 'notification_store.dart';
 import 'push_notification_service.dart';
 
@@ -174,11 +175,26 @@ class AppNotifications {
   // ─── Subscriptions ───
 
   static Future<void> ensureSubscriptions({User? user}) async {
+    final topics = <String>[];
     try {
-      await PushNotificationService.instance.subscribeToTopic('all_users');
-      await PushNotificationService.instance.subscribeToTopic('announcements');
+      final appId = AppTenant.currentAppId;
+      if (appId.isNotEmpty) {
+        final topic1 = 'announcements_$appId';
+        await PushNotificationService.instance.subscribeToTopic(topic1);
+        topics.add(topic1);
+      }
       final uid = user?.uid;
-      if (uid != null) await PushNotificationService.instance.subscribeToTopic('user_$uid');
+      if (uid != null) {
+        final topic2 = 'user_$uid';
+        await PushNotificationService.instance.subscribeToTopic(topic2);
+        topics.add(topic2);
+      }
+      if (uid != null && topics.isNotEmpty) {
+        try {
+          await AppTenant.current.userDoc(uid)
+              .update({'subscribed_topics': topics});
+        } catch (_) {}
+      }
     } catch (_) {}
   }
 }

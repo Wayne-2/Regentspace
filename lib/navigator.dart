@@ -4,6 +4,9 @@ import 'pages/dashboard/dashboard.dart';
 import 'pages/finances/finance.dart';
 import 'pages/profile/profile.dart';
 
+/// Global tab controller — canva switches to dashboard after build submit.
+final ValueNotifier<int> currentTabNotifier = ValueNotifier<int>(0);
+
 class RegentBottomNav extends StatefulWidget {
   const RegentBottomNav({super.key});
 
@@ -12,25 +15,38 @@ class RegentBottomNav extends StatefulWidget {
 }
 
 class _RegentBottomNavState extends State<RegentBottomNav> {
-  int currentTabIndex = 0;
+  @override
+  void initState() {
+    super.initState();
+    currentTabNotifier.addListener(_onTabChange);
+  }
 
-  final List<Widget> pages = const [
-    Dashboard(),
-    Regentcanva(),
-    Finances(),
-    ProfilePage(),
-  ];
+  @override
+  void dispose() {
+    currentTabNotifier.removeListener(_onTabChange);
+    super.dispose();
+  }
+
+  void _onTabChange() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: pages[currentTabIndex],
+      body: IndexedStack(
+        index: currentTabNotifier.value,
+        children: const [
+          Dashboard(),
+          Regentcanva(),
+          Finances(),
+          ProfilePage(),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentTabIndex,
+        currentIndex: currentTabNotifier.value,
         onTap: (int index) {
-          setState(() {
-            currentTabIndex = index;
-          });
+          currentTabNotifier.value = index;
         },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF740690),

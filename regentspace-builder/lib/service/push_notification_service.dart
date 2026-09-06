@@ -204,6 +204,25 @@ class PushNotificationService {
   Future<void> unsubscribeFromTopic(String topic) =>
       _fcm.unsubscribeFromTopic(topic);
 
+  /// Re-request notification permission and save FCM token.
+  /// Called after login to ensure token is persisted.
+  Future<void> ensurePermissionAndToken() async {
+    try {
+      await _fcm.requestPermission(alert: true, badge: true, sound: true);
+      await _local
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
+    } catch (_) {}
+    try {
+      final token = await _fcm.getToken();
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (token != null && uid != null) {
+        await UserRepository.instance.saveFcmToken(uid: uid, token: token);
+        if (kDebugMode) debugPrint('[Push] FCM token saved after login');
+      }
+    } catch (_) {}
+  }
+
   void dispose() {
     _onMessageSub?.cancel();
     _onOpenedAppSub?.cancel();

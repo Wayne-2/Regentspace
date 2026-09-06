@@ -1,0 +1,8 @@
+name: regentspace_build_server
+description: HTTP build server for regentspace-builder
+version: 1.0.0
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  path: ^1.9.0
