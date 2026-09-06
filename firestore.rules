@@ -2,26 +2,85 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ─── Regentspace platform data under apps/regentspace-builder/ ───
+    match /apps/{platformAppId} {
+
+      // ─── Shared platform config ───
+      // apps/regentspace-builder/config/* — readable by any authenticated user
+      match /config/{configId} {
+        allow read: if request.auth != null;
+        allow write: if false; // set during build, read-only at runtime
+      }
+
+      // ─── Per-app data ───
+      // apps/regentspace-builder/apps/{appId}/* — only the creator can access
+      match /apps/{appId} {
+        // App document — creator can read, auth user can create (with createdBy)
+        allow read, update, delete: if request.auth != null
+          && resource.data.createdBy == request.auth.uid;
+        allow create: if request.auth != null;
+
+        // User profiles for THIS generated app
+        // The app creator (regentspace user) can read ALL users (for "New Users" dashboard)
+        // The generated app's end user can only read/write their own doc
+        match /users/{uid} {
+          allow read: if request.auth != null;
+          allow create, update: if request.auth != null && request.auth.uid == uid;
+
+          // Monnify virtual accounts per user
+          match /monnifyAccounts/{ref} {
+            allow read, write: if request.auth != null && request.auth.uid == uid;
+          }
+
+          // Notifications per user
+          match /notifications/{notifId} {
+            allow read, write: if request.auth != null && request.auth.uid == uid;
+          }
+        }
+
+        // Monnify reserved accounts — user can read their own, create their own
+        match /monnify_reserved_accounts/{ref} {
+          allow read: if request.auth != null
+            && resource.data.uid == request.auth.uid;
+          allow create: if request.auth != null
+            && request.resource.data.uid == request.auth.uid;
+          allow update: if request.auth != null
+            && resource.data.uid == request.auth.uid;
+        }
+
+        // Monnify transactions (webhook writes via Admin SDK)
+        match /monnify_transactions/{id} {
+          allow read: if request.auth != null
+            && resource.data.uid == request.auth.uid;
+          allow write: if false; // webhook only
+        }
+
+        // VTPass transactions — user can read their own, create their own
+        match /vtpass_transactions/{id} {
+          allow read: if request.auth != null
+            && resource.data.uid == request.auth.uid;
+          allow create: if request.auth != null
+            && request.resource.data.uid == request.auth.uid;
+          allow update, delete: if false; // webhook/admin only
+        }
+      }
+    }
+
+    // ─── Legacy regentspace platform data (pre-builder) ───
+
     // User profiles — same shape for email/password and Google
-    // Write path: UserRepository.saveEmailUser / saveGoogleUser -> users/{uid}
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid;
-      // Subcollection for Monnify virtual accounts (client mirrors Monnify response)
-      // Path: users/{uid}/monnifyAccounts/{accountReference} - MonnifyService.createReservedAccount:217
       match /monnifyAccounts/{ref} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
-      // Notifications per-user — persisted by AppNotifications._show + PushNotificationService
-      // Dashboard badge: watchUnreadCount, NotificationPage: watchForUser
       match /notifications/{notifId} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
     }
 
-    // Global mirror for webhook lookups — written by client in direct mode,
-    // or by webhook Admin SDK (which bypasses rules). Must allow client create when useDirect=true.
-    // Previous `allow write: if false` blocked direct-mode batch.commit at MonnifyService:219 -> permission-denied.
+    // Global mirror for webhook lookups
     match /monnify_reserved_accounts/{ref} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
@@ -30,12 +89,10 @@ service cloud.firestore {
 
     match /monnify_transactions/{id} {
       allow read: if request.auth != null;
-      allow write: if false; // webhook only via Admin SDK
+      allow write: if false;
     }
 
-    // Monnify credentials — read requires auth (secret). Cold-start load before login fails
-    // with permission-denied (log 13:00:27.991), retried after login via MonnifyConfig.ensureConfigured().
-    // Do NOT set allow read: if true in prod — that would leak apiKey/secretKey publicly.
+    // Monnify credentials — read requires auth
     match /config/monnify {
       allow read: if request.auth != null;
       allow write: if false;

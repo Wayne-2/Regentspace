@@ -91,28 +91,51 @@ class _LoginpageState extends State<Loginpage> {
           context: context,
           barrierDismissible: false,
           builder: (_) => AlertDialog(
-            title: Text(!isVerified ? 'Email not verified' : 'Phone missing', style: const TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w700, fontSize: 16)),
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(!isVerified ? 'Email not verified' : 'Phone missing', style: const TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w700, fontSize: 16, color: Color(0xFF1A1A1E))),
             content: Text(
               !isVerified
                   ? 'Your email ${cred.user?.email ?? email} is not verified. Tap Verify to resend/confirm, or Continue to use the app (a banner will remain until verified).'
                   : 'Your phone number is missing. Please add it to complete your profile.',
-              style: const TextStyle(fontFamily: 'DMSans', fontSize: 13),
+              style: const TextStyle(fontFamily: 'DMSans', fontSize: 13, color: Color(0xFF5A5A64)),
             ),
+            actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
             actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav()));
-                },
-                child: const Text('Continue'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF740690), foregroundColor: Colors.white),
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => Verificationpage(email: cred.user?.email ?? email, showPhonePrompt: needsPhone)));
-                },
-                child: Text(!isVerified ? 'Verify email' : 'Add phone'),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav()));
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(0xFFFDF4FF),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Continue', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF740690),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => Verificationpage(email: cred.user?.email ?? email, showPhonePrompt: needsPhone)));
+                      },
+                      child: Text(!isVerified ? 'Verify email' : 'Add phone', style: const TextStyle(fontFamily: 'DMSans')),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -200,14 +223,40 @@ class _LoginpageState extends State<Loginpage> {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: const Text('Phone missing', style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w700, fontSize: 16)),
-            content: const Text('Google doesn\'t share phone numbers. Please add yours to complete your profile.', style: TextStyle(fontFamily: 'DMSans', fontSize: 13)),
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text('Phone missing', style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w700, fontSize: 16, color: Color(0xFF1A1A1E))),
+            content: const Text('Google doesn\'t share phone numbers. Please add yours to complete your profile.', style: TextStyle(fontFamily: 'DMSans', fontSize: 13, color: Color(0xFF5A5A64))),
+            actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
             actions: [
-              TextButton(onPressed: () { Navigator.pop(context); Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav())); }, child: const Text('Later')),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF740690), foregroundColor: Colors.white),
-                onPressed: () { Navigator.pop(context); Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => Verificationpage(email: cred.user?.email ?? '', showPhonePrompt: true))); },
-                child: const Text('Add phone'),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () { Navigator.pop(context); Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav())); },
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(0xFFFDF4FF),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Later', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF740690),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                      ),
+                      onPressed: () { Navigator.pop(context); Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => Verificationpage(email: cred.user?.email ?? '', showPhonePrompt: true))); },
+                      child: const Text('Add phone', style: TextStyle(fontFamily: 'DMSans')),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

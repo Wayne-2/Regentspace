@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import 'timeconverter.dart';
-import 'userpfp.dart';
 
-// Static UI only — no Supabase / stream.
 class RecentActivities extends StatelessWidget {
   const RecentActivities({super.key});
 
@@ -12,6 +11,13 @@ class RecentActivities extends StatelessWidget {
     {'username': 'Sunday John', 'service_used': 'Cable TV Subscription', 'amount': '5000', 'created_at': '2025-04-19T18:00:00Z'},
     {'username': 'Ifeanyi Opara', 'service_used': 'Electricity Bill', 'amount': '7500', 'created_at': '2025-04-19T14:20:00Z'},
   ];
+
+  String _getInitials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty) return "?";
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,12 +38,30 @@ class RecentActivities extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.black.withOpacity(0.04)),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2))],
+            border: Border.all(color: const Color(0xFFE8E8EA)),
           ),
           child: Row(
             children: [
-              UserAvatar(name: username, size: 38),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDF4FF),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFEAC5F7), width: 1),
+                ),
+                child: Center(
+                  child: Text(
+                    _getInitials(username),
+                    style: const TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -46,18 +70,18 @@ class RecentActivities extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(child: Text(username, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, fontSize: 13.5))),
+                        Expanded(child: Text(username, overflow: TextOverflow.ellipsis, style: AppTextStyles.body(color: AppColors.textPrimary))),
                         const SizedBox(width: 8),
-                        Text("₦ $amount", style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w700, fontSize: 12.5, color: const Color(0xFF1F1F1F))),
+                        Text("₦$amount", style: AppTextStyles.titleSmall(color: AppColors.textPrimary)),
                       ],
                     ),
                     const SizedBox(height: 2),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(child: Text(serviceUsed, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w400, fontSize: 11.5, color: Colors.black.withOpacity(0.55)))),
+                        Expanded(child: Text(serviceUsed, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption(color: AppColors.textTertiary))),
                         const SizedBox(width: 8),
-                        Text(createdAt, style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w400, fontSize: 10.5, color: Colors.black.withOpacity(0.5))),
+                        Text(createdAt, style: AppTextStyles.caption(color: AppColors.textHint)),
                       ],
                     ),
                   ],

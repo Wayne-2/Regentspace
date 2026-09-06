@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -88,6 +90,8 @@ class BuildTracker {
 
   Future<void> submitBuild(Map<String, dynamic> buildJson) async {
     final appName = buildJson['app']['name'] ?? 'App';
+    final appId = buildJson['app']['id'] ?? 'default';
+    final uid = FirebaseAuth.instance.currentUser?.uid;
 
     final response = await http.post(
       Uri.parse('$kBuildServerUrl/build'),
@@ -102,10 +106,29 @@ class BuildTracker {
     final data = jsonDecode(response.body);
     final buildId = data['buildId'] as String;
 
+    // Write app metadata to Firestore so dashboard can query it
+    if (uid != null) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('apps')
+            .doc('regentspace-builder')
+            .collection('apps')
+            .doc(appId)
+            .set({
+          'createdBy': uid,
+          'createdAt': FieldValue.serverTimestamp(),
+          'appName': appName,
+          'appId': appId,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('[BuildTracker] Firestore write failed: $e');
+      }
+    }
+
     final info = BuildInfo(
       buildId: buildId,
       appName: appName,
-      appId: buildJson['app']['id'] ?? 'default',
+      appId: appId,
       status: 'building',
       downloadUrl: data['downloadUrl'],
     );

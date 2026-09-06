@@ -39,9 +39,7 @@ class _AppRoot extends StatefulWidget {
 class _AppRootState extends State<_AppRoot> {
   final _scaffoldKey = GlobalKey<ScaffoldMessengerState>();
   bool? _firebaseOk;
-  bool _showOfflineHint = false;
   bool _initializing = false;
-  Timer? _hintTimer;
   Timer? _fallbackTimer;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
@@ -53,7 +51,6 @@ class _AppRootState extends State<_AppRoot> {
 
   @override
   void dispose() {
-    _hintTimer?.cancel();
     _fallbackTimer?.cancel();
     _connectivitySub?.cancel();
     super.dispose();
@@ -63,64 +60,41 @@ class _AppRootState extends State<_AppRoot> {
     if (_initializing) return;
     _initializing = true;
 
-    _hintTimer?.cancel();
     _fallbackTimer?.cancel();
     _connectivitySub?.cancel();
-    if (mounted) setState(() { _firebaseOk = null; _showOfflineHint = false; });
+    if (mounted) setState(() => _firebaseOk = null);
 
-    // Quick connectivity check — don't block on it, just use it for the snackbar hint
+    // Check actual connectivity before attempting Firebase
+    bool hasConnection = true;
     try {
-      final results = await Connectivity().checkConnectivity().timeout(const Duration(seconds: 2));
-      final noConnection = results.every((r) => r == ConnectivityResult.none);
-      if (noConnection && mounted && _firebaseOk == null) {
-        setState(() => _showOfflineHint = true);
-        _scaffoldKey.currentState?.showSnackBar(
-          const SnackBar(
-            content: Text('No internet connection. Please turn on your data or Wi-Fi.'),
-            duration: Duration(seconds: 4),
-          ),
-        );
-      }
+      final results = await Connectivity().checkConnectivity().timeout(const Duration(seconds: 3));
+      hasConnection = results.any((r) => r != ConnectivityResult.none);
     } catch (_) {
-      // Connectivity check failed — assume no connection
-      if (mounted && _firebaseOk == null) {
-        setState(() => _showOfflineHint = true);
-        _scaffoldKey.currentState?.showSnackBar(
-          const SnackBar(
-            content: Text('No internet connection. Please turn on your data or Wi-Fi.'),
-            duration: Duration(seconds: 4),
-          ),
-        );
-      }
+      hasConnection = false;
     }
 
-    // Listen for connectivity changes — auto-retry Firebase when back online
-    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
-      final hasConnection = results.any((r) => r != ConnectivityResult.none);
-      if (hasConnection && mounted && _firebaseOk == null && !_initializing) {
-        _initFirebase();
-      }
-    });
+    if (!hasConnection) {
+      // Actually offline — show error page immediately
+      _initializing = false;
+      if (mounted) setState(() => _firebaseOk = false);
+      _startConnectivityListener();
+      return;
+    }
 
-    // After 1 second, if still not ready, show snackbar
-    _hintTimer = Timer(const Duration(seconds: 1), () {
-      if (mounted && _firebaseOk == null && !_showOfflineHint) {
-        setState(() => _showOfflineHint = true);
-        _scaffoldKey.currentState?.showSnackBar(
-          const SnackBar(
-            content: Text('No internet connection. Please turn on your data or Wi-Fi.'),
-            duration: Duration(seconds: 4),
-          ),
-        );
-      }
-    });
-
-    // After 10 seconds, if still not ready, fall back to Networkerror
-    // Must be longer than Firebase.initializeApp timeout (8s) to avoid race condition
-    _fallbackTimer = Timer(const Duration(seconds: 10), () {
+    // Online — start Firebase init with a fallback timer
+    _fallbackTimer = Timer(const Duration(seconds: 12), () {
       if (mounted && _firebaseOk == null && !_initializing) {
-        _connectivitySub?.cancel();
+        _initializing = false;
         setState(() => _firebaseOk = false);
+        _startConnectivityListener();
+      }
+    });
+
+    // Start listening for connectivity changes during init
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      final backOnline = results.any((r) => r != ConnectivityResult.none);
+      if (backOnline && mounted && _firebaseOk != true && !_initializing) {
+        _initFirebase();
       }
     });
 
@@ -128,36 +102,51 @@ class _AppRootState extends State<_AppRoot> {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       ).timeout(const Duration(seconds: 8));
+
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
       await PushNotificationService.instance.init();
       await BuildTracker.instance.init();
       await AppNotifications.ensureSubscriptions();
-      await MonnifyConfig.loadFromFirestore();
+
+      // MonnifyConfig may fail at cold-start (unauth) — that's OK, retried after login
+      try {
+        await MonnifyConfig.loadFromFirestore();
+      } catch (_) {}
+
       FirebaseAuth.instance.authStateChanges().listen((user) async {
         if (user != null && !MonnifyConfig.isConfigured) {
           await MonnifyConfig.loadFromFirestore();
         }
       });
-      _hintTimer?.cancel();
+
       _fallbackTimer?.cancel();
       _connectivitySub?.cancel();
       _initializing = false;
       if (mounted) {
         setState(() => _firebaseOk = true);
-        // If we're stuck on Networkerror page, navigate to Login
         final nav = Navigator.of(context);
         if (nav.canPop()) {
           nav.pushReplacement(MaterialPageRoute(builder: (_) => const Loginpage()));
         }
       }
     } catch (_) {
-      _hintTimer?.cancel();
       _fallbackTimer?.cancel();
       _initializing = false;
       if (mounted && _firebaseOk == null) {
         setState(() => _firebaseOk = false);
       }
+      _startConnectivityListener();
     }
+  }
+
+  void _startConnectivityListener() {
+    _connectivitySub?.cancel();
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      final hasConnection = results.any((r) => r != ConnectivityResult.none);
+      if (hasConnection && mounted && _firebaseOk != true && !_initializing) {
+        _initFirebase();
+      }
+    });
   }
 
   @override

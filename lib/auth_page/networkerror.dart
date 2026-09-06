@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import '../theme/app_theme.dart';
 
 class Networkerror extends StatefulWidget {
   final Future<void> Function() onRetry;
@@ -29,7 +30,7 @@ class _NetworkerrorState extends State<Networkerror> {
     _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
       final hasConnection = results.any((r) => r != ConnectivityResult.none);
       if (hasConnection && mounted && !_isRetrying) {
-        _handleRetry();
+        _popAndRetry();
       }
     });
   }
@@ -40,19 +41,22 @@ class _NetworkerrorState extends State<Networkerror> {
     super.dispose();
   }
 
-  Future<void> _handleRetry() async {
-    if (_isRetrying) return;
-    setState(() => _isRetrying = true);
-    try {
-      await widget.onRetry();
-    } catch (_) {}
-    if (mounted) setState(() => _isRetrying = false);
+  /// Pop back to Loadingpage, then trigger retry.
+  void _popAndRetry() {
+    if (!mounted) return;
+    _isRetrying = true;
+    // Pop this page — the Loadingpage underneath will show loading animation
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+    // Fire retry (sets _firebaseOk = null → Loadingpage shows loading)
+    widget.onRetry();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -64,68 +68,47 @@ class _NetworkerrorState extends State<Networkerror> {
                   width: 80,
                   height: 80,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFFDF4FF),
+                    color: AppColors.primarySoft,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.wifi_off_rounded,
                     size: 40,
-                    color: Color(0xFF6C0090),
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 32),
                 Text(
                   'No Internet Connection',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'DMSans',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    height: 1.25,
-                    letterSpacing: -0.4,
-                    color: const Color(0xFF1A1A1E),
-                  ),
+                  style: AppTextStyles.headline(),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   'Please check your internet connection and try again.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'DMSans',
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w400,
-                    height: 1.5,
-                    color: const Color(0xFF5A5A64),
-                  ),
+                  style: AppTextStyles.body(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 36),
-                _isRetrying
-                    ? LoadingAnimationWidget.fourRotatingDots(
-                        size: 36,
-                        color: const Color(0xFF6C0090),
-                      )
-                    : SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _handleRetry,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6C0090),
-                            foregroundColor: Colors.white,
-                            textStyle: const TextStyle(
-                              fontFamily: 'DMSans',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.15,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 13),
-                            elevation: 0,
-                          ),
-                          child: const Text('Retry'),
-                        ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isRetrying ? null : _popAndRetry,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      textStyle: AppTextStyles.body(color: Colors.white),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      elevation: 0,
+                    ),
+                    child: _isRetrying
+                        ? LoadingAnimationWidget.fourRotatingDots(size: 24, color: Colors.white)
+                        : const Text('Retry'),
+                  ),
+                ),
               ],
             ),
           ),

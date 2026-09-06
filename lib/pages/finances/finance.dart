@@ -1,11 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../theme/app_theme.dart';
 import '../../components/loadingpopup.dart';
-import '../../components/userpfp.dart';
 import '../../components/recent_activities.dart';
 import '../../service/app_notifications.dart';
 import '../../service/monnify_service.dart';
@@ -21,8 +19,6 @@ class Finances extends StatefulWidget {
 }
 
 class _FinancesState extends State<Finances> {
-  final GlobalKey _walletButtonKey = GlobalKey();
-
   String _fmtBalance(num? v) {
     if (v == null) return '₦0.00';
     return NumberFormat.currency(locale: 'en_NG', symbol: '₦', decimalDigits: 2).format(v);
@@ -32,75 +28,6 @@ class _FinancesState extends State<Finances> {
     {"name": "Wema Bank", "code": "035"},
     {"name": "Sterling Bank", "code": "232"},
   ];
-
-  void _showWalletDropdown(GlobalKey key) async {
-    final RenderBox button = key.currentContext!.findRenderObject() as RenderBox;
-    final Offset position = button.localToGlobal(Offset.zero);
-
-    final List<_WalletAction> actions = [
-      _WalletAction(
-        label: "Create Virtual Account",
-        icon: Icons.add_circle_outline,
-        onTap: () => _showActionAlert(
-          title: "Create Virtual Account",
-          message: "This will create a new virtual account linked to your wallet.",
-          confirmLabel: "Create",
-          onConfirm: () {
-            Navigator.pop(context);
-            Future.delayed(const Duration(milliseconds: 100), () => _showBankSelectionSheet(context));
-          },
-        ),
-      ),
-      _WalletAction(
-        label: "Manage Account",
-        icon: Icons.settings_outlined,
-        onTap: () => _showActionAlert(
-          title: "Manage Account",
-          message: "Access advanced account settings.",
-          confirmLabel: "Manage",
-          onConfirm: () => Navigator.pop(context),
-        ),
-      ),
-      _WalletAction(
-        label: "Delete Account",
-        icon: Icons.delete_outline,
-        color: AppColors.error,
-        onTap: () => _showActionAlert(
-          title: "Delete Account",
-          message: "Are you sure you want to delete this virtual account?",
-          confirmLabel: "Delete",
-          confirmColor: AppColors.error,
-          onConfirm: () => Navigator.pop(context),
-        ),
-      ),
-    ];
-
-    final result = await showMenu<_WalletAction>(
-      context: context,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      position: RelativeRect.fromLTRB(
-        position.dx,
-        position.dy + button.size.height + 6,
-        position.dx + button.size.width,
-        0,
-      ),
-      items: actions.map((action) {
-        return PopupMenuItem<_WalletAction>(
-          value: action,
-          child: Row(
-            children: [
-              Icon(action.icon, color: action.color ?? AppColors.primary, size: 20),
-              const SizedBox(width: 10),
-              Text(action.label, style: AppTextStyles.body(color: AppColors.textPrimary)),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-
-    result?.onTap();
-  }
 
   void _showActionAlert({
     required String title,
@@ -113,18 +40,38 @@ class _FinancesState extends State<Finances> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(title, style: AppTextStyles.title(color: AppColors.textPrimary)),
-        content: Text(message, style: AppTextStyles.body()),
+        content: Text(message, style: AppTextStyles.body(color: AppColors.textSecondary)),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textTertiary))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: confirmColor ?? AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: onConfirm,
-            child: Text(confirmLabel, style: AppTextStyles.body(color: Colors.white)),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.primarySoft,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textSecondary)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: confirmColor ?? AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                  ),
+                  onPressed: onConfirm,
+                  child: Text(confirmLabel, style: AppTextStyles.body(color: Colors.white)),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -141,27 +88,51 @@ class _FinancesState extends State<Finances> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 12),
-            Container(width: 50, height: 5, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(10))),
-            const SizedBox(height: 16),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(10))),
+            const SizedBox(height: 20),
             Text("Select Preferred Bank", style: AppTextStyles.title()),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text("Choose a bank for your virtual account", style: AppTextStyles.caption(color: AppColors.textTertiary)),
+            ),
+            const SizedBox(height: 12),
             Flexible(
               child: ListView.builder(
                 shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: supportedBanks.length,
                 itemBuilder: (context, index) {
                   final bank = supportedBanks[index];
-                  return ListTile(
-                    leading: const Icon(Icons.account_balance, color: AppColors.primary),
-                    title: Text(bank["name"]!, style: AppTextStyles.body(color: AppColors.textPrimary)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _confirmCreateAccount(context, bank["name"]!, bank["code"]!);
-                    },
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoft,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.primaryLight),
+                    ),
+                    child: ListTile(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.account_balance, color: AppColors.primary, size: 20),
+                      ),
+                      title: Text(bank["name"]!, style: AppTextStyles.body(color: AppColors.textPrimary)),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _confirmCreateAccount(context, bank["name"]!, bank["code"]!);
+                      },
+                    ),
                   );
                 },
               ),
             ),
+            const SizedBox(height: 16),
           ],
         );
       },
@@ -173,17 +144,41 @@ class _FinancesState extends State<Finances> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text("Create Virtual Account", style: AppTextStyles.title()),
-        content: Text("Proceed to create a virtual account with $bankName?", style: AppTextStyles.body()),
+        content: Text("Proceed to create a virtual account with $bankName?", style: AppTextStyles.body(color: AppColors.textSecondary)),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textTertiary))),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _createVirtualAccount(bankCode);
-            },
-            child: Text("Continue", style: AppTextStyles.body(color: AppColors.primary)),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.primarySoft,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textSecondary)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _createVirtualAccount(bankCode);
+                  },
+                  child: Text("Continue", style: AppTextStyles.body(color: Colors.white)),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -222,7 +217,7 @@ class _FinancesState extends State<Finances> {
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -249,10 +244,17 @@ class _FinancesState extends State<Finances> {
                             Text(username, style: AppTextStyles.headline(color: AppColors.textPrimary)),
                           ],
                         ),
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: const Color(0xFFE5E5E5),
-                          child: Text(initials, style: AppTextStyles.title(color: AppColors.textSecondary)),
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFDF4FF),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFEAC5F7), width: 1),
+                          ),
+                          child: Center(
+                            child: Text(initials, style: AppTextStyles.title(color: AppColors.primary)),
+                          ),
                         ),
                       ],
                     ),
@@ -260,7 +262,7 @@ class _FinancesState extends State<Finances> {
                 },
               ),
 
-              // ── Balance + Wallet button ──
+              // ── Balance ──
               StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                 stream: uid == null ? null : UserRepository.instance.watchUser(uid),
                 builder: (context, userSnap) {
@@ -305,47 +307,14 @@ class _FinancesState extends State<Finances> {
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("Total Balance", style: AppTextStyles.caption(color: AppColors.textTertiary)),
-                                  const SizedBox(height: 4),
-                                  Text(displayBalance, style: AppTextStyles.display(color: AppColors.primaryDark)),
-                                ],
-                              ),
-                            ),
-                            GestureDetector(
-                              key: _walletButtonKey,
-                              onTap: () => _showWalletDropdown(_walletButtonKey),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primarySoft,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: AppColors.primaryLight),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Manage Wallet", style: AppTextStyles.caption(color: AppColors.textPrimary)),
-                                        const SizedBox(height: 1),
-                                        Text('$bankName • $last4', overflow: TextOverflow.ellipsis, style: AppTextStyles.caption(color: AppColors.accent)),
-                                      ],
-                                    ),
-                                    const SizedBox(width: 6),
-                                    const Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.textSecondary),
-                                  ],
-                                ),
-                              ),
-                            ),
+                            Text("Total Balance", style: AppTextStyles.caption(color: AppColors.textTertiary)),
+                            const SizedBox(height: 4),
+                            Text(displayBalance, style: AppTextStyles.display(color: AppColors.primaryDark)),
+                            const SizedBox(height: 2),
+                            Text('$bankName • $last4', style: AppTextStyles.caption(color: AppColors.textTertiary)),
                           ],
                         ),
                       );
@@ -531,13 +500,4 @@ class _FinancesState extends State<Finances> {
       ],
     );
   }
-}
-
-class _WalletAction {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-  final Color? color;
-
-  _WalletAction({required this.label, required this.icon, required this.onTap, this.color});
 }

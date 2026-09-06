@@ -168,11 +168,39 @@ class _CreateaccountpageState extends State<Createaccountpage> {
                 ));
                 // Full debug dialog for copy/paste
                 showDialog(context: context, builder: (_) => AlertDialog(
-                  title: Text('Monnify debug — create failed', style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w700)),
-                  content: SingleChildScrollView(child: SelectableText(e.toString(), style: TextStyle(fontFamily: 'DMSans', fontSize: 10))),
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  title: Text('Monnify debug — create failed', style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1E))),
+                  content: SingleChildScrollView(child: SelectableText(e.toString(), style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: Color(0xFF5A5A64)))),
+                  actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                   actions: [
-                    TextButton(onPressed: () { Clipboard.setData(ClipboardData(text: e.toString())); Navigator.pop(context); }, child: Text('Copy')),
-                    TextButton(onPressed: () => Navigator.pop(context), child: Text('Close')),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () { Clipboard.setData(ClipboardData(text: e.toString())); Navigator.pop(context); },
+                            style: TextButton.styleFrom(
+                              backgroundColor: const Color(0xFFFDF4FF),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: Text('Copy', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              backgroundColor: const Color(0xFF740690),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: Text('Close', style: TextStyle(fontFamily: 'DMSans', color: Colors.white)),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ));
               }

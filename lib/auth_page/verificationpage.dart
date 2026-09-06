@@ -184,16 +184,43 @@ class _VerificationpageState extends State<Verificationpage> {
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Email not verified', style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w700)),
-          content: Text('Your email ${widget.email} is not verified yet. You can continue but some features may be limited. We\'ve sent a verification link — check inbox/spam.\n\nContinue anyway?', style: const TextStyle(fontFamily: 'DMSans', fontSize: 13)),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Email not verified', style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w700, fontSize: 16, color: Color(0xFF1A1A1E))),
+          content: Text('Your email ${widget.email} is not verified yet. You can continue but some features may be limited. We\'ve sent a verification link — check inbox/spam.\n\nContinue anyway?', style: const TextStyle(fontFamily: 'DMSans', fontSize: 13, color: Color(0xFF5A5A64))),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Stay')),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav()));
-              },
-              child: const Text('Continue'),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFFFDF4FF),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('Stay', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav()));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF740690),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      elevation: 0,
+                    ),
+                    child: const Text('Continue', style: TextStyle(fontFamily: 'DMSans')),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

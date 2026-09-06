@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import '../../theme/app_theme.dart';
 
 class ManageRatesPage extends StatefulWidget {
   const ManageRatesPage({super.key});
@@ -9,8 +10,6 @@ class ManageRatesPage extends StatefulWidget {
 }
 
 class _ManageRatesPageState extends State<ManageRatesPage> {
-  final Color primaryColor = const Color.fromRGBO(74, 0, 99, 1);
-
   final Map<String, double> airtimeRates = {
     'MTN': 98.0,
     'GLO': 97.0,
@@ -31,62 +30,68 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             "Edit $network $type Rate",
-            style: TextStyle(fontFamily: 'DMSans', 
-              fontWeight: FontWeight.w600,
-              color: primaryColor,
-            ),
+            style: AppTextStyles.title(color: AppColors.textPrimary),
           ),
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: type == "Airtime" ? "Discount (%)" : "₦ per GB",
-              labelStyle: TextStyle(fontFamily: 'DMSans', color: Colors.grey[700]),
+              labelStyle: AppTextStyles.body(color: AppColors.textTertiary),
               focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: primaryColor, width: 1.3),
-                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.primary, width: 1.3),
+                borderRadius: BorderRadius.circular(12),
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Cancel", style: TextStyle(fontFamily: 'DMSans', color: Colors.grey)),
-            ),
-            SizedBox(
-              height: 40,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      backgroundColor: AppColors.primarySoft,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textSecondary)),
                   ),
                 ),
-                onPressed: () {
-                  final newRate = double.tryParse(controller.text);
-                  if (newRate != null) {
-                    setState(() {
-                      if (type == "Airtime") {
-                        airtimeRates[network] = newRate;
-                      } else {
-                        dataRates[network] = newRate;
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      final newRate = double.tryParse(controller.text);
+                      if (newRate != null) {
+                        setState(() {
+                          if (type == "Airtime") {
+                            airtimeRates[network] = newRate;
+                          } else {
+                            dataRates[network] = newRate;
+                          }
+                        });
+                        Navigator.pop(context);
                       }
-                    });
-                    Navigator.pop(context);
-                  }
-                },
-                child: Text(
-                  "Save",
-                  style: TextStyle(fontFamily: 'DMSans', color: Colors.white),
+                    },
+                    child: Text("Save", style: AppTextStyles.body(color: Colors.white)),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         );
@@ -100,22 +105,14 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: AppColors.border),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title,
-                style: TextStyle(fontFamily: 'DMSans', 
-                    fontSize: 18, fontWeight: FontWeight.w600, color: primaryColor)),
+            Text(title, style: AppTextStyles.title(color: AppColors.primaryDark)),
             const Divider(height: 20, thickness: 0.6),
             ...rates.entries.map((entry) {
               return Padding(
@@ -123,27 +120,17 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(entry.key,
-                        style: TextStyle(fontFamily: 'DMSans', 
-                            fontWeight: FontWeight.w500, fontSize: 16)),
+                    Text(entry.key, style: AppTextStyles.body(color: AppColors.textPrimary)),
                     Row(
                       children: [
                         Text(
-                          type == "Airtime"
-                              ? "${entry.value.toStringAsFixed(1)}%"
-                              : "₦${entry.value.toStringAsFixed(0)}",
-                          style: TextStyle(fontFamily: 'DMSans', 
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87),
+                          type == "Airtime" ? "${entry.value.toStringAsFixed(1)}%" : "₦${entry.value.toStringAsFixed(0)}",
+                          style: AppTextStyles.titleSmall(color: AppColors.textPrimary),
                         ),
                         const SizedBox(width: 10),
                         GestureDetector(
-                          onTap: () =>
-                              _editRateDialog(type, entry.key, entry.value),
-                          child: Icon(
-                            CupertinoIcons.pencil_circle,
-                            color: primaryColor,
-                          ),
+                          onTap: () => _editRateDialog(type, entry.key, entry.value),
+                          child: const Icon(CupertinoIcons.pencil_circle, color: AppColors.primary, size: 22),
                         ),
                       ],
                     ),
@@ -160,61 +147,41 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xfff8f9fb),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: Colors.white,
         centerTitle: true,
-        title: Text(
-          "Manage Rates",
-           style: TextStyle(fontFamily: 'DMSans', 
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
-          ),
-        ),
+        title: Text("Manage Rates", style: AppTextStyles.headline(color: AppColors.textPrimary)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Adjust your data and airtime rates to suit your business preferences.",
-              style: TextStyle(fontFamily: 'DMSans', 
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
-            ),
+            Text("Adjust your data and airtime rates to suit your business preferences.", style: AppTextStyles.body(color: AppColors.textTertiary)),
             const SizedBox(height: 20),
             _buildRateCard("Airtime Rates", airtimeRates, "Airtime"),
             _buildRateCard("Data Rates", dataRates, "Data"),
             const SizedBox(height: 30),
             Center(
               child: SizedBox(
-                height: 40,
+                height: 48,
                 child: ElevatedButton.icon(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text("Rates saved successfully ✅")),
+                      const SnackBar(content: Text("Rates saved successfully"), backgroundColor: AppColors.primary),
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     padding: const EdgeInsets.symmetric(horizontal: 40),
+                    elevation: 0,
                   ),
-                  label: Text(
-                    "Save Changes",
-                    style: TextStyle(fontFamily: 'DMSans', 
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                  icon: const Icon(Icons.check_rounded, color: Colors.white, size: 20),
+                  label: Text("Save Changes", style: AppTextStyles.label(color: Colors.white)),
                 ),
               ),
             ),

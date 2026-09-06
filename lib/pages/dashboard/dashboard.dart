@@ -1139,8 +1139,6 @@ class _UserListForGeneratedApp extends StatelessWidget {
               .doc('regentspace-builder')
               .collection('apps')
               .where('createdBy', isEqualTo: uid)
-              .orderBy('createdAt', descending: true)
-              .limit(1)
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {

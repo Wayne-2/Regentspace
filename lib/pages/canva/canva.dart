@@ -176,7 +176,9 @@ class _RegentcanvaState extends State<Regentcanva> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(forText ? 'Text Color' : 'Container Color', style: const TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, fontSize: 16)),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(forText ? 'Text Color' : 'Container Color', style: const TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, fontSize: 16, color: Color(0xFF1A1A1E))),
         content: SingleChildScrollView(
           child: ColorPicker(
             pickerColor: currentColor,
@@ -195,12 +197,36 @@ class _RegentcanvaState extends State<Regentcanva> {
             paletteType: PaletteType.hsvWithHue,
           ),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(fontFamily: 'DMSans'))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Done', style: TextStyle(fontFamily: 'DMSans')),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFFFDF4FF),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Cancel', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                  ),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Done', style: TextStyle(fontFamily: 'DMSans')),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -226,7 +252,9 @@ class _RegentcanvaState extends State<Regentcanva> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit Text', style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, fontSize: 16)),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Edit Text', style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, fontSize: 16, color: Color(0xFF1A1A1E))),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -234,20 +262,44 @@ class _RegentcanvaState extends State<Regentcanva> {
           decoration: InputDecoration(
             hintText: 'Enter new text',
             hintStyle: const TextStyle(fontFamily: 'DMSans', color: AppColors.textHint),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(fontFamily: 'DMSans'))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
-            onPressed: () {
-              setState(() => _elementTexts[id] = controller.text);
-              Navigator.pop(ctx);
-            },
-            child: const Text('Save', style: TextStyle(fontFamily: 'DMSans')),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFFFDF4FF),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Cancel', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                  ),
+                  onPressed: () {
+                    setState(() => _elementTexts[id] = controller.text);
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Save', style: TextStyle(fontFamily: 'DMSans')),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -263,7 +315,9 @@ class _RegentcanvaState extends State<Regentcanva> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isScreen ? 'Screen Background' : 'Background Color', style: const TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, fontSize: 16)),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(isScreen ? 'Screen Background' : 'Background Color', style: const TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, fontSize: 16, color: Color(0xFF1A1A1E))),
         content: SingleChildScrollView(
           child: ColorPicker(
             pickerColor: currentColor,
@@ -282,12 +336,36 @@ class _RegentcanvaState extends State<Regentcanva> {
             paletteType: PaletteType.hsvWithHue,
           ),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(fontFamily: 'DMSans'))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Done', style: TextStyle(fontFamily: 'DMSans')),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFFFDF4FF),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Cancel', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                  ),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Done', style: TextStyle(fontFamily: 'DMSans')),
+                ),
+              ),
+            ],
           ),
         ],
       ),
