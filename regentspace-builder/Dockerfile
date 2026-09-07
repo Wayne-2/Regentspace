@@ -10,6 +10,7 @@ ENV PATH="$FLUTTER_HOME/bin:$FLUTTER_HOME/bin/cache/dart-sdk/bin:$ANDROID_HOME/c
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl git unzip xz-utils zip jq \
     openjdk-17-jdk-headless \
+    python3 python3-pip python3-pillow \
     && rm -rf /var/lib/apt/lists/*
 
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
@@ -50,7 +51,6 @@ COPY assets/ /app/assets/
 COPY lib/ /app/lib/
 COPY generator/ /app/generator/
 COPY analysis_options.yaml /app/analysis_options.yaml
-COPY .metadata /app/.metadata 2>/dev/null || true
 
 # Pre-install template deps (cached layer)
 WORKDIR /app
@@ -58,9 +58,6 @@ RUN flutter pub get || true
 
 WORKDIR /app/server
 
-# Cloud Run provides PORT env var
-ENV PORT=8080
-
 EXPOSE 8080
 
-CMD ["dart", "run", "bin/server.dart", "--port", "8080"]
+CMD ["dart", "run", "bin/server.dart"]
