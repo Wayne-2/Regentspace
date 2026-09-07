@@ -294,8 +294,10 @@ String _sanitize(String s) {
 /// Write a JSON response with proper UTF-8 encoding
 void _jsonResponse(HttpResponse response, int statusCode, Map<String, dynamic> body) {
   response.statusCode = statusCode;
+  final encoded = utf8.encode(jsonEncode(body));
   response.headers.set('Content-Type', 'application/json; charset=utf-8');
-  response.write(utf8.encode(jsonEncode(body)));
+  response.headers.set('Content-Length', '${encoded.length}');
+  response.add(encoded);
 }
 
 class BuildStatus {
