@@ -13,6 +13,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-pillow \
     && rm -rf /var/lib/apt/lists/*
 
+# Create 4GB swap file for Flutter builds (Railway has limited RAM)
+RUN fallocate -l 4G /swapfile \
+    && chmod 600 /swapfile \
+    && mkswap /swapfile \
+    && echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 # Install Flutter
@@ -62,6 +68,10 @@ RUN flutter pub get || true
 
 WORKDIR /app/server
 
+# Copy entrypoint and make executable
+COPY server/entrypoint.sh /app/server/entrypoint.sh
+RUN chmod +x /app/server/entrypoint.sh
+
 EXPOSE 8080
 
-CMD ["dart", "run", "bin/server.dart"]
+ENTRYPOINT ["/app/server/entrypoint.sh"]
