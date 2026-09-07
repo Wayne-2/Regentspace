@@ -53,10 +53,12 @@ service cloud.firestore {
           allow write: if false; // webhook only
         }
 
-        // VTPass transactions — user can read their own, create their own
+        // VTPass transactions — user can read their own, app creator can read all
         match /vtpass_transactions/{id} {
-          allow read: if request.auth != null
-            && resource.data.uid == request.auth.uid;
+          allow read: if request.auth != null && (
+            resource.data.uid == request.auth.uid ||
+            resource.data.createdBy == request.auth.uid
+          );
           allow create: if request.auth != null
             && request.resource.data.uid == request.auth.uid;
           allow update, delete: if false; // webhook/admin only

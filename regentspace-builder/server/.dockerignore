@@ -1,0 +1,12 @@
+build/
+builds/
+.dart_tool/
+.idea/
+.git/
+.gitignore
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+pubspec.lock
+test/
+docs/

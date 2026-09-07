@@ -175,6 +175,9 @@ class _LoadingpageState extends State<Loadingpage> {
   @override
   void didUpdateWidget(covariant Loadingpage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.firebaseOk != oldWidget.firebaseOk) {
+      _navigated = false;
+    }
     if (widget.firebaseOk != null && !_navigated) {
       _navigate();
     }
@@ -188,7 +191,7 @@ class _LoadingpageState extends State<Loadingpage> {
       final destination = widget.firebaseOk == true
           ? MaterialPageRoute(builder: (_) => const Loginpage())
           : MaterialPageRoute(builder: (_) => Networkerror(onRetry: widget.onRetry));
-      Navigator.of(context).pushReplacement(destination);
+      Navigator.of(context).push(destination);
     });
   }
 

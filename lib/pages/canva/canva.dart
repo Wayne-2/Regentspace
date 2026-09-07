@@ -37,6 +37,8 @@ class _RegentcanvaState extends State<Regentcanva> {
     'login_signup': "Don't have an account? Sign up",
     'signup_heading': 'Create Account',
     'signup_subtitle': 'Welcome user, fill the follow',
+    'signup_username_label': 'Username',
+    'signup_username_hint': 'e.g. John',
     'signup_email_label': 'Email',
     'signup_email_hint': 'you@example.com',
     'signup_password_label': 'Password',
@@ -499,6 +501,8 @@ class _RegentcanvaState extends State<Regentcanva> {
           'login_signup': "Don't have an account? Sign up",
           'signup_heading': 'Create Account',
           'signup_subtitle': 'Welcome user, fill the follow',
+          'signup_username_label': 'Username',
+          'signup_username_hint': 'e.g. John',
           'signup_email_label': 'Email',
           'signup_email_hint': 'you@example.com',
           'signup_password_label': 'Password',
@@ -664,8 +668,8 @@ class _RegentcanvaState extends State<Regentcanva> {
         'apiKey': 'AIzaSyDKvRGEE-9HcPtrJqrAlR0ZD4020BKa9NQ',
       },
       'theme': {
-        'primaryColor': '#6C0090',
-        'accentColor': '#740690',
+        'primaryColor': _colorToHex(_containerBackgrounds['login_button'] ?? const Color(0xFF6C0090)),
+        'accentColor': _colorToHex(_containerBackgrounds['signup_button'] ?? const Color(0xFF740690)),
         'background': '#F5F5F7',
       },
       'screens': screens,
@@ -730,27 +734,46 @@ class _RegentcanvaState extends State<Regentcanva> {
                         if (!_isEditMode) _selectedElementId = null;
                       }),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
-                          color: _isEditMode ? AppColors.primary : const Color(0xFFE5E5E5),
+                          color: const Color(0xFFE5E5E5),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              _isEditMode ? Icons.edit_rounded : Icons.visibility_rounded,
-                              size: 14,
-                              color: _isEditMode ? Colors.white : const Color(0xFF777777),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: _isEditMode ? AppColors.primary : Colors.transparent,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Edit',
+                                style: TextStyle(
+                                  fontFamily: 'DMSans',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: _isEditMode ? Colors.white : const Color(0xFF777777),
+                                ),
+                              ),
                             ),
-                            const SizedBox(width: 5),
-                            Text(
-                              _isEditMode ? 'Edit' : 'View',
-                              style: TextStyle(
-                                fontFamily: 'DMSans',
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: _isEditMode ? Colors.white : const Color(0xFF777777),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: !_isEditMode ? AppColors.primary : Colors.transparent,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'View',
+                                style: TextStyle(
+                                  fontFamily: 'DMSans',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: !_isEditMode ? Colors.white : const Color(0xFF777777),
+                                ),
                               ),
                             ),
                           ],
@@ -1482,6 +1505,14 @@ class _RegentcanvaState extends State<Regentcanva> {
             ),
           ),
           const SizedBox(height: 20),
+
+          // Username field
+          _selectable(id: 'signup_username', fullWidth: true, child: _buildLoginField(
+            label: _getTextForElement('signup_username_label') ?? 'Username',
+            hint: _getTextForElement('signup_username_hint') ?? '',
+            elementId: 'signup_username',
+          )),
+          const SizedBox(height: 12),
 
           // Email field
           _selectable(id: 'signup_email', fullWidth: true, child: _buildLoginField(

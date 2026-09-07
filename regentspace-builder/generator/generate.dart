@@ -367,6 +367,7 @@ class BuildGenerator {
       ..writeln('  final Map<String, Color> elementColors;')
       ..writeln('  final Map<String, Color> containerBackgrounds;')
       ..writeln('  final Map<int, Color> screenBackgrounds;')
+      ..writeln('  final Map<String, dynamic> _theme;')
       ..writeln()
       ..writeln('  const BuildConfig({')
       ..writeln('    required this.appId,')
@@ -377,7 +378,8 @@ class BuildGenerator {
       ..writeln('    required this.elementColors,')
       ..writeln('    required this.containerBackgrounds,')
       ..writeln('    required this.screenBackgrounds,')
-      ..writeln('  });')
+      ..writeln('    Map<String, dynamic> theme = const {},')
+      ..writeln('  }) : _theme = theme;')
       ..writeln()
       ..writeln('  /// The baked-in JSON string. Replaced by the generator.')
       ..writeln('  static const String _jsonString = \'{{BAKED_JSON}}\';')
@@ -428,6 +430,7 @@ class BuildGenerator {
       ..writeln('      elementColors: elementColors,')
       ..writeln('      containerBackgrounds: containerBackgrounds,')
       ..writeln('      screenBackgrounds: screenBackgrounds,')
+      ..writeln('      theme: m[\'theme\'] as Map<String, dynamic>? ?? {},')
       ..writeln('    );')
       ..writeln('  }')
       ..writeln()
@@ -459,6 +462,17 @@ class BuildGenerator {
       ..writeln('      return Image.memory(appIconBytes!, width: size, height: size, fit: BoxFit.contain);')
       ..writeln('    }')
       ..writeln('    return Icon(Icons.account_circle, size: size, color: color ?? getElementColor(\'intro_icon\'));')
+      ..writeln('  }')
+      ..writeln()
+      ..writeln('  /// Returns theme color from the theme block.')
+      ..writeln('  Color getThemeColor(String key, {Color? fallback}) {')
+      ..writeln('    try {')
+      ..writeln('      final hex = _theme[key] as String?;')
+      ..writeln('      if (hex != null && hex.isNotEmpty) {')
+      ..writeln('        return Color(int.parse(hex.replaceFirst(\'#\', \'0xFF\'), radix: 16));')
+      ..writeln('      }')
+      ..writeln('    } catch (_) {}')
+      ..writeln('    return fallback ?? const Color(0xFF6C0090);')
       ..writeln('  }')
       ..writeln('}');
 
@@ -792,7 +806,7 @@ class BuildGenerator {
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF6C0090),
+                                    color: config.getThemeColor('primaryColor'),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Text(count > 9 ? '9+' : '\x24count',
@@ -910,7 +924,7 @@ class BuildGenerator {
                                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Account number copied')));
                                               Navigator.pop(ctx);
                                             },
-                                            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C0090), foregroundColor: Colors.white,
+                                            style: ElevatedButton.styleFrom(backgroundColor: config.getThemeColor('primaryColor'), foregroundColor: Colors.white,
                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                                             child: Text('Copy Account Number', style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w600)),
                                           )),
@@ -1528,7 +1542,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final existing = await MonnifyService.instance.getUserAccountsOnce(cred.user!.uid);
         if (existing.docs.isEmpty) {
           if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Setting up your virtual account...'), backgroundColor: Color(0xFF740690), duration: Duration(seconds: 3)),
+            SnackBar(content: const Text('Setting up your virtual account...'), backgroundColor: config.getThemeColor('primaryColor'), duration: const Duration(seconds: 3)),
           );
           if (!MonnifyConfig.isConfigured) await MonnifyConfig.ensureConfigured();
           if (MonnifyConfig.isConfigured) {
@@ -1537,7 +1551,7 @@ class _LoginScreenState extends State<LoginScreen> {
               final bank = (doc['primaryBankName'] ?? 'your bank').toString();
               final acct = (doc['primaryAccountNumber'] ?? '').toString();
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(acct.isEmpty ? 'Virtual account ready at $bank' : 'Virtual account ready: $bank \u2022 $acct'), backgroundColor: Color(0xFF740690)),
+                SnackBar(content: Text(acct.isEmpty ? 'Virtual account ready at $bank' : 'Virtual account ready: $bank \u2022 $acct'), backgroundColor: config.getThemeColor('primaryColor')),
               );
             }
           }
@@ -1599,9 +1613,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(fontFamily: 'DMSans', fontSize: 13,
                   color: config.getElementColor('login_subtitle', fallback: const Color(0xFFAAAAAA)))),
               const SizedBox(height: 28),
-              _buildField('Email', 'you@example.com', controller: _emailCtrl, keyboardType: TextInputType.emailAddress),
+              _buildField('Email', 'you@example.com', controller: _emailCtrl, keyboardType: TextInputType.emailAddress, elementId: 'login_email'),
               const SizedBox(height: 16),
-              _buildField('Password', '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022', controller: _passCtrl, obscure: true),
+              _buildField('Password', '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022', controller: _passCtrl, obscure: true, elementId: 'login_password'),
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
@@ -1663,23 +1677,29 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildField(String label, String hint, {TextEditingController? controller, bool obscure = false, TextInputType? keyboardType}) {
+  Widget _buildField(String label, String hint, {TextEditingController? controller, bool obscure = false, TextInputType? keyboardType, String? elementId}) {
+    final labelColor = elementId != null ? config.getElementColor('${elementId}_label', fallback: const Color(0xFF888888)) : const Color(0xFF888888);
+    final bgColor = elementId != null ? config.getContainerBg(elementId, fallback: Colors.white) : Colors.white;
+    final borderColor = elementId != null ? config.getContainerBg('${elementId}_border', fallback: const Color(0xFFE0E0E0)) : const Color(0xFFE0E0E0);
+    final hintColor = elementId != null ? config.getElementColor('${elementId}_hint', fallback: const Color(0xFFC0C0C0)) : const Color(0xFFC0C0C0);
+    final displayLabel = elementId != null ? config.getText('${elementId}_label', fallback: label) : label;
+    final displayHint = elementId != null ? config.getText('${elementId}_hint', fallback: hint) : hint;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontFamily: 'DMSans', fontSize: 12, color: Color(0xFF888888))),
+        Text(displayLabel, style: TextStyle(fontFamily: 'DMSans', fontSize: 12, color: labelColor)),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
           obscureText: obscure,
           keyboardType: keyboardType,
           decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(fontFamily: 'DMSans', fontSize: 13, color: Color(0xFFC0C0C0)),
+            hintText: displayHint,
+            hintStyle: TextStyle(fontFamily: 'DMSans', fontSize: 13, color: hintColor),
             filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xFFE0E0E0))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xFFE0E0E0))),
+            fillColor: bgColor,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: borderColor)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: borderColor)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
           style: TextStyle(fontFamily: 'DMSans', fontSize: 13),
@@ -1761,7 +1781,7 @@ class _SignupScreenState extends State<SignupScreen> {
         final existing = await MonnifyService.instance.getUserAccountsOnce(cred.user!.uid);
         if (existing.docs.isEmpty) {
           if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Virtual account is being created...'), backgroundColor: Color(0xFF740690), duration: Duration(seconds: 3)),
+            SnackBar(content: const Text('Virtual account is being created...'), backgroundColor: config.getThemeColor('primaryColor'), duration: const Duration(seconds: 3)),
           );
           if (!MonnifyConfig.isConfigured) await MonnifyConfig.ensureConfigured();
           if (MonnifyConfig.isConfigured) {
@@ -1770,7 +1790,7 @@ class _SignupScreenState extends State<SignupScreen> {
               final bank = (doc['primaryBankName'] ?? 'your bank').toString();
               final acct = (doc['primaryAccountNumber'] ?? '').toString();
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(acct.isEmpty ? 'Virtual account ready at $bank' : 'Virtual account ready: $bank \u2022 $acct'), backgroundColor: Color(0xFF740690)),
+                SnackBar(content: Text(acct.isEmpty ? 'Virtual account ready at $bank' : 'Virtual account ready: $bank \u2022 $acct'), backgroundColor: config.getThemeColor('primaryColor')),
               );
             }
           }
@@ -1835,13 +1855,13 @@ class _SignupScreenState extends State<SignupScreen> {
                 style: TextStyle(fontFamily: 'DMSans', fontSize: 13,
                   color: config.getElementColor('signup_subtitle', fallback: const Color(0xFFAAAAAA)))),
               const SizedBox(height: 28),
-              _buildField('Username', 'e.g. John', controller: _usernameCtrl),
+              _buildField('Username', 'e.g. John', controller: _usernameCtrl, elementId: 'signup_username'),
               const SizedBox(height: 16),
-              _buildField('Email', 'you@example.com', controller: _emailCtrl, keyboardType: TextInputType.emailAddress),
+              _buildField('Email', 'you@example.com', controller: _emailCtrl, keyboardType: TextInputType.emailAddress, elementId: 'signup_email'),
               const SizedBox(height: 16),
-              _buildField('Password', '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022', controller: _passCtrl, obscure: true),
+              _buildField('Password', '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022', controller: _passCtrl, obscure: true, elementId: 'signup_password'),
               const SizedBox(height: 16),
-              _buildField('Confirm Password', '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022', controller: _confirmCtrl, obscure: true),
+              _buildField('Confirm Password', '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022', controller: _confirmCtrl, obscure: true, elementId: 'signup_confirm'),
               if (_error != null) ...[
                 const SizedBox(height: 12),
                 Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 12)),
@@ -1896,23 +1916,29 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  Widget _buildField(String label, String hint, {TextEditingController? controller, bool obscure = false, TextInputType? keyboardType}) {
+  Widget _buildField(String label, String hint, {TextEditingController? controller, bool obscure = false, TextInputType? keyboardType, String? elementId}) {
+    final labelColor = elementId != null ? config.getElementColor('${elementId}_label', fallback: const Color(0xFF888888)) : const Color(0xFF888888);
+    final bgColor = elementId != null ? config.getContainerBg(elementId, fallback: Colors.white) : Colors.white;
+    final borderColor = elementId != null ? config.getContainerBg('${elementId}_border', fallback: const Color(0xFFE0E0E0)) : const Color(0xFFE0E0E0);
+    final hintColor = elementId != null ? config.getElementColor('${elementId}_hint', fallback: const Color(0xFFC0C0C0)) : const Color(0xFFC0C0C0);
+    final displayLabel = elementId != null ? config.getText('${elementId}_label', fallback: label) : label;
+    final displayHint = elementId != null ? config.getText('${elementId}_hint', fallback: hint) : hint;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontFamily: 'DMSans', fontSize: 12, color: Color(0xFF888888))),
+        Text(displayLabel, style: TextStyle(fontFamily: 'DMSans', fontSize: 12, color: labelColor)),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
           obscureText: obscure,
           keyboardType: keyboardType,
           decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(fontFamily: 'DMSans', fontSize: 13, color: Color(0xFFC0C0C0)),
+            hintText: displayHint,
+            hintStyle: TextStyle(fontFamily: 'DMSans', fontSize: 13, color: hintColor),
             filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xFFE0E0E0))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xFFE0E0E0))),
+            fillColor: bgColor,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: borderColor)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: borderColor)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
           style: TextStyle(fontFamily: 'DMSans', fontSize: 13),

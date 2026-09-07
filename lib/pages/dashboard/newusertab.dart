@@ -14,18 +14,32 @@ class BuilderFirestore {
   static Future<FirebaseFirestore> get instance async {
     if (_db != null) return _db!;
 
-    _app = await Firebase.initializeApp(
-      name: 'regentspace-builder',
-      options: const FirebaseOptions(
-        apiKey: 'AIzaSyDKvRGEE-9HcPtrJqrAlR0ZD4020BKa9NQ',
-        appId: '1:540697819834:android:fea3c4853d6afb31c82083',
-        messagingSenderId: '540697819834',
-        projectId: 'regentspace-builder',
-        storageBucket: 'regentspace-builder.firebasestorage.app',
-      ),
-    );
-    _db = FirebaseFirestore.instanceFor(app: _app!);
-    return _db!;
+    // Check if app already initialized (e.g. from another widget)
+    try {
+      _app = Firebase.app('regentspace-builder');
+      _db = FirebaseFirestore.instanceFor(app: _app!);
+      return _db!;
+    } catch (_) {
+      // Not initialized yet, continue
+    }
+
+    try {
+      _app = await Firebase.initializeApp(
+        name: 'regentspace-builder',
+        options: const FirebaseOptions(
+          apiKey: 'AIzaSyDKvRGEE-9HcPtrJqrAlR0ZD4020BKa9NQ',
+          appId: '1:540697819834:android:fea3c4853d6afb31c82083',
+          messagingSenderId: '540697819834',
+          projectId: 'regentspace-builder',
+          storageBucket: 'regentspace-builder.firebasestorage.app',
+        ),
+      );
+      _db = FirebaseFirestore.instanceFor(app: _app!);
+      return _db!;
+    } catch (e) {
+      debugPrint('[BuilderFirestore] Init error: $e');
+      rethrow;
+    }
   }
 }
 

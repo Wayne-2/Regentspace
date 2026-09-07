@@ -10,6 +10,8 @@ import '../../service/monnify_service.dart';
 import '../../service/monnify_config.dart';
 import '../../service/user_repository.dart';
 import 'managerates.dart';
+import 'monitor_interest.dart';
+import 'all_recent_activity.dart';
 
 class Finances extends StatefulWidget {
   const Finances({super.key});
@@ -375,7 +377,7 @@ class _FinancesState extends State<Finances> {
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: () {},
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MonitorInterestPage())),
                           borderRadius: BorderRadius.circular(14),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -436,17 +438,11 @@ class _FinancesState extends State<Finances> {
                       const SizedBox(height: 12),
                       Row(
                         children: [
+                          Expanded(child: _buildSummaryTile("Interest Rate", "25%")),
+                          Container(width: 1, height: 32, color: AppColors.primaryLight),
                           Expanded(child: _buildSummaryTile("Today's Earnings", "₦2,000.00")),
                           Container(width: 1, height: 32, color: AppColors.primaryLight),
-                          Expanded(child: _buildSummaryTile("Week's Earnings", "₦5,300.00")),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildSummaryDetail("Interest Rate", "25%"),
-                          _buildSummaryDetail("Withdrawal Balance", "₦22,550.00"),
+                          Expanded(child: _buildSummaryTile("Withdrawal Balance", "₦22,550.00")),
                         ],
                       ),
                     ],
@@ -463,14 +459,17 @@ class _FinancesState extends State<Finances> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Recent Activity', style: AppTextStyles.title(color: AppColors.textPrimary)),
-                    Text('See all', style: AppTextStyles.caption(color: AppColors.accent)),
+                    GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AllRecentActivityPage())),
+                      child: Text('See all', style: AppTextStyles.caption(color: AppColors.accent)),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 8),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
-                child: RecentActivities(),
+                child: RecentActivities(limit: 5),
               ),
               const SizedBox(height: 20),
             ],
@@ -483,20 +482,9 @@ class _FinancesState extends State<Finances> {
   Widget _buildSummaryTile(String label, String value) {
     return Column(
       children: [
-        Text(label, style: AppTextStyles.caption(color: AppColors.accent)),
+        Text(label, style: AppTextStyles.caption(color: AppColors.accent), textAlign: TextAlign.center),
         const SizedBox(height: 2),
-        Text(value, style: AppTextStyles.titleSmall(color: AppColors.textPrimary)),
-      ],
-    );
-  }
-
-  Widget _buildSummaryDetail(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: AppTextStyles.caption(color: AppColors.textTertiary)),
-        const SizedBox(height: 2),
-        Text(value, style: AppTextStyles.title(color: AppColors.textPrimary)),
+        Text(value, style: AppTextStyles.titleSmall(color: AppColors.textPrimary), textAlign: TextAlign.center),
       ],
     );
   }

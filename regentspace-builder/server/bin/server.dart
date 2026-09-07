@@ -17,7 +17,7 @@ import 'package:path/path.dart' as p;
 ///   cd server && dart run bin/server.dart [--port 8080]
 
 void main(List<String> args) async {
-  var port = 8080;
+  var port = int.tryParse(Platform.environment['PORT'] ?? '') ?? 8080;
 
   for (var i = 0; i < args.length; i++) {
     if (args[i] == '--port' && i + 1 < args.length) {

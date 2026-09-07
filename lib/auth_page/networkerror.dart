@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../theme/app_theme.dart';
 
 class Networkerror extends StatefulWidget {
@@ -14,7 +13,6 @@ class Networkerror extends StatefulWidget {
 }
 
 class _NetworkerrorState extends State<Networkerror> {
-  bool _isRetrying = false;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
   @override
@@ -29,8 +27,8 @@ class _NetworkerrorState extends State<Networkerror> {
 
     _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
       final hasConnection = results.any((r) => r != ConnectivityResult.none);
-      if (hasConnection && mounted && !_isRetrying) {
-        _popAndRetry();
+      if (hasConnection && mounted) {
+        _retry();
       }
     });
   }
@@ -41,15 +39,11 @@ class _NetworkerrorState extends State<Networkerror> {
     super.dispose();
   }
 
-  /// Pop back to Loadingpage, then trigger retry.
-  void _popAndRetry() {
+  void _retry() {
     if (!mounted) return;
-    _isRetrying = true;
-    // Pop this page — the Loadingpage underneath will show loading animation
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
     }
-    // Fire retry (sets _firebaseOk = null → Loadingpage shows loading)
     widget.onRetry();
   }
 
@@ -93,7 +87,7 @@ class _NetworkerrorState extends State<Networkerror> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _isRetrying ? null : _popAndRetry,
+                    onPressed: _retry,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -104,9 +98,7 @@ class _NetworkerrorState extends State<Networkerror> {
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       elevation: 0,
                     ),
-                    child: _isRetrying
-                        ? LoadingAnimationWidget.fourRotatingDots(size: 24, color: Colors.white)
-                        : const Text('Retry'),
+                    child: const Text('Retry'),
                   ),
                 ),
               ],

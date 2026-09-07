@@ -1,119 +1,321 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../../components/userpfp.dart';
+import '../../theme/app_theme.dart';
+import '../../service/user_repository.dart';
+import '../../service/auth_service.dart';
+import '../../auth_page/login.dart';
+import '../../components/notificationpage.dart';
+import 'personal_info_page.dart';
+import 'security_page.dart';
+import 'appearance_page.dart';
+import 'help_support_page.dart';
+import 'about_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
-  static const mockUser = {
-    'username': 'John Doe',
-    'email': 'john@example.com',
-  };
-
   @override
   Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(253, 244, 255, 1),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: const Color.fromRGBO(234, 197, 247, 1),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black.withOpacity(0.04)),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Text("Profile", style: AppTextStyles.headline(color: AppColors.textPrimary)),
               ),
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  const UserAvatar(name: 'John Doe', size: 42),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          mockUser['username']!,
-                          style: TextStyle(fontFamily: 'DMSans', fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1F1F1F)),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          mockUser['email']!,
-                          style: TextStyle(fontFamily: 'DMSans', color: Colors.black54, fontSize: 12.5, fontWeight: FontWeight.w400),
-                        ),
-                      ],
+
+              // ── User Info Card ──
+              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: uid == null ? null : UserRepository.instance.watchUser(uid),
+                builder: (context, snap) {
+                  final data = snap.data?.data();
+                  final username = (data?['username'] ?? data?['displayName'] ?? 'User') as String;
+                  final email = (data?['email'] ?? '') as String;
+                  final phone = (data?['phone'] ?? '') as String;
+                  final initials = username.length >= 2 ? username.substring(0, 2).toUpperCase() : username.toUpperCase();
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySoft,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.primaryLight, width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFDF4FF),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFEAC5F7), width: 1),
+                            ),
+                            child: Center(
+                              child: Text(initials, style: AppTextStyles.title(color: AppColors.primary)),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(username, style: AppTextStyles.title(color: AppColors.textPrimary)),
+                                const SizedBox(height: 2),
+                                Text(email, style: AppTextStyles.caption(color: AppColors.textTertiary)),
+                                if (phone.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(phone, style: AppTextStyles.caption(color: AppColors.textTertiary)),
+                                ],
+                              ],
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalInfoPage())),
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.edit_rounded, size: 18, color: AppColors.primary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Account Settings ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text('Account Settings', style: AppTextStyles.titleSmall(color: AppColors.textPrimary)),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    children: [
+                      _SettingTile(
+                        icon: Icons.person_outline_rounded,
+                        title: 'Personal Information',
+                        subtitle: 'Edit your profile details',
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalInfoPage())),
+                      ),
+                      _divider,
+                      _SettingTile(
+                        icon: Icons.shield_outlined,
+                        title: 'Security & Privacy',
+                        subtitle: 'Password and security settings',
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityPage())),
+                      ),
+                      _divider,
+                      _SettingTile(
+                        icon: Icons.notifications_outlined,
+                        title: 'Notifications',
+                        subtitle: 'Manage notification preferences',
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationPage())),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── App Settings ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text('App Settings', style: AppTextStyles.titleSmall(color: AppColors.textPrimary)),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    children: [
+                      _SettingTile(
+                        icon: Icons.palette_outlined,
+                        title: 'Appearance',
+                        subtitle: 'Theme and display settings',
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AppearancePage())),
+                      ),
+                      _divider,
+                      _SettingTile(
+                        icon: Icons.help_outline_rounded,
+                        title: 'Help & Support',
+                        subtitle: 'FAQs and contact support',
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportPage())),
+                      ),
+                      _divider,
+                      _SettingTile(
+                        icon: Icons.info_outline_rounded,
+                        title: 'About Regentspace',
+                        subtitle: 'Version and legal information',
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutPage())),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── Logout ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showLogoutDialog(context),
+                    icon: const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
+                    label: Text('Log Out', style: AppTextStyles.body(color: AppColors.error)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.error, width: 1),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
-                  Icon(Icons.edit_outlined, color: Colors.grey[600], size: 20),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Account Settings',
-              style: TextStyle(fontFamily: 'DMSans', color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.2),
-            ),
-            const SizedBox(height: 10),
-            _SettingTile(icon: Icons.person, title: 'Personal Information', onTap: _staticSnack),
-            _SettingTile(icon: Icons.security, title: 'Security & Privacy', onTap: _staticSnack),
-            _SettingTile(icon: Icons.notifications, title: 'Notifications', onTap: _staticSnack),
-            const SizedBox(height: 20),
-            Text(
-              'App Settings',
-              style: TextStyle(fontFamily: 'DMSans', color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.2),
-            ),
-            const SizedBox(height: 10),
-            _SettingTile(icon: Icons.wb_sunny, title: 'Appearance', onTap: _staticSnack),
-            _SettingTile(icon: Icons.help_outline, title: 'Help & Support', onTap: _staticSnack),
-            _SettingTile(icon: Icons.info_outline, title: 'About Regentspace', onTap: _staticSnack),
-            const SizedBox(height: 20),
-            TextButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.logout, color: Colors.red),
-              label: Text('Logout', style: TextStyle(fontFamily: 'DMSans', color: Colors.red)),
-            ),
-          ],
+
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  static void _staticSnack() {
-    // static placeholder — no action
+  static Widget get _divider => const Divider(height: 1, thickness: 0.5, indent: 48, color: AppColors.border);
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text("Log Out", style: AppTextStyles.title(color: AppColors.textPrimary)),
+        content: Text("Are you sure you want to log out?", style: AppTextStyles.body(color: AppColors.textSecondary)),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.primarySoft,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textSecondary)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await AuthService().signOutGoogle();
+                    if (context.mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const Loginpage()),
+                        (_) => false,
+                      );
+                    }
+                  },
+                  child: Text("Log Out", style: AppTextStyles.body(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
 class _SettingTile extends StatelessWidget {
   final IconData icon;
   final String title;
+  final String subtitle;
   final VoidCallback onTap;
 
-  const _SettingTile({required this.icon, required this.title, required this.onTap});
+  const _SettingTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$title tapped (static demo)'), backgroundColor: const Color(0xFF740690)),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black.withOpacity(0.04)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.grey[800], size: 20),
-            const SizedBox(width: 12),
-            Expanded(child: Text(title, style: TextStyle(fontFamily: 'DMSans', fontSize: 13.5, color: Colors.black87, fontWeight: FontWeight.w500))),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.black26),
-          ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTextStyles.body(color: AppColors.textPrimary)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: AppTextStyles.caption(color: AppColors.textTertiary)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textHint),
+            ],
+          ),
         ),
       ),
     );

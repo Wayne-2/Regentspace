@@ -73,12 +73,52 @@ sed -i "s/{{PACKAGE_NAME}}/$PACKAGE_NAME/g" "$WORKSPACE/android/app/build.gradle
 sed -i "s/{{VERSION_CODE}}/$VERSION_CODE/g" "$WORKSPACE/android/app/build.gradle.kts"
 sed -i "s/{{VERSION_NAME}}/$APP_VERSION/g" "$WORKSPACE/android/app/build.gradle.kts"
 
-# [7] Add user assets (if provided)
-echo "[7/10] Checking for user assets..."
-ICON_PATH=$(jq -r '.app.iconPath // ""' "$INPUT_JSON")
-if [ -n "$ICON_PATH" ] && [ -f "$ICON_PATH" ]; then
-    echo "  Found app icon: $ICON_PATH"
-    # Copy icon to mipmap directories (would need image processing)
+# [7] Generate launcher icon from base64 (if provided)
+echo "[7/10] Generating launcher icon..."
+ICON_BASE64=$(jq -r '.app.iconBase64 // ""' "$INPUT_JSON")
+if [ -n "$ICON_BASE64" ]; then
+    echo "  Decoding app icon from build JSON..."
+    ICON_TMP="$WORKSPACE/icon_input.png"
+    echo "$ICON_BASE64" | base64 -d > "$ICON_TMP"
+
+    # Use Python + Pillow to resize and overwrite mipmap icons
+    python3 - "$ICON_TMP" "$WORKSPACE/android/app/src/main/res" << 'PYEOF'
+import sys
+from PIL import Image
+
+icon_path = sys.argv[1]
+res_dir = sys.argv[2]
+
+# Android mipmap sizes: density -> (size, folder)
+densities = {
+    'mdpi':    48,
+    'hdpi':    72,
+    'xhdpi':   96,
+    'xxhdpi':  144,
+    'xxxhdpi': 192,
+}
+
+img = Image.open(icon_path).convert('RGBA')
+
+for density, size in densities.items():
+    folder = f'{res_dir}/mipmap-{density}'
+    resized = img.resize((size, size), Image.LANCZOS)
+    resized.save(f'{folder}/ic_launcher.png', 'PNG')
+    # Also update the notification icon
+    resized.save(f'{folder}/notification_display_icon.png', 'PNG')
+
+# Also update the drawable notification icon (use xxxhdpi size)
+drawable_dir = f'{res_dir}/drawable'
+img_96 = img.resize((96, 96), Image.LANCZOS)
+img_96.save(f'{drawable_dir}/notification_display_icon.png', 'PNG')
+
+print(f'  Icon resized to {len(densities)} densities')
+PYEOF
+
+    rm -f "$ICON_TMP"
+    echo "  Launcher icon updated"
+else
+    echo "  No custom icon — using default"
 fi
 
 # [8] Resolve dependencies

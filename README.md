@@ -16,3 +16,8 @@ For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 # Regentspace
+
+To 
+nohup dart run bin/server.dart --port 8080 > /tmp/build-server.log 2>&1 &
+nohup ~/cloudflared tunnel --url http://localhost:8080 > /tmp/cloudflared.log 2>&1 &
+# Check URL: grep -o 'https://.*trycloudflare.com' /tmp/cloudflared.log
