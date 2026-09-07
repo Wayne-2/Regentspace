@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../theme/app_theme.dart';
 import '../../service/user_repository.dart';
 
@@ -103,7 +104,28 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
         ),
       ),
       body: !_initialized
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? Center(
+              child: Shimmer.fromColors(
+                baseColor: Colors.grey[300]!,
+                highlightColor: Colors.grey[100]!,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(width: 80, height: 80, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16))),
+                    const SizedBox(height: 24),
+                    Container(width: 160, height: 14, color: Colors.white),
+                    const SizedBox(height: 12),
+                    Container(width: 200, height: 12, color: Colors.white),
+                    const SizedBox(height: 24),
+                    Container(width: double.infinity, height: 48, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+                    const SizedBox(height: 16),
+                    Container(width: double.infinity, height: 48, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+                    const SizedBox(height: 16),
+                    Container(width: double.infinity, height: 48, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+                  ],
+                ),
+              ),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Form(

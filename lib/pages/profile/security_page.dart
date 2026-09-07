@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 
@@ -21,9 +22,10 @@ class _SecurityPageState extends State<SecurityPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Change Password", style: AppTextStyles.title(color: AppColors.textPrimary)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        title: Text("Change Password", textAlign: TextAlign.center, style: AppTextStyles.title(color: AppColors.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -34,68 +36,64 @@ class _SecurityPageState extends State<SecurityPage> {
             _buildDialogField("Confirm New Password", confirmCtrl, obscure: true),
           ],
         ),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
-          Row(
+          Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppColors.primarySoft,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textSecondary)),
+              const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: const RoundedRectangleBorder(),
+                  minimumSize: const Size(double.infinity, 48),
                 ),
+                child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textSecondary)),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    elevation: 0,
-                  ),
-                  onPressed: () async {
-                    if (newCtrl.text != confirmCtrl.text) {
+              const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+              TextButton(
+                onPressed: () async {
+                  if (newCtrl.text != confirmCtrl.text) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Passwords do not match'), backgroundColor: AppColors.error),
+                    );
+                    return;
+                  }
+                  if (newCtrl.text.length < 6) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Password must be at least 6 characters'), backgroundColor: AppColors.error),
+                    );
+                    return;
+                  }
+                  try {
+                    final user = FirebaseAuth.instance.currentUser;
+                    if (user == null) return;
+                    final cred = EmailAuthProvider.credential(
+                      email: user.email!,
+                      password: currentCtrl.text,
+                    );
+                    await user.reauthenticateWithCredential(cred);
+                    await user.updatePassword(newCtrl.text);
+                    if (context.mounted) {
+                      Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Passwords do not match'), backgroundColor: AppColors.error),
+                        const SnackBar(content: Text('Password updated successfully'), backgroundColor: AppColors.primary),
                       );
-                      return;
                     }
-                    if (newCtrl.text.length < 6) {
+                  } catch (e) {
+                    if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Password must be at least 6 characters'), backgroundColor: AppColors.error),
+                        SnackBar(content: Text('Failed: $e'), backgroundColor: AppColors.error),
                       );
-                      return;
                     }
-                    try {
-                      final user = FirebaseAuth.instance.currentUser;
-                      if (user == null) return;
-                      final cred = EmailAuthProvider.credential(
-                        email: user.email!,
-                        password: currentCtrl.text,
-                      );
-                      await user.reauthenticateWithCredential(cred);
-                      await user.updatePassword(newCtrl.text);
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Password updated successfully'), backgroundColor: AppColors.primary),
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed: $e'), backgroundColor: AppColors.error),
-                        );
-                      }
-                    }
-                  },
-                  child: Text("Update", style: AppTextStyles.body(color: Colors.white)),
+                  }
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: const RoundedRectangleBorder(),
+                  minimumSize: const Size(double.infinity, 48),
                 ),
+                child: Text("Update", style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
               ),
             ],
           ),

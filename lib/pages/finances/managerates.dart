@@ -72,14 +72,15 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(title, style: AppTextStyles.title(color: AppColors.textPrimary)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          title: Text(title, textAlign: TextAlign.center, style: AppTextStyles.title(color: AppColors.textPrimary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: AppTextStyles.caption(color: AppColors.textTertiary)),
+              Text(label, textAlign: TextAlign.center, style: AppTextStyles.body(color: AppColors.textSecondary)),
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
@@ -104,39 +105,35 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
               ],
             ],
           ),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
-            Row(
+            Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: TextButton.styleFrom(
-                      backgroundColor: AppColors.primarySoft,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textSecondary)),
+                Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                TextButton(
+                  onPressed: () {
+                    final newValue = double.tryParse(controller.text);
+                    if (newValue != null) {
+                      onSave(newValue);
+                      Navigator.pop(context);
+                    }
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: const RoundedRectangleBorder(),
+                    minimumSize: const Size(double.infinity, 48),
                   ),
+                  child: Text("Save", style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      final newValue = double.tryParse(controller.text);
-                      if (newValue != null) {
-                        onSave(newValue);
-                        Navigator.pop(context);
-                      }
-                    },
-                    child: Text("Save", style: AppTextStyles.body(color: Colors.white)),
+                Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: const RoundedRectangleBorder(),
+                    minimumSize: const Size(double.infinity, 48),
                   ),
+                  child: Text("Cancel", style: AppTextStyles.body(color: AppColors.primary)),
                 ),
               ],
             ),
@@ -201,9 +198,10 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text("Transaction Limits", style: AppTextStyles.title(color: AppColors.textPrimary)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          title: Text("Transaction Limits", textAlign: TextAlign.center, style: AppTextStyles.title(color: AppColors.textPrimary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -236,41 +234,37 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
               ),
             ],
           ),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
-            Row(
+            Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: TextButton.styleFrom(
-                      backgroundColor: AppColors.primarySoft,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textSecondary)),
+                Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                TextButton(
+                  onPressed: () {
+                    final minVal = double.tryParse(minCtrl.text) ?? 100;
+                    final maxVal = double.tryParse(maxCtrl.text) ?? 500000;
+                    setState(() {
+                      minTransaction = minVal;
+                      maxTransaction = maxVal;
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: const RoundedRectangleBorder(),
+                    minimumSize: const Size(double.infinity, 48),
                   ),
+                  child: Text("Save", style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      final minVal = double.tryParse(minCtrl.text) ?? 100;
-                      final maxVal = double.tryParse(maxCtrl.text) ?? 500000;
-                      setState(() {
-                        minTransaction = minVal;
-                        maxTransaction = maxVal;
-                      });
-                      Navigator.pop(context);
-                    },
-                    child: Text("Save", style: AppTextStyles.body(color: Colors.white)),
+                Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: const RoundedRectangleBorder(),
+                    minimumSize: const Size(double.infinity, 48),
                   ),
+                  child: Text("Cancel", style: AppTextStyles.body(color: AppColors.primary)),
                 ),
               ],
             ),

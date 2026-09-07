@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -170,10 +172,17 @@ class _DashboardState extends State<Dashboard> {
                                 children: [
                                   Text('Setting up...', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500, color: Color.fromARGB(219, 25, 27, 35))),
                                   const SizedBox(width: 6),
-                                  SizedBox(
-                                    width: 12,
-                                    height: 12,
-                                    child: CircularProgressIndicator(strokeWidth: 1.8, color: Color(0xFF740690)),
+                                  Shimmer.fromColors(
+                                    baseColor: const Color(0xFF740690).withOpacity(0.3),
+                                    highlightColor: const Color(0xFF740690).withOpacity(0.1),
+                                    child: Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF740690),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -829,7 +838,18 @@ class _AddMoneySheetState extends State<_AddMoneySheet> {
                             padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.black.withOpacity(0.04))),
                             child: Row(children: [
-                              const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF740690))),
+                              Shimmer.fromColors(
+                                baseColor: const Color(0xFF740690).withOpacity(0.3),
+                                highlightColor: const Color(0xFF740690).withOpacity(0.1),
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF740690),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
                               const SizedBox(width: 12),
                               const Expanded(child: Text('Virtual account is being created... Pull down on dashboard to refresh.', style: TextStyle(fontFamily: 'DMSans', fontSize: 12.5))),
                             ]),
@@ -972,7 +992,96 @@ class _TipRow extends StatelessWidget {
   }
 }
 
-class _BuildResultBanner extends StatelessWidget {
+class _BuildResultBanner extends StatefulWidget {
+  @override
+  State<_BuildResultBanner> createState() => _BuildResultBannerState();
+}
+
+class _BuildResultBannerState extends State<_BuildResultBanner> {
+  Timer? _elapsedTimer;
+  Duration _elapsed = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _startElapsedTimer();
+  }
+
+  void _startElapsedTimer() {
+    _elapsedTimer?.cancel();
+    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final builds = BuildTracker.instance.builds.value;
+      final active = builds.where((b) => b.status == 'building' || b.status == 'preparing');
+      if (active.isEmpty) {
+        _elapsedTimer?.cancel();
+        return;
+      }
+      setState(() {
+        _elapsed += const Duration(seconds: 1);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _elapsedTimer?.cancel();
+    super.dispose();
+  }
+
+  String _fmtElapsed(Duration d) {
+    final m = d.inMinutes;
+    final s = d.inSeconds % 60;
+    if (m == 0) return '${s}s';
+    return '${m}m ${s}s';
+  }
+
+  void _showCancelDialog(BuildContext context, BuildInfo build) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        title: Text('Cancel Build?', textAlign: TextAlign.center, style: AppTextStyles.title(color: AppColors.textPrimary)),
+        content: Text(
+          'Are you sure you want to cancel building "${build.appName}"? This cannot be undone.',
+          textAlign: TextAlign.center,
+          style: AppTextStyles.body(color: AppColors.textSecondary),
+        ),
+        actions: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: const RoundedRectangleBorder(),
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+                child: Text('No, keep', style: AppTextStyles.body(color: AppColors.textSecondary)),
+              ),
+              const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  BuildTracker.instance.cancelBuild(build.buildId);
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: const RoundedRectangleBorder(),
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+                child: Text('Yes, cancel', style: AppTextStyles.body(color: AppColors.error).copyWith(fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<List<BuildInfo>>(
@@ -981,43 +1090,59 @@ class _BuildResultBanner extends StatelessWidget {
         if (builds.isEmpty) return const SizedBox.shrink();
 
         final latest = builds.first;
-        final isBuilding = latest.status == 'building';
+        final isBuilding = latest.status == 'building' || latest.status == 'preparing';
         final isCompleted = latest.status == 'completed';
         final isFailed = latest.status == 'failed';
+        final isCancelled = latest.status == 'cancelled';
+
+        // Restart timer when build starts
+        if (isBuilding && (_elapsedTimer == null || !_elapsedTimer!.isActive)) {
+          _elapsed = Duration.zero;
+          _startElapsedTimer();
+        }
 
         final bgColor = isCompleted
             ? const Color(0xFFE8F5E9)
-            : isFailed
+            : isFailed || isCancelled
                 ? const Color(0xFFFFEBEE)
                 : const Color(0xFFF3E5F5);
         final borderColor = isCompleted
             ? const Color(0xFF00875A)
-            : isFailed
+            : isFailed || isCancelled
                 ? const Color(0xFFC62828)
                 : const Color(0xFF740690);
         final iconColor = isCompleted
             ? const Color(0xFF00875A)
-            : isFailed
+            : isFailed || isCancelled
                 ? const Color(0xFFC62828)
                 : const Color(0xFF740690);
 
         final icon = isCompleted
             ? Icons.check_circle_rounded
-            : isFailed
-                ? Icons.error_rounded
-                : Icons.build_rounded;
+            : isCancelled
+                ? Icons.cancel_rounded
+                : isFailed
+                    ? Icons.error_rounded
+                    : Icons.build_rounded;
 
         final title = isCompleted
             ? 'Build Complete'
-            : isFailed
-                ? 'Build Failed'
-                : 'Building ${latest.appName}...';
+            : isCancelled
+                ? 'Build Cancelled'
+                : isFailed
+                    ? 'Build Failed'
+                    : 'Building ${latest.appName}...';
 
-        final subtitle = isCompleted
-            ? '${latest.appName} is ready to download'
-            : isFailed
-                ? latest.error ?? 'An error occurred during build'
-                : 'This may take a few minutes';
+        String subtitle;
+        if (isBuilding) {
+          subtitle = 'Elapsed: ${_fmtElapsed(_elapsed)} — Please keep the app open';
+        } else if (isFailed) {
+          subtitle = _sanitizeError(latest.error ?? 'An error occurred during build');
+        } else if (isCancelled) {
+          subtitle = 'The build was cancelled. You can restart from the canva.';
+        } else {
+          subtitle = '${latest.appName} is ready to download';
+        }
 
         final sizeText = latest.apkSize != null
             ? '${(latest.apkSize! / 1024 / 1024).toStringAsFixed(1)} MB'
@@ -1031,72 +1156,121 @@ class _BuildResultBanner extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: borderColor.withOpacity(0.3)),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: borderColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: isBuilding
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: iconColor,
-                        ),
-                      )
-                    : Icon(icon, size: 19, color: iconColor),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w700, color: borderColor)),
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: TextStyle(fontFamily: 'DMSans', fontSize: 11, color: Colors.black.withOpacity(0.55))),
-                    if (sizeText.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(sizeText, style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: Colors.black.withOpacity(0.4))),
-                    ],
-                  ],
-                ),
-              ),
-              if (isCompleted && latest.downloadUrl != null) ...[
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () async {
-                    final url = Uri.parse('$kBuildServerUrl${latest.downloadUrl}');
-                    await launchUrl(url, mode: LaunchMode.externalApplication);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00875A),
+                      color: borderColor.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
+                    child: isBuilding
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: iconColor,
+                            ),
+                          )
+                        : Icon(icon, size: 19, color: iconColor),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.download_rounded, size: 14, color: Colors.white),
-                        SizedBox(width: 4),
-                        Text('Download', style: TextStyle(fontFamily: 'DMSans', fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
+                        Text(title, style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w700, color: borderColor)),
+                        const SizedBox(height: 2),
+                        Text(subtitle, style: TextStyle(fontFamily: 'DMSans', fontSize: 11, color: Colors.black.withOpacity(0.55)), maxLines: 2, overflow: TextOverflow.ellipsis),
+                        if (sizeText.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(sizeText, style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: Colors.black.withOpacity(0.4))),
+                        ],
                       ],
                     ),
                   ),
-                ),
-              ],
-              if (isCompleted || isFailed) ...[
-                const SizedBox(width: 4),
-                GestureDetector(
-                  onTap: () => BuildTracker.instance.dismissBuild(0),
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(Icons.close_rounded, size: 16, color: Colors.black.withOpacity(0.3)),
+                  if (isBuilding) ...[
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _showCancelDialog(context, latest),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC62828).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFC62828).withOpacity(0.3)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.stop_rounded, size: 14, color: Color(0xFFC62828)),
+                            SizedBox(width: 4),
+                            Text('Cancel', style: TextStyle(fontFamily: 'DMSans', fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFFC62828))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (isCompleted && latest.downloadUrl != null) ...[
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () async {
+                        final url = Uri.parse('$kBuildServerUrl${latest.downloadUrl}');
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00875A),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.download_rounded, size: 14, color: Colors.white),
+                            SizedBox(width: 4),
+                            Text('Download', style: TextStyle(fontFamily: 'DMSans', fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (isCompleted || isFailed || isCancelled) ...[
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () => BuildTracker.instance.dismissBuild(0),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.close_rounded, size: 16, color: Colors.black.withOpacity(0.4)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              // Show error details for failed builds
+              if (isFailed && latest.error != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC62828).withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _sanitizeError(latest.error!),
+                    style: const TextStyle(fontFamily: 'DMSans', fontSize: 10, color: Color(0xFFC62828), height: 1.4),
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -1105,6 +1279,15 @@ class _BuildResultBanner extends StatelessWidget {
         );
       },
     );
+  }
+
+  String _sanitizeError(String error) {
+    return error
+        .replaceAll(RegExp(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]'), '')
+        .replaceAll(RegExp(r'Woah!.*?root\.\s*'), '')
+        .replaceAll(RegExp(r'/\s*'), '')
+        .replaceAll(RegExp(r'📎\s*'), '')
+        .trim();
   }
 }
 
@@ -1120,9 +1303,30 @@ class _UserListForGeneratedApp extends StatelessWidget {
       future: BuilderFirestore.instance,
       builder: (context, dbSnap) {
         if (dbSnap.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
+          return SizedBox(
             height: 76,
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF740690))),
+            child: Center(
+              child: Shimmer.fromColors(
+                baseColor: Colors.grey[300]!,
+                highlightColor: Colors.grey[100]!,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(width: 32, height: 32, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
+                    const SizedBox(width: 12),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(width: 100, height: 10, color: Colors.white),
+                        const SizedBox(height: 6),
+                        Container(width: 60, height: 8, color: Colors.white),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           );
         }
         final db = dbSnap.data;
@@ -1142,9 +1346,30 @@ class _UserListForGeneratedApp extends StatelessWidget {
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const SizedBox(
+              return SizedBox(
                 height: 76,
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF740690))),
+                child: Center(
+                  child: Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(width: 32, height: 32, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
+                        const SizedBox(width: 12),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(width: 100, height: 10, color: Colors.white),
+                            const SizedBox(height: 6),
+                            Container(width: 60, height: 8, color: Colors.white),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               );
             }
             final docs = snapshot.data?.docs ?? [];

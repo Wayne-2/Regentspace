@@ -15,6 +15,7 @@ import '../service/messaging_service.dart';
 import '../service/app_notifications.dart';
 import '../service/monnify_service.dart';
 import '../service/user_repository.dart';
+import '../theme/app_theme.dart';
 
 class Createaccountpage extends StatefulWidget {
   const Createaccountpage({super.key});
@@ -168,36 +169,26 @@ class _CreateaccountpageState extends State<Createaccountpage> {
                 ));
                 // Full debug dialog for copy/paste
                 showDialog(context: context, builder: (_) => AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  title: Text('Monnify debug — create failed', style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1E))),
-                  content: SingleChildScrollView(child: SelectableText(e.toString(), style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: Color(0xFF5A5A64)))),
-                  actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                  insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  title: Text('Monnify debug — create failed', textAlign: TextAlign.center, style: AppTextStyles.title(color: AppColors.textPrimary)),
+                  content: SingleChildScrollView(child: SelectableText(e.toString(), textAlign: TextAlign.center, style: AppTextStyles.body(color: AppColors.textSecondary))),
                   actions: [
-                    Row(
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () { Clipboard.setData(ClipboardData(text: e.toString())); Navigator.pop(context); },
-                            style: TextButton.styleFrom(
-                              backgroundColor: const Color(0xFFFDF4FF),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            child: Text('Copy', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
-                          ),
+                        const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                        TextButton(
+                          style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: const RoundedRectangleBorder(), minimumSize: const Size(double.infinity, 48)),
+                          onPressed: () { Clipboard.setData(ClipboardData(text: e.toString())); Navigator.pop(context); },
+                          child: Text('Copy', style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: TextButton.styleFrom(
-                              backgroundColor: const Color(0xFF740690),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            child: Text('Close', style: TextStyle(fontFamily: 'DMSans', color: Colors.white)),
-                          ),
+                        const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                        TextButton(
+                          style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: const RoundedRectangleBorder(), minimumSize: const Size(double.infinity, 48)),
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('Close', style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
                         ),
                       ],
                     ),
@@ -314,11 +305,29 @@ class _CreateaccountpageState extends State<Createaccountpage> {
                   action: SnackBarAction(label: 'COPY', textColor: Colors.white, onPressed: () => Clipboard.setData(ClipboardData(text: e.toString()))),
                 ));
                 showDialog(context: context, builder: (_) => AlertDialog(
-                  title: Text('Monnify debug — create failed (google)', style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w700)),
-                  content: SingleChildScrollView(child: SelectableText(e.toString(), style: TextStyle(fontFamily: 'DMSans', fontSize: 10))),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  backgroundColor: Colors.white,
+                  insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  title: Text('Monnify debug — create failed (google)', textAlign: TextAlign.center, style: AppTextStyles.title(color: AppColors.textPrimary)),
+                  content: SingleChildScrollView(child: SelectableText(e.toString(), textAlign: TextAlign.center, style: AppTextStyles.body(color: AppColors.textSecondary))),
                   actions: [
-                    TextButton(onPressed: () { Clipboard.setData(ClipboardData(text: e.toString())); Navigator.pop(context); }, child: Text('Copy')),
-                    TextButton(onPressed: () => Navigator.pop(context), child: Text('Close')),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                        TextButton(
+                          style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: const RoundedRectangleBorder(), minimumSize: const Size(double.infinity, 48)),
+                          onPressed: () { Clipboard.setData(ClipboardData(text: e.toString())); Navigator.pop(context); },
+                          child: Text('Copy', style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
+                        ),
+                        const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                        TextButton(
+                          style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: const RoundedRectangleBorder(), minimumSize: const Size(double.infinity, 48)),
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('Close', style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ),
                   ],
                 ));
               }

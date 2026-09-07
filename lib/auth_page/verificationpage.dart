@@ -5,6 +5,7 @@ import '../navigator.dart';
 import '../service/auth_service.dart';
 import '../service/user_repository.dart';
 import 'loadingscreen.dart';
+import '../theme/app_theme.dart';
 
 /// Full verification screen — shows emailVerified status and lets the
 /// user resend the link or refresh.
@@ -184,41 +185,29 @@ class _VerificationpageState extends State<Verificationpage> {
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Email not verified', style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w700, fontSize: 16, color: Color(0xFF1A1A1E))),
-          content: Text('Your email ${widget.email} is not verified yet. You can continue but some features may be limited. We\'ve sent a verification link — check inbox/spam.\n\nContinue anyway?', style: const TextStyle(fontFamily: 'DMSans', fontSize: 13, color: Color(0xFF5A5A64))),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          title: Text('Email not verified', textAlign: TextAlign.center, style: AppTextStyles.title(color: AppColors.textPrimary)),
+          content: Text('Your email ${widget.email} is not verified yet. You can continue but some features may be limited. We\'ve sent a verification link — check inbox/spam.\n\nContinue anyway?', textAlign: TextAlign.center, style: AppTextStyles.body(color: AppColors.textSecondary)),
           actions: [
-            Row(
+            Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFFDF4FF),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text('Stay', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
-                  ),
+                const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                TextButton(
+                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: const RoundedRectangleBorder(), minimumSize: const Size(double.infinity, 48)),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Stay', style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav()));
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF740690),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      elevation: 0,
-                    ),
-                    child: const Text('Continue', style: TextStyle(fontFamily: 'DMSans')),
-                  ),
+                const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                TextButton(
+                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: const RoundedRectangleBorder(), minimumSize: const Size(double.infinity, 48)),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav()));
+                  },
+                  child: Text('Continue', style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
                 ),
               ],
             ),

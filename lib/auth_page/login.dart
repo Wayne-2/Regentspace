@@ -15,6 +15,7 @@ import '../service/auth_service.dart';
 import '../service/messaging_service.dart';
 import '../service/app_notifications.dart';
 import '../service/user_repository.dart';
+import '../theme/app_theme.dart';
 
 class Loginpage extends StatefulWidget {
   const Loginpage({super.key});
@@ -91,49 +92,38 @@ class _LoginpageState extends State<Loginpage> {
           context: context,
           barrierDismissible: false,
           builder: (_) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text(!isVerified ? 'Email not verified' : 'Phone missing', style: const TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w700, fontSize: 16, color: Color(0xFF1A1A1E))),
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+            title: Text(!isVerified ? 'Email not verified' : 'Phone missing', textAlign: TextAlign.center, style: AppTextStyles.title(color: AppColors.textPrimary)),
             content: Text(
               !isVerified
                   ? 'Your email ${cred.user?.email ?? email} is not verified. Tap Verify to resend/confirm, or Continue to use the app (a banner will remain until verified).'
                   : 'Your phone number is missing. Please add it to complete your profile.',
-              style: const TextStyle(fontFamily: 'DMSans', fontSize: 13, color: Color(0xFF5A5A64)),
+              textAlign: TextAlign.center,
+              style: AppTextStyles.body(color: AppColors.textSecondary),
             ),
-            actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
             actions: [
-              Row(
+              Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav()));
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: const Color(0xFFFDF4FF),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('Continue', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
-                    ),
+                  const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                  TextButton(
+                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: const RoundedRectangleBorder(), minimumSize: const Size(double.infinity, 48)),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav()));
+                    },
+                    child: Text('Continue', style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF740690),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 0,
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => Verificationpage(email: cred.user?.email ?? email, showPhonePrompt: needsPhone)));
-                      },
-                      child: Text(!isVerified ? 'Verify email' : 'Add phone', style: const TextStyle(fontFamily: 'DMSans')),
-                    ),
+                  const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                  TextButton(
+                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: const RoundedRectangleBorder(), minimumSize: const Size(double.infinity, 48)),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => Verificationpage(email: cred.user?.email ?? email, showPhonePrompt: needsPhone)));
+                    },
+                    child: Text(!isVerified ? 'Verify email' : 'Add phone', style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -223,38 +213,26 @@ class _LoginpageState extends State<Loginpage> {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Text('Phone missing', style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w700, fontSize: 16, color: Color(0xFF1A1A1E))),
-            content: const Text('Google doesn\'t share phone numbers. Please add yours to complete your profile.', style: TextStyle(fontFamily: 'DMSans', fontSize: 13, color: Color(0xFF5A5A64))),
-            actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+            title: Text('Phone missing', textAlign: TextAlign.center, style: AppTextStyles.title(color: AppColors.textPrimary)),
+            content: Text('Google doesn\'t share phone numbers. Please add yours to complete your profile.', textAlign: TextAlign.center, style: AppTextStyles.body(color: AppColors.textSecondary)),
             actions: [
-              Row(
+              Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () { Navigator.pop(context); Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav())); },
-                      style: TextButton.styleFrom(
-                        backgroundColor: const Color(0xFFFDF4FF),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('Later', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
-                    ),
+                  const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                  TextButton(
+                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: const RoundedRectangleBorder(), minimumSize: const Size(double.infinity, 48)),
+                    onPressed: () { Navigator.pop(context); Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav())); },
+                    child: Text('Later', style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF740690),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 0,
-                      ),
-                      onPressed: () { Navigator.pop(context); Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => Verificationpage(email: cred.user?.email ?? '', showPhonePrompt: true))); },
-                      child: const Text('Add phone', style: TextStyle(fontFamily: 'DMSans')),
-                    ),
+                  const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                  TextButton(
+                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: const RoundedRectangleBorder(), minimumSize: const Size(double.infinity, 48)),
+                    onPressed: () { Navigator.pop(context); Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => Verificationpage(email: cred.user?.email ?? '', showPhonePrompt: true))); },
+                    child: Text('Add phone', style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),

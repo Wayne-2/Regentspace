@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../theme/app_theme.dart';
 import '../../components/loadingpopup.dart';
 import '../../components/recent_activities.dart';
@@ -41,37 +42,34 @@ class _FinancesState extends State<Finances> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title, style: AppTextStyles.title(color: AppColors.textPrimary)),
-        content: Text(message, style: AppTextStyles.body(color: AppColors.textSecondary)),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        title: Text(title, textAlign: TextAlign.center, style: AppTextStyles.title(color: AppColors.textPrimary)),
+        content: Text(message, textAlign: TextAlign.center, style: AppTextStyles.body(color: AppColors.textSecondary)),
         actions: [
-          Row(
+          Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppColors.primarySoft,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textSecondary)),
+              Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+              TextButton(
+                onPressed: onConfirm,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: const RoundedRectangleBorder(),
+                  minimumSize: const Size(double.infinity, 48),
                 ),
+                child: Text(confirmLabel, style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: confirmColor ?? AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    elevation: 0,
-                  ),
-                  onPressed: onConfirm,
-                  child: Text(confirmLabel, style: AppTextStyles.body(color: Colors.white)),
+              Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: const RoundedRectangleBorder(),
+                  minimumSize: const Size(double.infinity, 48),
                 ),
+                child: Text("Cancel", style: AppTextStyles.body(color: AppColors.primary)),
               ),
             ],
           ),
@@ -145,40 +143,37 @@ class _FinancesState extends State<Finances> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Create Virtual Account", style: AppTextStyles.title()),
-        content: Text("Proceed to create a virtual account with $bankName?", style: AppTextStyles.body(color: AppColors.textSecondary)),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        title: Text("Create Virtual Account", textAlign: TextAlign.center, style: AppTextStyles.title(color: AppColors.textPrimary)),
+        content: Text("Proceed to create a virtual account with $bankName?", textAlign: TextAlign.center, style: AppTextStyles.body(color: AppColors.textSecondary)),
         actions: [
-          Row(
+          Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppColors.primarySoft,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textSecondary)),
+              Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _createVirtualAccount(bankCode);
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: const RoundedRectangleBorder(),
+                  minimumSize: const Size(double.infinity, 48),
                 ),
+                child: Text("Continue", style: AppTextStyles.body(color: AppColors.primary).copyWith(fontWeight: FontWeight.w600)),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    elevation: 0,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _createVirtualAccount(bankCode);
-                  },
-                  child: Text("Continue", style: AppTextStyles.body(color: Colors.white)),
+              Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: const RoundedRectangleBorder(),
+                  minimumSize: const Size(double.infinity, 48),
                 ),
+                child: Text("Cancel", style: AppTextStyles.body(color: AppColors.primary)),
               ),
             ],
           ),
@@ -287,7 +282,18 @@ class _FinancesState extends State<Finances> {
                           const SizedBox(height: 2),
                           Row(
                             children: [
-                              SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.8, color: AppColors.primary)),
+                              Shimmer.fromColors(
+                                baseColor: AppColors.primary.withOpacity(0.3),
+                                highlightColor: AppColors.primary.withOpacity(0.1),
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
                               const SizedBox(width: 6),
                               Text('Setting up virtual account...', style: AppTextStyles.caption(color: AppColors.textTertiary)),
                             ],

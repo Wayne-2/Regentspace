@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../service/user_repository.dart';
@@ -220,46 +221,43 @@ class ProfilePage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Log Out", style: AppTextStyles.title(color: AppColors.textPrimary)),
-        content: Text("Are you sure you want to log out?", style: AppTextStyles.body(color: AppColors.textSecondary)),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        title: Text("Log Out", textAlign: TextAlign.center, style: AppTextStyles.title(color: AppColors.textPrimary)),
+        content: Text("Are you sure you want to log out?", textAlign: TextAlign.center, style: AppTextStyles.body(color: AppColors.textSecondary)),
         actions: [
-          Row(
+          Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppColors.primarySoft,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textSecondary)),
+              const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: const RoundedRectangleBorder(),
+                  minimumSize: const Size(double.infinity, 48),
                 ),
+                child: Text("Cancel", style: AppTextStyles.body(color: AppColors.textSecondary)),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.error,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    elevation: 0,
-                  ),
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    await AuthService().signOutGoogle();
-                    if (context.mounted) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const Loginpage()),
-                        (_) => false,
-                      );
-                    }
-                  },
-                  child: Text("Log Out", style: AppTextStyles.body(color: Colors.white)),
+              const Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await AuthService().signOutGoogle();
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const Loginpage()),
+                      (_) => false,
+                    );
+                  }
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: const RoundedRectangleBorder(),
+                  minimumSize: const Size(double.infinity, 48),
                 ),
+                child: Text("Log Out", style: AppTextStyles.body(color: AppColors.error).copyWith(fontWeight: FontWeight.w600)),
               ),
             ],
           ),

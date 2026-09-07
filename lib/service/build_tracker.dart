@@ -145,7 +145,7 @@ class BuildTracker {
   }
 
   Future<void> _pollAll() async {
-    final active = builds.value.where((b) => b.status == 'building').toList();
+    final active = builds.value.where((b) => b.status == 'building' || b.status == 'preparing').toList();
     if (active.isEmpty) {
       _pollTimer?.cancel();
       return;
@@ -158,7 +158,7 @@ class BuildTracker {
           final data = jsonDecode(response.body);
           final serverStatus = data['status'] as String?;
 
-          if (serverStatus == 'completed' || serverStatus == 'failed') {
+          if (serverStatus == 'completed' || serverStatus == 'failed' || serverStatus == 'cancelled') {
             build.status = serverStatus!;
             build.apkSize = data['apkSize'];
             build.downloadUrl = data['downloadUrl'] ?? '/download/${build.buildId}';
@@ -185,11 +185,31 @@ class BuildTracker {
   }
 
   Future<void> dismissBuild(int index) async {
-    final list = List<BuildInfo>.from(builds.value);
-    if (index < list.length) {
-      list.removeAt(index);
-      builds.value = list;
-      await _saveBuilds();
+    try {
+      final list = List<BuildInfo>.from(builds.value);
+      if (index >= 0 && index < list.length) {
+        list.removeAt(index);
+        builds.value = list;
+        await _saveBuilds();
+        debugPrint('[BuildTracker] Dismissed build at index $index');
+      }
+    } catch (e) {
+      debugPrint('[BuildTracker] Dismiss failed: $e');
+    }
+  }
+
+  Future<void> cancelBuild(String buildId) async {
+    try {
+      final response = await http.post(Uri.parse('$kBuildServerUrl/cancel/$buildId'));
+      if (response.statusCode == 200) {
+        final build = builds.value.firstWhere((b) => b.buildId == buildId);
+        build.status = 'cancelled';
+        build.error = 'Build cancelled by user';
+        await _saveBuilds();
+        builds.value = List<BuildInfo>.from(builds.value);
+      }
+    } catch (e) {
+      debugPrint('[BuildTracker] Cancel failed: $e');
     }
   }
 }

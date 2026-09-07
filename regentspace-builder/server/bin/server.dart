@@ -58,9 +58,7 @@ void main(List<String> args) async {
       await handleRequest(request, builderDir, builds);
     } catch (e, st) {
       print('[Server] Error: $e\n$st');
-      request.response.statusCode = 500;
-      request.response.headers.set('Content-Type', 'application/json');
-      request.response.write(jsonEncode({'error': _sanitize(e.toString())}));
+      _jsonResponse(request.response, 500, {'error': _sanitize(e.toString())});
       await request.response.close();
     }
   }
@@ -75,11 +73,10 @@ Future<void> handleRequest(
 
   // Health check
   if (path == '/health' && request.method == 'GET') {
-    request.response.headers.set('Content-Type', 'application/json');
-    request.response.write(jsonEncode({
+    _jsonResponse(request.response, 200, {
       'status': 'ok',
       'timestamp': DateTime.now().toIso8601String(),
-    }));
+    });
     await request.response.close();
     return;
   }
@@ -90,18 +87,14 @@ Future<void> handleRequest(
     final build = builds[id];
 
     if (build == null || build.apkPath == null) {
-      request.response.statusCode = 404;
-      request.response.headers.set('Content-Type', 'application/json');
-      request.response.write(jsonEncode({'error': 'Build not found or APK not ready'}));
+      _jsonResponse(request.response, 404, {'error': 'Build not found or APK not ready'});
       await request.response.close();
       return;
     }
 
     final apkFile = File(build.apkPath!);
     if (!apkFile.existsSync()) {
-      request.response.statusCode = 404;
-      request.response.headers.set('Content-Type', 'application/json');
-      request.response.write(jsonEncode({'error': 'APK file no longer exists'}));
+      _jsonResponse(request.response, 404, {'error': 'APK file no longer exists'});
       await request.response.close();
       return;
     }
@@ -114,18 +107,42 @@ Future<void> handleRequest(
     return;
   }
 
+  // Cancel build
+  if (path.startsWith('/cancel/') && request.method == 'POST') {
+    final id = path.substring('/cancel/'.length);
+    final build = builds[id];
+
+    if (build == null) {
+      _jsonResponse(request.response, 404, {'error': 'Build not found'});
+      await request.response.close();
+      return;
+    }
+
+    if (build.status != 'building' && build.status != 'queued' && build.status != 'preparing') {
+      _jsonResponse(request.response, 400, {'error': 'Build is not active', 'status': build.status});
+      await request.response.close();
+      return;
+    }
+
+    build.status = 'cancelled';
+    build.error = 'Build cancelled by user';
+    build.process?.kill(ProcessSignal.sigterm);
+    print('[$id] Cancelled by user');
+
+    _jsonResponse(request.response, 200, {'status': 'cancelled', 'buildId': id});
+    await request.response.close();
+    return;
+  }
+
   // Build status
   if (path.startsWith('/status/') && request.method == 'GET') {
     final id = path.substring('/status/'.length);
     final build = builds[id];
 
     if (build == null) {
-      request.response.statusCode = 404;
-      request.response.headers.set('Content-Type', 'application/json');
-      request.response.write(jsonEncode({'error': 'Build not found'}));
+      _jsonResponse(request.response, 404, {'error': 'Build not found'});
     } else {
-      request.response.headers.set('Content-Type', 'application/json');
-      request.response.write(jsonEncode(build.toJson()));
+      _jsonResponse(request.response, 200, build.toJson());
     }
     await request.response.close();
     return;
@@ -139,17 +156,13 @@ Future<void> handleRequest(
     try {
       json = jsonDecode(body) as Map<String, dynamic>;
     } catch (e) {
-      request.response.statusCode = 400;
-      request.response.headers.set('Content-Type', 'application/json');
-      request.response.write(jsonEncode({'error': 'Invalid JSON: $e'}));
+      _jsonResponse(request.response, 400, {'error': 'Invalid JSON: $e'});
       await request.response.close();
       return;
     }
 
     if (!json.containsKey('app')) {
-      request.response.statusCode = 400;
-      request.response.headers.set('Content-Type', 'application/json');
-      request.response.write(jsonEncode({'error': 'Missing "app" field'}));
+      _jsonResponse(request.response, 400, {'error': 'Missing "app" field'});
       await request.response.close();
       return;
     }
@@ -164,29 +177,27 @@ Future<void> handleRequest(
     print('[Build] $buildId — $appName');
     unawaited(runBuild(status, json, builderDir, builds));
 
-    request.response.headers.set('Content-Type', 'application/json');
-    request.response.write(jsonEncode({
+    _jsonResponse(request.response, 200, {
       'buildId': buildId,
       'status': 'building',
       'statusUrl': '/status/$buildId',
       'downloadUrl': '/download/$buildId',
-    }));
+    });
     await request.response.close();
     return;
   }
 
   // Unknown
-  request.response.statusCode = 404;
-  request.response.headers.set('Content-Type', 'application/json');
-  request.response.write(jsonEncode({
+  _jsonResponse(request.response, 404, {
     'error': 'Not found',
     'endpoints': {
       'POST /build': 'Submit build JSON',
+      'POST /cancel/{id}': 'Cancel a build',
       'GET /health': 'Health check',
       'GET /status/{id}': 'Check build progress',
       'GET /download/{id}': 'Download APK',
     },
-  }));
+  });
   await request.response.close();
 }
 
@@ -223,6 +234,8 @@ Future<void> runBuild(
         'PATH': Platform.environment['PATH'] ?? '',
       },
     );
+
+    if (status.status == 'cancelled') return;
 
     if (result.exitCode != 0) {
       status.status = 'failed';
@@ -266,6 +279,13 @@ String _sanitize(String s) {
   return s.replaceAll(RegExp(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]'), '').trim();
 }
 
+/// Write a JSON response with proper UTF-8 encoding
+void _jsonResponse(HttpResponse response, int statusCode, Map<String, dynamic> body) {
+  response.statusCode = statusCode;
+  response.headers.set('Content-Type', 'application/json; charset=utf-8');
+  response.write(utf8.encode(jsonEncode(body)));
+}
+
 class BuildStatus {
   final String id;
   final String appId;
@@ -274,6 +294,7 @@ class BuildStatus {
   String? error;
   String? apkPath;
   int? apkSize;
+  Process? process;
   final DateTime createdAt = DateTime.now();
 
   BuildStatus({
