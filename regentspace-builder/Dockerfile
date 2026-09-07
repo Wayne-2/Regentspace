@@ -15,9 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 
-# Memory limits for Java/Gradle (Railway Hobby has ~1GB RAM)
-ENV GRADLE_OPTS="-Xmx768m -XX:MaxMetaspaceSize=256m -XX:ReservedCodeCacheSize=128m -Dfile.encoding=UTF-8"
-ENV JAVA_OPTS="-Xmx768m -XX:MaxMetaspaceSize=256m"
+# Memory limits for Java/Gradle processes
+ENV GRADLE_OPTS="-Xmx2g -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m -Dfile.encoding=UTF-8"
+ENV JAVA_OPTS="-Xmx2g -XX:MaxMetaspaceSize=512m"
 
 # Install Flutter
 RUN git clone --depth 1 --branch 3.27.4 https://github.com/flutter/flutter.git "$FLUTTER_HOME" \
