@@ -7,7 +7,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'push_notification_service.dart';
 
-const String kBuildServerUrl = 'https://upload-reserve-auto-vegetable.trycloudflare.com';
+const String kBuildServerUrl = 'https://just-eagerness-production-6d8e.up.railway.app';
 
 class BuildInfo {
   final String buildId;
