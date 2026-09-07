@@ -176,29 +176,33 @@ class UserList extends StatelessWidget {
 
 Widget shimmerUserItem() {
   return Padding(
-    padding: const EdgeInsets.only(right: 10),
+    padding: const EdgeInsets.only(right: 14),
     child: Column(
       children: [
         Shimmer.fromColors(
-          baseColor: Colors.grey.shade300,
-          highlightColor: Colors.grey.shade100,
+          baseColor: const Color(0xFFEAC5F7).withOpacity(0.4),
+          highlightColor: const Color(0xFFEAC5F7).withOpacity(0.1),
           child: Container(
-            width: 45,
-            height: 45,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: const Color(0xFFFDF4FF),
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFEAC5F7), width: 1),
             ),
           ),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 6),
         Shimmer.fromColors(
           baseColor: Colors.grey.shade300,
           highlightColor: Colors.grey.shade100,
           child: Container(
-            width: 60,
+            width: 64,
             height: 10,
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
         ),
       ],

@@ -110,6 +110,7 @@ class _DashboardState extends State<Dashboard> {
         scrolledUnderElevation: 0,
         backgroundColor: const Color.fromARGB(255, 254, 252, 255),
         centerTitle: false,
+        automaticallyImplyLeading: false,
         title: Text(
           'Regentspace',
           style: AppTextStyles.headline(color: AppColors.primaryDark),
