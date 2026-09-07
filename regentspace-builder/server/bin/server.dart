@@ -225,7 +225,7 @@ Future<void> runBuild(
     status.status = 'building';
     print('[$buildId] Building...');
 
-    final result = await Process.run(
+    final process = await Process.start(
       'bash',
       [p.join(builderDir.path, 'build.sh'), jsonFile.path, outputDir.path],
       workingDirectory: builderDir.path,
@@ -234,13 +234,25 @@ Future<void> runBuild(
         'PATH': Platform.environment['PATH'] ?? '',
       },
     );
+    status.process = process;
+
+    // Check if cancelled before we started listening
+    if (status.status == 'cancelled') {
+      process.kill(ProcessSignal.sigterm);
+      return;
+    }
+
+    // Collect output (must consume streams to avoid zombie processes)
+    await process.stdout.drain<void>();
+    final stderr = await process.stderr.join();
+    final exitCode = await process.exitCode;
 
     if (status.status == 'cancelled') return;
 
-    if (result.exitCode != 0) {
+    if (exitCode != 0) {
       status.status = 'failed';
-      status.error = result.stderr.toString();
-      print('[$buildId] FAILED (exit ${result.exitCode}): ${status.error}');
+      status.error = _sanitize(stderr.toString());
+      print('[$buildId] FAILED (exit $exitCode): ${status.error}');
       return;
     }
 
