@@ -60,7 +60,7 @@ void main(List<String> args) async {
       print('[Server] Error: $e\n$st');
       request.response.statusCode = 500;
       request.response.headers.set('Content-Type', 'application/json');
-      request.response.write(jsonEncode({'error': e.toString()}));
+      request.response.write(jsonEncode({'error': _sanitize(e.toString())}));
       await request.response.close();
     }
   }
@@ -254,11 +254,16 @@ Future<void> runBuild(
     print('[$buildId] Done — ${p.basename(apk.path)} (${sizeMB}MB)');
   } catch (e) {
     status.status = 'failed';
-    status.error = e.toString();
+    status.error = _sanitize(e.toString());
     print('[$buildId] ERROR: $e');
   } finally {
     if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
   }
+}
+
+/// Strip control characters (ANSI escapes, null bytes, etc.) that break JSON encoding
+String _sanitize(String s) {
+  return s.replaceAll(RegExp(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]'), '').trim();
 }
 
 class BuildStatus {

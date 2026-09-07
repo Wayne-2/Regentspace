@@ -52,6 +52,10 @@ COPY lib/ /app/lib/
 COPY generator/ /app/generator/
 COPY analysis_options.yaml /app/analysis_options.yaml
 
+# Install generator deps
+WORKDIR /app/generator
+RUN dart pub get
+
 # Pre-install template deps (cached layer)
 WORKDIR /app
 RUN flutter pub get || true
