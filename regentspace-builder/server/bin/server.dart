@@ -244,14 +244,15 @@ Future<void> runBuild(
 
     // Collect output (must consume streams to avoid zombie processes)
     await process.stdout.drain<void>();
-    final stderr = await process.stderr.join();
+    final stderrChunks = await process.stderr.toList();
+    final stderrBytes = stderrChunks.expand((c) => c).toList();
     final exitCode = await process.exitCode;
 
     if (status.status == 'cancelled') return;
 
     if (exitCode != 0) {
       status.status = 'failed';
-      status.error = _sanitize(stderr.toString());
+      status.error = _sanitize(utf8.decode(stderrBytes, allowMalformed: true));
       print('[$buildId] FAILED (exit $exitCode): ${status.error}');
       return;
     }

@@ -177,7 +177,7 @@ class BuildGenerator {
       ..writeln('version: $version')
       ..writeln()
       ..writeln('environment:')
-      ..writeln('  sdk: ^3.12.0')
+      ..writeln('  sdk: ^3.6.0')
       ..writeln()
       ..writeln('dependencies:')
       ..writeln('  flutter:')
