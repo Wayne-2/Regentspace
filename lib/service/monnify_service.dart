@@ -77,6 +77,13 @@ class MonnifyService {
     if (user == null) throw Exception('Not authenticated');
     final uid = user.uid;
 
+    // Check if user already has a reserved account — Monnify limits 1 per customer
+    final existingAccounts = await _db.collection('users').doc(uid).collection('monnifyAccounts').limit(1).get();
+    if (existingAccounts.docs.isNotEmpty) {
+      debugPrint('[Monnify] user $uid already has a reserved account — returning existing');
+      return existingAccounts.docs.first.data();
+    }
+
     // DEBUG FIX: retry config load after auth (cold-start load failed with permission-denied before login)
     // See log 13:00:27.991 [MonnifyConfig] Firestore load failed: permission-denied
     // and 13:02:16.812 Auto virtual account failed: Monnify contractCode missing

@@ -9,17 +9,15 @@ ENV PATH="$FLUTTER_HOME/bin:$FLUTTER_HOME/bin/cache/dart-sdk/bin:$ANDROID_HOME/c
 # System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl git unzip xz-utils zip jq \
-    openjdk-17-jdk-headless \
+    openjdk-21-jdk-headless \
     python3 python3-pip python3-pillow \
     && rm -rf /var/lib/apt/lists/*
 
-# Create 4GB swap file for Flutter builds (Railway has limited RAM)
-RUN fallocate -l 4G /swapfile \
-    && chmod 600 /swapfile \
-    && mkswap /swapfile \
-    && echo '/swapfile none swap sw 0 0' >> /etc/fstab
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+# Memory limits for Java/Gradle (Railway Hobby has ~1GB RAM)
+ENV GRADLE_OPTS="-Xmx768m -XX:MaxMetaspaceSize=256m -XX:ReservedCodeCacheSize=128m -Dfile.encoding=UTF-8"
+ENV JAVA_OPTS="-Xmx768m -XX:MaxMetaspaceSize=256m"
 
 # Install Flutter
 RUN git clone --depth 1 --branch 3.27.4 https://github.com/flutter/flutter.git "$FLUTTER_HOME" \
@@ -68,10 +66,6 @@ RUN flutter pub get || true
 
 WORKDIR /app/server
 
-# Copy entrypoint and make executable
-COPY server/entrypoint.sh /app/server/entrypoint.sh
-RUN chmod +x /app/server/entrypoint.sh
-
 EXPOSE 8080
 
-ENTRYPOINT ["/app/server/entrypoint.sh"]
+CMD ["dart", "run", "bin/server.dart"]

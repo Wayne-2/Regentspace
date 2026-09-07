@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
@@ -244,6 +245,10 @@ class ProfilePage extends StatelessWidget {
               TextButton(
                 onPressed: () async {
                   Navigator.pop(context);
+                  // Clear all Hive boxes (user-specific cached data)
+                  for (final name in ['canva_progress', 'builds', 'notifications']) {
+                    await Hive.box(name).clear();
+                  }
                   await AuthService().signOutGoogle();
                   if (context.mounted) {
                     Navigator.of(context).pushAndRemoveUntil(

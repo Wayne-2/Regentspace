@@ -128,12 +128,15 @@ flutter pub get
 
 # [9] Build APK
 echo "[9/10] Building APK..."
-flutter build apk --release
+flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons --split-per-abi
 
 # [10] Collect output
 echo "[10/10] Collecting output..."
 mkdir -p "$OUTPUT_DIR"
-APK_PATH="$WORKSPACE/build/app/outputs/flutter-apk/app-release.apk"
+APK_PATH="$WORKSPACE/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk"
+if [ ! -f "$APK_PATH" ]; then
+    APK_PATH="$WORKSPACE/build/app/outputs/flutter-apk/app-release.apk"
+fi
 if [ -f "$APK_PATH" ]; then
     cp "$APK_PATH" "$OUTPUT_DIR/${PACKAGE_NAME//./_}-$APP_VERSION.apk"
     echo ""

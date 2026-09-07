@@ -14,14 +14,12 @@ class BuilderFirestore {
   static Future<FirebaseFirestore> get instance async {
     if (_db != null) return _db!;
 
-    // Check if app already initialized (e.g. from another widget)
+    // Try to get existing app first (covers native-level registration persisting across sessions)
     try {
       _app = Firebase.app('regentspace-builder');
       _db = FirebaseFirestore.instanceFor(app: _app!);
       return _db!;
-    } catch (_) {
-      // Not initialized yet, continue
-    }
+    } catch (_) {}
 
     try {
       _app = await Firebase.initializeApp(
@@ -34,12 +32,18 @@ class BuilderFirestore {
           storageBucket: 'regentspace-builder.firebasestorage.app',
         ),
       );
-      _db = FirebaseFirestore.instanceFor(app: _app!);
-      return _db!;
     } catch (e) {
-      debugPrint('[BuilderFirestore] Init error: $e');
-      rethrow;
+      // Already initialized natively — recover without crashing
+      try {
+        _app = Firebase.app('regentspace-builder');
+      } catch (_) {
+        debugPrint('[BuilderFirestore] Init error: $e');
+        rethrow;
+      }
     }
+
+    _db = FirebaseFirestore.instanceFor(app: _app!);
+    return _db!;
   }
 }
 

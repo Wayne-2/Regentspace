@@ -669,6 +669,15 @@ class _RegentcanvaState extends State<Regentcanva> {
     final json = _generateBuildJson();
     final appName = json['app']['name'] ?? 'App';
 
+    // Show pending snackbar immediately
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Pending build request...'),
+        backgroundColor: Color(0xFF6C0090),
+        duration: Duration(seconds: 2),
+      ),
+    );
+
     try {
       await BuildTracker.instance.submitBuild(json);
       if (!mounted) return;
