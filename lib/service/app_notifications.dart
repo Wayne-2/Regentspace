@@ -31,9 +31,10 @@ class AppNotifications {
     return 'there';
   }
 
-  static Future<void> _show(String title, String body) async {
+  static Future<void> _show(String title, String body, {bool persist = true}) async {
     if (kDebugMode) debugPrint('[AppNotifications] $title — $body');
     await PushNotificationService.instance.showTestNotification(title: title, body: body);
+    if (!persist) return;
     // Persist per-user so NotificationPage + badge can show history
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
@@ -42,9 +43,6 @@ class AppNotifications {
       } catch (e) {
         if (kDebugMode) debugPrint('[AppNotifications] Firestore persist failed: $e');
       }
-    } else {
-      // No uid yet (e.g. immediate welcome before auth fully propagated) — fallback to in-memory only
-      // NotificationStore.addLocal already handles Firestore when uid becomes available on next call
     }
   }
 
@@ -53,26 +51,27 @@ class AppNotifications {
   // ---------------------------------------------------------------------------
 
   /// First-time welcome — call right after isNewUser == true.
-  /// Pulls name from Firebase user or Google profile.
+  /// Shows as push notification but NOT persisted to notification history (too frequent).
   static Future<void> welcomeFirstTime({User? user, String? fallbackName}) async {
     final name = _displayName(user, fallback: fallbackName);
     await _show(
       _t('Welcome to Regentspace, {name}! 🎉', {'name': name}),
       _t("Your account is ready, {name}. Let's take off — your wallet and Canva are waiting.", {'name': name}),
+      persist: false,
     );
   }
 
   static Future<void> loginSuccess({User? user}) async {
     final name = _displayName(user);
-    await _show('Welcome back, $name', 'Regentspace is ready for you.');
+    await _show('Welcome back, $name', 'Regentspace is ready for you.', persist: false);
   }
 
   static Future<void> googleFirstTime({User? user}) async {
-    // Same template as welcome but explicit Google wording if you want to differentiate
     final name = _displayName(user);
     await _show(
       'Welcome to Regentspace, $name! 🎉',
       'Your Google account is linked, $name. Dive in — your wallet is ready.',
+      persist: false,
     );
   }
 

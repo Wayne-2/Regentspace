@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../../theme/app_theme.dart';
 
 class AppearancePage extends StatefulWidget {
@@ -9,14 +10,36 @@ class AppearancePage extends StatefulWidget {
 }
 
 class _AppearancePageState extends State<AppearancePage> {
+  static const _boxName = 'appearance';
   String _selectedTheme = 'System Default';
   bool _compactMode = false;
+  double _fontSizeScale = 1.0;
 
   final List<Map<String, dynamic>> _themes = [
     {'name': 'System Default', 'icon': Icons.brightness_auto_rounded},
     {'name': 'Light', 'icon': Icons.light_mode_rounded},
     {'name': 'Dark', 'icon': Icons.dark_mode_rounded},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final box = await Hive.openBox(_boxName);
+    setState(() {
+      _selectedTheme = box.get('theme', defaultValue: 'System Default');
+      _compactMode = box.get('compactMode', defaultValue: false);
+      _fontSizeScale = box.get('fontSizeScale', defaultValue: 1.0);
+    });
+  }
+
+  Future<void> _saveSetting(String key, dynamic value) async {
+    final box = await Hive.openBox(_boxName);
+    await box.put(key, value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +74,6 @@ class _AppearancePageState extends State<AppearancePage> {
                 children: _themes.map((theme) {
                   final isSelected = _selectedTheme == theme['name'];
                   final isFirst = theme == _themes.first;
-                  final isLast = theme == _themes.last;
                   return Column(
                     children: [
                       if (!isFirst) const Divider(height: 1, thickness: 0.5, indent: 52, color: AppColors.border),
@@ -59,7 +81,10 @@ class _AppearancePageState extends State<AppearancePage> {
                         icon: theme['icon'],
                         title: theme['name'],
                         isSelected: isSelected,
-                        onTap: () => setState(() => _selectedTheme = theme['name']),
+                        onTap: () {
+                          setState(() => _selectedTheme = theme['name']);
+                          _saveSetting('theme', theme['name']);
+                        },
                       ),
                     ],
                   );
@@ -83,7 +108,10 @@ class _AppearancePageState extends State<AppearancePage> {
                 title: 'Compact Mode',
                 subtitle: 'Show more content on screen',
                 value: _compactMode,
-                onChanged: (v) => setState(() => _compactMode = v),
+                onChanged: (v) {
+                  setState(() => _compactMode = v);
+                  _saveSetting('compactMode', v);
+                },
               ),
             ),
 
@@ -107,17 +135,20 @@ class _AppearancePageState extends State<AppearancePage> {
                       Text("A", style: AppTextStyles.caption(color: AppColors.textPrimary)),
                       Expanded(
                         child: Slider(
-                          value: 1.0,
+                          value: _fontSizeScale,
                           min: 0.8,
                           max: 1.2,
                           activeColor: AppColors.primary,
-                          onChanged: (v) {},
+                          onChanged: (v) {
+                            setState(() => _fontSizeScale = v);
+                            _saveSetting('fontSizeScale', v);
+                          },
                         ),
                       ),
                       Text("A", style: AppTextStyles.headline(color: AppColors.textPrimary)),
                     ],
                   ),
-                  Text("Default", style: AppTextStyles.caption(color: AppColors.textTertiary)),
+                  Text(_fontSizeScale == 1.0 ? 'Default' : '${(_fontSizeScale * 100).round()}%', style: AppTextStyles.caption(color: AppColors.textTertiary)),
                 ],
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_theme.dart';
 
 class AboutPage extends StatelessWidget {
@@ -86,9 +87,9 @@ class AboutPage extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _LegalTile(title: 'Terms of Service', onTap: () {}),
+                  _LegalTile(title: 'Terms of Service', onTap: () => launchUrl(Uri.parse('https://regentspace.com/terms'), mode: LaunchMode.externalApplication)),
                   const Divider(height: 1, thickness: 0.5, indent: 16, color: AppColors.border),
-                  _LegalTile(title: 'Privacy Policy', onTap: () {}),
+                  _LegalTile(title: 'Privacy Policy', onTap: () => launchUrl(Uri.parse('https://regentspace.com/privacy'), mode: LaunchMode.externalApplication)),
                   const Divider(height: 1, thickness: 0.5, indent: 16, color: AppColors.border),
                   _LegalTile(title: 'Open Source Licenses', onTap: () => showLicensePage(context: context)),
                 ],

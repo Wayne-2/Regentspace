@@ -79,6 +79,7 @@ class MonnifyService {
 
     // Check if user already has a reserved account — Monnify limits 1 per customer
     final existingAccounts = await _db.collection('users').doc(uid).collection('monnifyAccounts').limit(1).get();
+    debugPrint('[Monnify] existingAccounts check uid=$uid count=${existingAccounts.docs.length}');
     if (existingAccounts.docs.isNotEmpty) {
       debugPrint('[Monnify] user $uid already has a reserved account — returning existing');
       return existingAccounts.docs.first.data();
@@ -92,11 +93,14 @@ class MonnifyService {
     }
 
     // Pull profile from Firestore to auto-fill create-account fields extracted from Google/email
-    final profileSnap = await UserRepository.instance.getUser(uid);
+    // Use Source.server to avoid stale cached data from a previous user session on this device
+    final profileSnap = await _db.collection('users').doc(uid).get(const GetOptions(source: Source.server));
     final profile = profileSnap.data() ?? {};
-    final email = (customerEmail ?? profile['email'] ?? user.email ?? '').trim();
+    final rawEmail = (customerEmail ?? profile['email'] ?? user.email ?? '').trim();
+    final email = rawEmail.isNotEmpty ? rawEmail.toLowerCase() : rawEmail;
     final name = (customerName ?? profile['username'] ?? profile['displayName'] ?? user.displayName ?? email.split('@').first).trim();
     final resolvedAccountName = (accountName ?? name).trim();
+    debugPrint('[Monnify] createReservedAccount uid=$uid email="$email" name="$name" profileEmail="${profile['email']}" authEmail="${user.email}" customerEmail="$customerEmail"');
     if (email.isEmpty || resolvedAccountName.isEmpty) throw Exception('Missing email/name for reserved account');
 
     final ref = (accountReference ?? 'REGENT_${uid}_${DateTime.now().millisecondsSinceEpoch}').replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
@@ -183,6 +187,26 @@ class MonnifyService {
           await batchRetry.commit();
           return docRetry;
         }
+      }
+      // Handle "already has account for this customer" — Monnify may create the account
+      // but still return 422. Fetch the existing one instead of failing.
+      if (res.statusCode == 422 && res.body.toLowerCase().contains('cannot reserve more than')) {
+        debugPrint('[Monnify] customer "$email" already has reserved account — fetching existing');
+        final existing = await _db.collection('monnify_reserved_accounts')
+            .where('customerEmail', isEqualTo: email)
+            .limit(1)
+            .get();
+        if (existing.docs.isNotEmpty) {
+          debugPrint('[Monnify] found existing reserved account ${existing.docs.first.id} for $email');
+          return existing.docs.first.data();
+        }
+        // Also check user's subcollection
+        final userExisting = await _db.collection('users').doc(uid).collection('monnifyAccounts').limit(1).get();
+        if (userExisting.docs.isNotEmpty) {
+          debugPrint('[Monnify] found existing user account for $uid');
+          return userExisting.docs.first.data();
+        }
+        throw Exception('Monnify: this email ($email) already has a reserved account on another customer. Use a different email or contact Monnify support.');
       }
       final decoded = jsonDecode(res.body) as Map<String, dynamic>;
       if (res.statusCode < 200 || res.statusCode >= 300) {

@@ -74,7 +74,7 @@ class HelpSupportPage extends StatelessWidget {
                     icon: Icons.chat_bubble_outline_rounded,
                     title: 'Live Chat',
                     subtitle: 'Chat with our support team',
-                    onTap: () {},
+                    onTap: () => launchUrl(Uri.parse('https://regentspace.com/support'), mode: LaunchMode.externalApplication),
                   ),
                   const Divider(height: 1, thickness: 0.5, indent: 52, color: AppColors.primaryLight),
                   _ContactTile(

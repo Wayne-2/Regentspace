@@ -17,6 +17,8 @@ import '../../service/monnify_service.dart';
 import '../../service/monnify_config.dart';
 import '../../service/build_tracker.dart';
 import '../../components/notificationpage.dart';
+import '../../components/shareinvite.dart';
+import '../../pages/finances/all_recent_activity.dart';
 import 'newusertab.dart';
 
 class Dashboard extends StatefulWidget {
@@ -117,7 +119,7 @@ class _DashboardState extends State<Dashboard> {
         ),
         actions: [
           GestureDetector(
-            onTap: () {},
+            onTap: () => launchUrl(Uri.parse('https://regentspace.com/support'), mode: LaunchMode.externalApplication),
             child: Container(
               width: 40,
               height: 40,
@@ -258,7 +260,7 @@ class _DashboardState extends State<Dashboard> {
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () {},
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AllRecentActivityPage())),
                         borderRadius: BorderRadius.circular(14),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -433,7 +435,7 @@ class _DashboardState extends State<Dashboard> {
                               const SizedBox(height: 10),
                 
                               InkWell(
-                                onTap: () {},
+                                onTap: () => sendInvite(context),
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
@@ -509,7 +511,11 @@ class _DashboardState extends State<Dashboard> {
                     children: [
                       const Text("New Users", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color.fromARGB(255, 78, 6, 102))),
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Full user list coming soon'), backgroundColor: Color(0xFF740690)),
+                          );
+                        },
                         child: const Text("View all", style: TextStyle(fontSize: 12, color: Color.fromARGB(255, 78, 6, 102), fontWeight: FontWeight.w600)),
                       ),
                     ],
@@ -779,172 +785,262 @@ class _AddMoneySheetState extends State<_AddMoneySheet> {
     final uid = widget.uid;
     return Container(
       decoration: const BoxDecoration(
-        color: Color.fromARGB(255, 255, 255, 255),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SafeArea(
         top: false,
         child: DraggableScrollableSheet(
-          initialChildSize: 0.72,
+          initialChildSize: 0.75,
           minChildSize: 0.5,
           maxChildSize: 0.92,
           expand: false,
           builder: (context, scrollController) {
             return SingleChildScrollView(
               controller: scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(child: Container(width: 44, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(10)))),
-                  const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Add Money', style: TextStyle(fontFamily: 'DMSans', fontSize: 18, fontWeight: FontWeight.w800, color: Color.fromARGB(255, 78, 6, 102))),
-                      InkWell(
-                        onTap: () => Navigator.pop(context),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(color: const Color(0xFFEAC5F7), shape: BoxShape.circle),
-                          child: const Icon(Icons.close_rounded, size: 18, color: Color.fromARGB(255, 78, 6, 102)),
-                        ),
+                  // Drag handle
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(100)),
                       ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text('Fund your wallet via bank transfer — works from any Nigerian bank app.', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, color: Color.fromARGB(190, 25, 27, 35))),
-                  const SizedBox(height: 16),
-                  if (uid == null)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.black.withOpacity(0.04))),
-                      child: const Row(children: [Icon(Icons.login_rounded, color: Color(0xFF740690)), SizedBox(width: 10), Expanded(child: Text('Please log in to view your virtual account.', style: TextStyle(fontFamily: 'DMSans', fontSize: 13)))]),
-                    )
-                  else
-                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                      stream: UserRepository.instance.watchUser(uid),
-                      builder: (context, userSnap) {
-                        final userData = userSnap.data?.data();
-                        final primary = userData?['primaryVirtualAccount'] as Map<String, dynamic>?;
-                        final bankName = (primary?['bankName'] as String?)?.trim();
-                        final acctNo = (primary?['accountNumber'] as String?)?.trim();
-                        final acctRef = (primary?['accountReference'] as String?)?.trim();
-                        final acctName = (primary?['accountName'] as String?)?.trim() ?? (userData?['username'] as String?) ?? '—';
-                        final hasAccount = bankName != null && bankName.isNotEmpty && acctNo != null && acctNo.isNotEmpty;
-                        if (!hasAccount) {
-                          return Container(
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.black.withOpacity(0.04))),
-                            child: Row(children: [
-                              Shimmer.fromColors(
-                                baseColor: const Color(0xFF740690).withOpacity(0.3),
-                                highlightColor: const Color(0xFF740690).withOpacity(0.1),
-                                child: Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF740690),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Expanded(child: Text('Virtual account is being created... Pull down on dashboard to refresh.', style: TextStyle(fontFamily: 'DMSans', fontSize: 12.5))),
-                            ]),
-                          );
-                        }
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+
+                  // Header with gradient accent
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // Bank details container
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0xFFEAC5F7)),
-                              ),
+                            const Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 38,
-                                        height: 38,
-                                        decoration: BoxDecoration(color: const Color(0xFFF3E5F5), borderRadius: BorderRadius.circular(10)),
-                                        child: const Icon(Icons.account_balance_rounded, size: 18, color: Color(0xFF740690)),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(bankName, style: const TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF2E0342))),
-                                            const SizedBox(height: 2),
-                                            Text(acctNo, style: const TextStyle(fontFamily: 'DMSans', fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F), letterSpacing: 0.4)),
-                                            const SizedBox(height: 2),
-                                            Text(acctName, style: TextStyle(fontFamily: 'DMSans', fontSize: 11, color: Colors.black.withOpacity(0.55))),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: OutlinedButton.icon(
-                                      onPressed: () => _copy(context, acctNo, 'Account number'),
-                                      icon: const Icon(Icons.copy_rounded, size: 14),
-                                      label: const Text('Copy account number', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, fontWeight: FontWeight.w600)),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: const Color(0xFF740690),
-                                        side: const BorderSide(color: Color(0xFF740690)),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                        padding: const EdgeInsets.symmetric(vertical: 10),
-                                      ),
-                                    ),
+                                  Text('Add Money', style: TextStyle(fontFamily: 'DMSans', fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1A1A1E))),
+                                  SizedBox(height: 4),
+                                  Text('Fund your wallet via bank transfer', style: TextStyle(fontFamily: 'DMSans', fontSize: 12.5, color: Color(0xFF8A8A94)),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 14),
-                            // Suggestions / tips
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0xFFEAC5F7)),
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(color: const Color(0xFFF5F5F7), borderRadius: BorderRadius.circular(12)),
+                                child: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF8A8A94)),
                               ),
-                              child: Column(
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (uid == null)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9F5FF),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(color: const Color(0xFFEAC5F7).withValues(alpha: 0.4), borderRadius: BorderRadius.circular(12)),
+                                child: const Icon(Icons.login_rounded, color: Color(0xFF740690), size: 20),
+                              ),
+                              const SizedBox(width: 14),
+                              const Expanded(child: Text('Please log in to view your virtual account.', style: TextStyle(fontFamily: 'DMSans', fontSize: 13, color: Color(0xFF5A5A64)))),
+                            ]),
+                          )
+                        else
+                          StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                            stream: UserRepository.instance.watchUser(uid),
+                            builder: (context, userSnap) {
+                              final userData = userSnap.data?.data();
+                              final primary = userData?['primaryVirtualAccount'] as Map<String, dynamic>?;
+                              final bankName = (primary?['bankName'] as String?)?.trim();
+                              final acctNo = (primary?['accountNumber'] as String?)?.trim();
+                              final acctRef = (primary?['accountReference'] as String?)?.trim();
+                              final acctName = (primary?['accountName'] as String?)?.trim() ?? (userData?['username'] as String?) ?? '—';
+                              final hasAccount = bankName != null && bankName.isNotEmpty && acctNo != null && acctNo.isNotEmpty;
+                              if (!hasAccount) {
+                                return Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF9F5FF),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(children: [
+                                    Shimmer.fromColors(
+                                      baseColor: const Color(0xFF740690).withValues(alpha: 0.3),
+                                      highlightColor: const Color(0xFF740690).withValues(alpha: 0.1),
+                                      child: Container(
+                                        width: 10,
+                                        height: 10,
+                                        decoration: const BoxDecoration(color: Color(0xFF740690), shape: BoxShape.circle),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    const Expanded(
+                                      child: Text('Virtual account is being created...', style: TextStyle(fontFamily: 'DMSans', fontSize: 13, color: Color(0xFF5A5A64))),
+                                    ),
+                                  ]),
+                                );
+                              }
+                              return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(children: [Container(padding: const EdgeInsets.all(6), decoration: const BoxDecoration(color: Color(0xFFF3E5F5), shape: BoxShape.circle), child: const Icon(Icons.lightbulb_rounded, size: 14, color: Color(0xFF740690))), const SizedBox(width: 8), const Text('Tips', style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFF2E0342)))]),
-                                  const SizedBox(height: 8),
-                                  _TipRow(text: 'Use bank transfer from any app — choose $bankName or any listed bank.'),
-                                  const SizedBox(height: 6),
-                                  const _TipRow(text: 'Funds reflect instantly; if delayed, pull to refresh on dashboard.'),
-                                  const SizedBox(height: 6),
-                                  const _TipRow(text: 'Account is dedicated to you — keep it for future top-ups.'),
-                                  const SizedBox(height: 10),
+                                  // Bank account card
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(18),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [Color(0xFFFAF5FF), Color(0xFFF3E8FF)],
+                                      ),
+                                      borderRadius: BorderRadius.circular(22),
+                                      border: Border.all(color: const Color(0xFFEAC5F7).withValues(alpha: 0.5)),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Container(
+                                              width: 42,
+                                              height: 42,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.circular(14),
+                                                boxShadow: [BoxShadow(color: const Color(0xFF740690).withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2))],
+                                              ),
+                                              child: const Icon(Icons.account_balance_rounded, size: 20, color: Color(0xFF740690)),
+                                            ),
+                                            const SizedBox(width: 14),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(bankName, style: const TextStyle(fontFamily: 'DMSans', fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF2E0342))),
+                                                  const SizedBox(height: 1),
+                                                  Text(acctName, style: TextStyle(fontFamily: 'DMSans', fontSize: 11.5, color: Colors.black.withValues(alpha: 0.45))),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 18),
+                                        // Account number — prominent, tappable
+                                        GestureDetector(
+                                          onTap: () => _copy(context, acctNo, 'Account number'),
+                                          child: Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(14),
+                                              border: Border.all(color: const Color(0xFFEAC5F7).withValues(alpha: 0.6)),
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Text(acctNo, style: const TextStyle(fontFamily: 'DMSans', fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1A1A1E), letterSpacing: 1.5)),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xFFF3E5F5),
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: const Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(Icons.copy_rounded, size: 13, color: Color(0xFF740690)),
+                                                      SizedBox(width: 4),
+                                                      Text('Copy', style: TextStyle(fontFamily: 'DMSans', fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF740690))),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 16),
+
+                                  // Tips
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFAFAFA),
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Icon(Icons.lightbulb_rounded, size: 15, color: Color(0xFFF59E0B)),
+                                            SizedBox(width: 8),
+                                            Text('How it works', style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF1A1A1E))),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        _TipRow(text: 'Transfer from any bank app to your $bankName account'),
+                                        const SizedBox(height: 8),
+                                        const _TipRow(text: 'Funds reflect instantly — pull down to refresh'),
+                                        const SizedBox(height: 8),
+                                        const _TipRow(text: 'Your dedicated account — save it for future top-ups'),
+                                      ],
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 20),
+
+                                  // Action buttons
                                   Row(
                                     children: [
                                       Expanded(
                                         child: OutlinedButton.icon(
                                           onPressed: () => _copyAll(bankName, acctNo, acctName),
                                           icon: const Icon(Icons.copy_all_rounded, size: 16),
-                                          label: const Text('Copy details', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, fontWeight: FontWeight.w600)),
-                                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF740690), side: const BorderSide(color: Color(0xFF740690)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), padding: const EdgeInsets.symmetric(vertical: 10)),
+                                          label: const Text('Copy all details', style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w600)),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: const Color(0xFF740690),
+                                            side: const BorderSide(color: Color(0xFFEAC5F7)),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                          ),
                                         ),
                                       ),
-                                      const SizedBox(width: 10),
+                                      const SizedBox(width: 12),
                                       Expanded(
+                                        flex: 2,
                                         child: ElevatedButton.icon(
                                           onPressed: () {
                                             Clipboard.setData(ClipboardData(text: acctNo));
@@ -952,21 +1048,35 @@ class _AddMoneySheetState extends State<_AddMoneySheet> {
                                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Account number copied — paste in your bank app'), backgroundColor: Color(0xFF740690)));
                                           },
                                           icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                                          label: const Text('Pay now', style: TextStyle(fontFamily: 'DMSans', fontSize: 12, fontWeight: FontWeight.w700)),
-                                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF740690), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), padding: const EdgeInsets.symmetric(vertical: 10)),
+                                          label: const Text('Pay now', style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w700)),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF740690),
+                                            foregroundColor: Colors.white,
+                                            elevation: 0,
+                                            shadowColor: const Color(0xFF740690).withValues(alpha: 0.3),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
+
+                                  const SizedBox(height: 16),
+                                  Center(
+                                    child: Text(
+                                      'Powered by Monnify',
+                                      style: TextStyle(fontFamily: 'DMSans', fontSize: 10.5, color: Colors.black.withValues(alpha: 0.25), letterSpacing: 0.5),
+                                    ),
+                                  ),
                                 ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Center(child: Text('Powered by Monnify • NGN only', style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: Colors.black.withOpacity(0.35)))),
-                          ],
-                        );
-                      },
+                              );
+                            },
+                          ),
+                      ],
                     ),
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             );
@@ -985,9 +1095,14 @@ class _TipRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(padding: EdgeInsets.only(top: 2), child: Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFF4CAF50))),
-        const SizedBox(width: 6),
-        Expanded(child: Text(text, style: TextStyle(fontFamily: 'DMSans', fontSize: 11.5, color: Colors.black.withOpacity(0.65), height: 1.3))),
+        Container(
+          margin: const EdgeInsets.only(top: 3),
+          width: 5,
+          height: 5,
+          decoration: const BoxDecoration(color: Color(0xFF740690), shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 10),
+        Expanded(child: Text(text, style: TextStyle(fontFamily: 'DMSans', fontSize: 12, color: Colors.black.withValues(alpha: 0.55), height: 1.4))),
       ],
     );
   }
@@ -1018,6 +1133,7 @@ class _BuildResultBannerState extends State<_BuildResultBanner> {
         return;
       }
       setState(() {
+        if (!mounted) return;
         _elapsed += const Duration(seconds: 1);
       });
     });

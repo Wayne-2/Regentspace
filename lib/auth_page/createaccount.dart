@@ -407,7 +407,7 @@ class _CreateaccountpageState extends State<Createaccountpage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       GestureDetector(
-                        onTap: () => Navigator.push(
+                        onTap: () => Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(builder: (_) => const Loginpage()),
                         ),

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../auth_page/login.dart';
 
 class SecurityPage extends StatefulWidget {
   const SecurityPage({super.key});
@@ -173,7 +174,14 @@ class _SecurityPageState extends State<SecurityPage> {
                     title: 'Biometric Login',
                     subtitle: 'Use fingerprint or face ID',
                     value: _biometricsEnabled,
-                    onChanged: (v) => setState(() => _biometricsEnabled = v),
+                    onChanged: (v) {
+                      setState(() => _biometricsEnabled = v);
+                      if (v) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Biometric login coming soon'), backgroundColor: Color(0xFF740690)),
+                        );
+                      }
+                    },
                   ),
                   const Divider(height: 1, thickness: 0.5, indent: 52, color: AppColors.border),
                   _SwitchTile(
@@ -181,7 +189,14 @@ class _SecurityPageState extends State<SecurityPage> {
                     title: 'Two-Factor Authentication',
                     subtitle: 'Extra layer of security',
                     value: _twoFactorEnabled,
-                    onChanged: (v) => setState(() => _twoFactorEnabled = v),
+                    onChanged: (v) {
+                      setState(() => _twoFactorEnabled = v);
+                      if (v) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Two-factor authentication coming soon'), backgroundColor: Color(0xFF740690)),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),
@@ -204,14 +219,18 @@ class _SecurityPageState extends State<SecurityPage> {
                     icon: Icons.visibility_outlined,
                     title: 'Profile Visibility',
                     subtitle: 'Control who can see your profile',
-                    onTap: () {},
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Profile visibility settings coming soon'), backgroundColor: Color(0xFF740690)),
+                      );
+                    },
                   ),
                   const Divider(height: 1, thickness: 0.5, indent: 52, color: AppColors.border),
                   _SettingTile(
                     icon: Icons.delete_outline_rounded,
                     title: 'Delete Account',
                     subtitle: 'Permanently delete your account',
-                    onTap: () {},
+                    onTap: () => _confirmDeleteAccount(context),
                     isDestructive: true,
                   ),
                 ],
@@ -219,6 +238,53 @@ class _SecurityPageState extends State<SecurityPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmDeleteAccount(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        backgroundColor: Colors.white,
+        title: const Text('Delete Account', textAlign: TextAlign.center, style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, color: Color(0xFF1A1A1E))),
+        content: const Text('This action is permanent and cannot be undone. All your data will be lost.', textAlign: TextAlign.center, style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
+        actions: [
+          Column(
+            children: [
+              const Divider(height: 0.5, thickness: 0.5, color: Color(0xFFE8E8EA)),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: const RoundedRectangleBorder(), minimumSize: const Size(double.infinity, 48)),
+                child: const Text('Cancel', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFF5A5A64))),
+              ),
+              const Divider(height: 0.5, thickness: 0.5, color: Color(0xFFE8E8EA)),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    await FirebaseAuth.instance.currentUser?.delete();
+                    if (context.mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const Loginpage()),
+                        (_) => false,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Delete failed: $e'), backgroundColor: const Color(0xFFC62828)),
+                      );
+                    }
+                  }
+                },
+                style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: const RoundedRectangleBorder(), minimumSize: const Size(double.infinity, 48)),
+                child: const Text('Delete', style: TextStyle(fontFamily: 'DMSans', color: Color(0xFFE53935), fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

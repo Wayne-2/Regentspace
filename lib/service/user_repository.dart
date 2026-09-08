@@ -33,7 +33,7 @@ class UserRepository {
       'lastLoginAt': FieldValue.serverTimestamp(),
     };
     await _saveMerged(user.uid, data, isNewUser: true);
-    if (kDebugMode) debugPrint('[UserRepository] saved email user ${user.uid} -> $username / $phone');
+    if (kDebugMode) debugPrint('[UserRepository] saved email user ${user.uid} -> email="${data['email']}" username="$username" phone="$phone"');
   }
 
   /// Create/update profile from Google credential.

@@ -444,11 +444,11 @@ class _FinancesState extends State<Finances> {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Expanded(child: _buildSummaryTile("Interest Rate", "25%")),
+                          Expanded(child: _buildSummaryTile("Interest Rate", "---")),
                           Container(width: 1, height: 32, color: AppColors.primaryLight),
-                          Expanded(child: _buildSummaryTile("Today's Earnings", "₦2,000.00")),
+                          Expanded(child: _buildSummaryTile("Today's Earnings", "---")),
                           Container(width: 1, height: 32, color: AppColors.primaryLight),
-                          Expanded(child: _buildSummaryTile("Withdrawal Balance", "₦22,550.00")),
+                          Expanded(child: _buildSummaryTile("Withdrawal Balance", "---")),
                         ],
                       ),
                     ],

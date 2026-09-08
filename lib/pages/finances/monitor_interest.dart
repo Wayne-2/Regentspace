@@ -86,17 +86,17 @@ class _MonitorInterestPageState extends State<MonitorInterestPage> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Expanded(child: _buildSummaryItem("Total Earned", "₦12,500.00")),
+                      Expanded(child: _buildSummaryItem("Total Earned", "---")),
                       Container(width: 1, height: 40, color: AppColors.primaryLight),
-                      Expanded(child: _buildSummaryItem("Interest Rate", "25%")),
+                      Expanded(child: _buildSummaryItem("Interest Rate", "---")),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Expanded(child: _buildSummaryItem("Transactions", "48")),
+                      Expanded(child: _buildSummaryItem("Transactions", "---")),
                       Container(width: 1, height: 40, color: AppColors.primaryLight),
-                      Expanded(child: _buildSummaryItem("Avg. per Transaction", "₦260.42")),
+                      Expanded(child: _buildSummaryItem("Avg. per Transaction", "---")),
                     ],
                   ),
                 ],
@@ -109,10 +109,10 @@ class _MonitorInterestPageState extends State<MonitorInterestPage> {
             Text("Interest Breakdown", style: AppTextStyles.title(color: AppColors.textPrimary)),
             const SizedBox(height: 12),
 
-            _buildBreakdownItem("Airtime Purchases", "₦5,200.00", "20 transactions", Icons.phone_android, const Color(0xFF4CAF50)),
-            _buildBreakdownItem("Data Purchases", "₦4,800.00", "15 transactions", Icons.wifi, const Color(0xFF2196F3)),
-            _buildBreakdownItem("Cable TV Payments", "₦1,500.00", "8 transactions", Icons.tv, const Color(0xFFFF9800)),
-            _buildBreakdownItem("Electricity Bills", "₦1,000.00", "5 transactions", Icons.flash_on, const Color(0xFF9C27B0)),
+            _buildBreakdownItem("Airtime Purchases", "---", "---", Icons.phone_android, const Color(0xFF4CAF50)),
+            _buildBreakdownItem("Data Purchases", "---", "---", Icons.wifi, const Color(0xFF2196F3)),
+            _buildBreakdownItem("Cable TV Payments", "---", "---", Icons.tv, const Color(0xFFFF9800)),
+            _buildBreakdownItem("Electricity Bills", "---", "---", Icons.flash_on, const Color(0xFF9C27B0)),
 
             const SizedBox(height: 24),
 
@@ -120,11 +120,11 @@ class _MonitorInterestPageState extends State<MonitorInterestPage> {
             Text("Recent Interest Entries", style: AppTextStyles.title(color: AppColors.textPrimary)),
             const SizedBox(height: 12),
 
-            _buildInterestEntry("Airtime - MTN", "₦120.00", "2 hours ago"),
-            _buildInterestEntry("Data - GLO", "₦85.00", "5 hours ago"),
-            _buildInterestEntry("Cable TV - DSTV", "₦250.00", "Yesterday"),
-            _buildInterestEntry("Electricity - IKEDC", "₦500.00", "Yesterday"),
-            _buildInterestEntry("Airtime - Airtel", "₦95.00", "2 days ago"),
+            _buildInterestEntry("Airtime - MTN", "---", "---"),
+            _buildInterestEntry("Data - GLO", "---", "---"),
+            _buildInterestEntry("Cable TV - DSTV", "---", "---"),
+            _buildInterestEntry("Electricity - IKEDC", "---", "---"),
+            _buildInterestEntry("Airtime - Airtel", "---", "---"),
           ],
         ),
       ),
