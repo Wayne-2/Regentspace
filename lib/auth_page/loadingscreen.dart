@@ -24,15 +24,31 @@ class _LoadingscreenState extends State<Loadingscreen> {
     );
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      final user = FirebaseAuth.instance.currentUser;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => user != null ? const RegentBottomNav() : const Loginpage(),
-        ),
-      );
-    });
+    _navigateAfterDelay();
+  }
+
+  Future<void> _navigateAfterDelay() async {
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    User? user;
+    try {
+      user = FirebaseAuth.instance.currentUser;
+    } catch (_) {
+      // Firebase not initialized yet — stay on loading screen, retry shortly
+      if (mounted) {
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) _navigateAfterDelay();
+        });
+      }
+      return;
+    }
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => user != null ? const RegentBottomNav() : const Loginpage(),
+      ),
+    );
   }
 
   @override

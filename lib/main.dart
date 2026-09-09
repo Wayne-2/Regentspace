@@ -205,6 +205,8 @@ class _LoadingpageState extends State<Loadingpage> {
 
     if (widget.firebaseOk != null) {
       _navigate();
+    } else {
+      widget.onRetry();
     }
   }
 

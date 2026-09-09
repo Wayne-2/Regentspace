@@ -3,7 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
-import '../navigator.dart';
+import '../main.dart';
 
 class Networkerror extends StatefulWidget {
   final Future<void> Function() onRetry;
@@ -42,9 +42,10 @@ class _NetworkerrorState extends State<Networkerror> {
 
   void _retry() {
     if (!mounted) return;
-    widget.onRetry();
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const RegentBottomNav()),
+      MaterialPageRoute(
+        builder: (_) => Loadingpage(firebaseOk: null, onRetry: widget.onRetry),
+      ),
       (route) => false,
     );
   }
