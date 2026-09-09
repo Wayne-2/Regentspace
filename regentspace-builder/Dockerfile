@@ -2,6 +2,7 @@
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV BUILD_ID=20260909-agp852
 ENV FLUTTER_HOME=/opt/flutter
 ENV ANDROID_HOME=/opt/android-sdk
 ENV PATH="$FLUTTER_HOME/bin:$FLUTTER_HOME/bin/cache/dart-sdk/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
@@ -48,7 +49,6 @@ WORKDIR /app/server
 RUN dart pub get
 
 # Copy template files directly to /app/ (build.sh uses SCRIPT_DIR as template root)
-ARG CACHE_BUST=2
 COPY build.sh /app/build.sh
 RUN chmod +x /app/build.sh
 COPY android/ /app/android/
