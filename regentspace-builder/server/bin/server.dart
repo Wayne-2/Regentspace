@@ -75,6 +75,7 @@ Future<void> handleRequest(
   if (path == '/health' && request.method == 'GET') {
     _jsonResponse(request.response, 200, {
       'status': 'ok',
+      'buildId': Platform.environment['BUILD_ID'] ?? 'unknown',
       'timestamp': DateTime.now().toIso8601String(),
     });
     await request.response.close();
