@@ -241,9 +241,9 @@ class PushNotificationService {
       icon: '@mipmap/notification_display_icon',
       color: const Color(0xFF740690),
     );
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
-      iOS: DarwinNotificationDetails(presentAlert: false, presentBadge: false, presentSound: false),
+      iOS: const DarwinNotificationDetails(presentAlert: false, presentBadge: false, presentSound: false),
     );
     await _local.show(id, 'Building $appName', status, details, payload: 'build_progress:$buildId');
   }
@@ -270,9 +270,9 @@ class PushNotificationService {
       icon: '@mipmap/notification_display_icon',
       color: const Color(0xFF740690),
     );
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
-      iOS: DarwinNotificationDetails(presentAlert: false, presentBadge: false, presentSound: false),
+      iOS: const DarwinNotificationDetails(presentAlert: false, presentBadge: false, presentSound: false),
     );
     await _local.show(id, 'Building $appName', status, details, payload: 'build_progress:$buildId');
   }

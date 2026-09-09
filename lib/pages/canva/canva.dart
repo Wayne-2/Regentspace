@@ -139,7 +139,8 @@ class _RegentcanvaState extends State<Regentcanva> {
   bool _isContainerElement(String id) => id.contains('wallet') || id.contains('plan_card') ||
       id.contains('button') || id.contains('services_grid') || id.contains('summary') ||
       id.contains('transactions_list') || id.startsWith('screen_') || id.contains('service_') ||
-      id.contains('profile_') || id.contains('email') || id.contains('password') || id.contains('confirm');
+      id.contains('profile_') || id.contains('email') || id.contains('password') || id.contains('confirm') ||
+      id.contains('username');
 
   String? _getTextForElement(String id) {
     if (_elementTexts.containsKey(id)) return _elementTexts[id];
@@ -163,7 +164,9 @@ class _RegentcanvaState extends State<Regentcanva> {
         if (_isTextElement(id) || id == 'home_wallet' || id == 'finance_plan_card' || id == 'profile_personal' || id == 'profile_payment' || id == 'profile_security' || id == 'profile_notifications' || id == 'profile_help' || id == 'profile_logout') {
           _showColorPicker(forText: true);
         } else if (_isContainerElement(id)) {
-          _showColorPicker(forText: false);
+          // Input fields: save color to '${id}_label' for label text
+          final isInputField = id.contains('email') || id.contains('password') || id.contains('confirm') || id.contains('username');
+          _showColorPicker(forText: false, colorKey: isInputField ? '${id}_label' : null);
         }
         break;
       case 'Text':
@@ -180,10 +183,11 @@ class _RegentcanvaState extends State<Regentcanva> {
     }
   }
 
-  void _showColorPicker({required bool forText}) {
+  void _showColorPicker({required bool forText, String? colorKey}) {
     final id = _selectedElementId!;
+    final key = colorKey ?? id;
     final currentColor = forText
-        ? (_elementColors[id] ?? _getDefaultTextColor(id))
+        ? (_elementColors[key] ?? _getDefaultTextColor(id))
         : (_containerBackgrounds[id] ?? const Color(0xFFF7F7F7));
 
     _pushUndo();
@@ -212,7 +216,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                       return GestureDetector(
                         onTap: () {
                           setState(() {
-                            if (forText) { _elementColors[id] = c; }
+                            if (forText) { _elementColors[key] = c; }
                             else { _containerBackgrounds[id] = c; }
                           });
                           lastPicked = c;
@@ -239,7 +243,7 @@ class _RegentcanvaState extends State<Regentcanva> {
                   pickerColor: currentColor,
                   onColorChanged: (color) {
                     setState(() {
-                      if (forText) { _elementColors[id] = color; }
+                      if (forText) { _elementColors[key] = color; }
                       else { _containerBackgrounds[id] = color; }
                     });
                     lastPicked = color;
@@ -987,7 +991,7 @@ class _RegentcanvaState extends State<Regentcanva> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final previewH = constraints.maxHeight;
-                  _phoneScale = (previewH / 480).clamp(0.5, 1.5);
+                  _phoneScale = (previewH / 480).clamp(0.5, 1.0);
                   return ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(

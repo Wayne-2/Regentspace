@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import '../navigator.dart';
 
 class Networkerror extends StatefulWidget {
   final Future<void> Function() onRetry;
@@ -41,10 +42,11 @@ class _NetworkerrorState extends State<Networkerror> {
 
   void _retry() {
     if (!mounted) return;
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    }
     widget.onRetry();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const RegentBottomNav()),
+      (route) => false,
+    );
   }
 
   @override
