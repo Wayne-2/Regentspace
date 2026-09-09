@@ -2,7 +2,7 @@
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV BUILD_ID=20260909-agp852
+ENV BUILD_ID=20260909-agp901-kt2320
 ENV FLUTTER_HOME=/opt/flutter
 ENV ANDROID_HOME=/opt/android-sdk
 ENV PATH="$FLUTTER_HOME/bin:$FLUTTER_HOME/bin/cache/dart-sdk/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
@@ -21,7 +21,7 @@ ENV GRADLE_OPTS="-Xmx4g -XX:MaxMetaspaceSize=1g -XX:ReservedCodeCacheSize=512m -
 ENV JAVA_OPTS="-Xmx4g -XX:MaxMetaspaceSize=1g"
 
 # Install Flutter
-RUN git clone --depth 1 --branch 3.27.4 https://github.com/flutter/flutter.git "$FLUTTER_HOME" \
+RUN git clone --depth 1 --branch 3.44.0 https://github.com/flutter/flutter.git "$FLUTTER_HOME" \
     && flutter precache --android \
     && flutter config --no-analytics \
     && dart --disable-analytics
