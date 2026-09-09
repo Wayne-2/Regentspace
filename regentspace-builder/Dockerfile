@@ -48,6 +48,7 @@ WORKDIR /app/server
 RUN dart pub get
 
 # Copy template files directly to /app/ (build.sh uses SCRIPT_DIR as template root)
+ARG CACHE_BUST=2
 COPY build.sh /app/build.sh
 RUN chmod +x /app/build.sh
 COPY android/ /app/android/
