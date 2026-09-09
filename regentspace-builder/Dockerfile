@@ -15,9 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 
-# Memory limits for Java/Gradle processes
-ENV GRADLE_OPTS="-Xmx2g -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m -Dfile.encoding=UTF-8"
-ENV JAVA_OPTS="-Xmx2g -XX:MaxMetaspaceSize=512m"
+# Memory limits for Java/Gradle processes (Hobby plan: up to 8GB)
+ENV GRADLE_OPTS="-Xmx4g -XX:MaxMetaspaceSize=1g -XX:ReservedCodeCacheSize=512m -Dfile.encoding=UTF-8"
+ENV JAVA_OPTS="-Xmx4g -XX:MaxMetaspaceSize=1g"
 
 # Install Flutter
 RUN git clone --depth 1 --branch 3.27.4 https://github.com/flutter/flutter.git "$FLUTTER_HOME" \

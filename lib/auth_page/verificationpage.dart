@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../navigator.dart';
 import '../service/auth_service.dart';
 import '../service/user_repository.dart';
-import 'loadingscreen.dart';
 import '../theme/app_theme.dart';
 
 /// Full verification screen — shows emailVerified status and lets the
@@ -179,7 +178,7 @@ class _VerificationpageState extends State<Verificationpage> {
       return;
     }
     if (_isVerified) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const Loadingscreen()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegentBottomNav()));
     } else {
       // Unverified users can still continue — app shows persistent banner
       showDialog(

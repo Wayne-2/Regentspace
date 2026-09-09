@@ -3,6 +3,7 @@ import 'pages/canva/canva.dart';
 import 'pages/dashboard/dashboard.dart';
 import 'pages/finances/finance.dart';
 import 'pages/profile/profile.dart';
+import 'service/build_tracker.dart';
 
 /// Global tab controller — canva switches to dashboard after build submit.
 final ValueNotifier<int> currentTabNotifier = ValueNotifier<int>(0);
@@ -14,17 +15,26 @@ class RegentBottomNav extends StatefulWidget {
   State<RegentBottomNav> createState() => _RegentBottomNavState();
 }
 
-class _RegentBottomNavState extends State<RegentBottomNav> {
+class _RegentBottomNavState extends State<RegentBottomNav> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     currentTabNotifier.addListener(_onTabChange);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     currentTabNotifier.removeListener(_onTabChange);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      BuildTracker.instance.refreshActiveBuilds();
+    }
   }
 
   void _onTabChange() {

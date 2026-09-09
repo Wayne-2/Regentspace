@@ -124,10 +124,7 @@ class _AppRootState extends State<_AppRoot> {
       _initializing = false;
       if (mounted) {
         setState(() => _firebaseOk = true);
-        final nav = Navigator.of(context);
-        if (nav.canPop()) {
-          nav.pushReplacement(MaterialPageRoute(builder: (_) => const Loginpage()));
-        }
+        // Navigation is handled by Loadingpage._navigate() via didUpdateWidget
       }
     } catch (_) {
       _fallbackTimer?.cancel();
@@ -191,7 +188,7 @@ class _LoadingpageState extends State<Loadingpage> {
       final destination = widget.firebaseOk == true
           ? MaterialPageRoute(builder: (_) => const Loginpage())
           : MaterialPageRoute(builder: (_) => Networkerror(onRetry: widget.onRetry));
-      Navigator.of(context).push(destination);
+      Navigator.of(context).pushReplacement(destination);
     });
   }
 
@@ -213,10 +210,12 @@ class _LoadingpageState extends State<Loadingpage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: Colors.white,
-      body: SizedBox(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        backgroundColor: Colors.white,
+        body: SizedBox(
         width: MediaQuery.of(context).size.width * 1.0,
         child: Stack(
           children: [
@@ -297,24 +296,30 @@ class _LoadingpageState extends State<Loadingpage> {
                     height: 288,
                   ),
                   const SizedBox(height: 50),
-                  Text(
-                    'Welcome to Regentspace',
-                    style: TextStyle(fontFamily: 'DMSans',
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      height: 1.1,
-                      letterSpacing: -0.8,
-                      color: const Color.fromRGBO(65, 0, 86, 1),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Welcome to Regentspace',
+                      style: TextStyle(fontFamily: 'DMSans',
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        height: 1.1,
+                        letterSpacing: -0.8,
+                        color: const Color.fromRGBO(65, 0, 86, 1),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    'Are you ready to take off?',
-                    style: TextStyle(fontFamily: 'DMSans',
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 0.1,
-                      color: Color.fromRGBO(65, 0, 86, 1),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Are you ready to take off?',
+                      style: TextStyle(fontFamily: 'DMSans',
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.1,
+                        color: Color.fromRGBO(65, 0, 86, 1),
+                      ),
                     ),
                   ),
                   Padding(
@@ -332,6 +337,7 @@ class _LoadingpageState extends State<Loadingpage> {
           ],
         ),
       ),
+    ),
     );
   }
 }

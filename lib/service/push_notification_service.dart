@@ -65,6 +65,19 @@ class PushNotificationService {
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
 
+    // Build progress channel (silent, persistent)
+    const buildChannel = AndroidNotificationChannel(
+      'regentspace_build_channel',
+      'Build Progress',
+      description: 'Shows build progress while building apps',
+      importance: Importance.low,
+      playSound: false,
+      enableVibration: false,
+    );
+    await _local
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(buildChannel);
+
     // 2. Request permission
     final settings = await _fcm.requestPermission(
       alert: true,
@@ -205,6 +218,69 @@ class PushNotificationService {
   Future<void> deleteToken() => _fcm.deleteToken();
   Future<void> subscribeToTopic(String topic) => _fcm.subscribeToTopic(topic);
   Future<void> unsubscribeFromTopic(String topic) => _fcm.unsubscribeFromTopic(topic);
+
+  /// Show a persistent build progress notification (cannot be swiped away)
+  Future<void> showBuildProgressNotification({
+    required String buildId,
+    required String appName,
+    required String status,
+  }) async {
+    final id = buildId.hashCode;
+    final androidDetails = AndroidNotificationDetails(
+      'regentspace_build_channel',
+      'Build Progress',
+      channelDescription: 'Shows build progress while building apps',
+      importance: Importance.low,
+      priority: Priority.low,
+      ongoing: true,
+      autoCancel: false,
+      showProgress: true,
+      progress: 0,
+      maxProgress: 0,
+      indeterminate: true,
+      icon: '@mipmap/notification_display_icon',
+      color: const Color(0xFF740690),
+    );
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: DarwinNotificationDetails(presentAlert: false, presentBadge: false, presentSound: false),
+    );
+    await _local.show(id, 'Building $appName', status, details, payload: 'build_progress:$buildId');
+  }
+
+  /// Update an existing build progress notification
+  Future<void> updateBuildProgressNotification({
+    required String buildId,
+    required String appName,
+    required String status,
+  }) async {
+    final id = buildId.hashCode;
+    final androidDetails = AndroidNotificationDetails(
+      'regentspace_build_channel',
+      'Build Progress',
+      channelDescription: 'Shows build progress while building apps',
+      importance: Importance.low,
+      priority: Priority.low,
+      ongoing: true,
+      autoCancel: false,
+      showProgress: true,
+      progress: 0,
+      maxProgress: 0,
+      indeterminate: true,
+      icon: '@mipmap/notification_display_icon',
+      color: const Color(0xFF740690),
+    );
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: DarwinNotificationDetails(presentAlert: false, presentBadge: false, presentSound: false),
+    );
+    await _local.show(id, 'Building $appName', status, details, payload: 'build_progress:$buildId');
+  }
+
+  /// Dismiss the persistent build progress notification
+  Future<void> dismissBuildProgressNotification(String buildId) async {
+    await _local.cancel(buildId.hashCode);
+  }
 
   void dispose() {
     _onMessageSub?.cancel();

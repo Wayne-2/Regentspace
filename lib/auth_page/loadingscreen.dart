@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../navigator.dart';
+import 'login.dart';
 
 class Loadingscreen extends StatefulWidget {
   const Loadingscreen({super.key});
@@ -24,109 +26,115 @@ class _LoadingscreenState extends State<Loadingscreen> {
 
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
+      final user = FirebaseAuth.instance.currentUser;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const RegentBottomNav()),
+        MaterialPageRoute(
+          builder: (_) => user != null ? const RegentBottomNav() : const Loginpage(),
+        ),
       );
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: Colors.white,
-      body: SizedBox(
-        width: MediaQuery.of(context).size.width * 1.0,
-        child: Stack(
-          children: [
-            Positioned(
-              right: -402,
-              top: -508,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color.fromRGBO(240, 83, 240, 0.28),
-                  borderRadius: BorderRadius.circular(1000),
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        backgroundColor: Colors.white,
+        body: SizedBox(
+          width: MediaQuery.of(context).size.width * 1.0,
+          child: Stack(
+            children: [
+              Positioned(
+                right: -402,
+                top: -508,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color.fromRGBO(240, 83, 240, 0.28),
+                    borderRadius: BorderRadius.circular(1000),
+                  ),
+                  width: 804,
+                  height: 743,
                 ),
-                width: 804,
-                height: 743,
               ),
-            ),
-            Positioned(
-              right: -639,
-              top: -238,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color.fromRGBO(240, 83, 240, 0.28),
-                  borderRadius: BorderRadius.circular(1000),
+              Positioned(
+                right: -639,
+                top: -238,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color.fromRGBO(240, 83, 240, 0.28),
+                    borderRadius: BorderRadius.circular(1000),
+                  ),
+                  width: 804,
+                  height: 743,
                 ),
-                width: 804,
-                height: 743,
               ),
-            ),
-            Positioned(
-              left: -508,
-              bottom: -445,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color.fromRGBO(240, 83, 240, 0.28),
-                  borderRadius: BorderRadius.circular(1000),
+              Positioned(
+                left: -508,
+                bottom: -445,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color.fromRGBO(240, 83, 240, 0.28),
+                    borderRadius: BorderRadius.circular(1000),
+                  ),
+                  width: 804,
+                  height: 743,
                 ),
-                width: 804,
-                height: 743,
               ),
-            ),
-            Positioned(
-              left: -555,
-              bottom: -445,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color.fromRGBO(240, 83, 240, 0.28),
-                  borderRadius: BorderRadius.circular(1000),
+              Positioned(
+                left: -555,
+                bottom: -445,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color.fromRGBO(240, 83, 240, 0.28),
+                    borderRadius: BorderRadius.circular(1000),
+                  ),
+                  width: 804,
+                  height: 743,
                 ),
-                width: 804,
-                height: 743,
               ),
-            ),
-            Positioned(
-              left: -617,
-              bottom: -445,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color.fromRGBO(240, 83, 240, 0.28),
-                  borderRadius: BorderRadius.circular(1000),
+              Positioned(
+                left: -617,
+                bottom: -445,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color.fromRGBO(240, 83, 240, 0.28),
+                    borderRadius: BorderRadius.circular(1000),
+                  ),
+                  width: 804,
+                  height: 743,
                 ),
-                width: 804,
-                height: 743,
               ),
-            ),
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 1.0,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: SizedBox(
-                      child: LoadingAnimationWidget.threeRotatingDots(
-                        size: 80,
-                        color: const Color.fromRGBO(209, 69, 255, 1),
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 1.0,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: SizedBox(
+                        child: LoadingAnimationWidget.threeRotatingDots(
+                          size: 80,
+                          color: const Color.fromRGBO(209, 69, 255, 1),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Getting started...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.normal,
-                      color: Color.fromRGBO(65, 0, 86, 1),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Getting started...',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.normal,
+                        color: Color.fromRGBO(65, 0, 86, 1),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

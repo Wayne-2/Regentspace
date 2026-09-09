@@ -25,7 +25,8 @@ class AuthService {
   /// Web uses same OAuth client as Firebase; Android needs SHA-1 registered.
   Future<UserCredential> signInWithGoogle() async {
     // Disconnect first to force account picker (instead of auto-restoring last account)
-    await _googleSignIn.disconnect();
+    // Ignores error when no existing session (first-time or after signOut)
+    try { await _googleSignIn.disconnect(); } catch (_) {}
     // Trigger native / web popup
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     if (googleUser == null) {

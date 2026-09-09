@@ -135,6 +135,16 @@ class BuildTracker {
 
     builds.value = [info, ...builds.value];
     await _saveBuilds();
+
+    // Show initial build progress notification
+    try {
+      await PushNotificationService.instance.showBuildProgressNotification(
+        buildId: buildId,
+        appName: appName,
+        status: 'Build submitted, waiting for server...',
+      );
+    } catch (_) {}
+
     _startPolling();
   }
 
@@ -152,19 +162,47 @@ class BuildTracker {
     }
 
     for (final build in active) {
+      // Show/update persistent progress notification
+      try {
+        final displayStatus = _statusToDisplayText(build.status);
+        await PushNotificationService.instance.showBuildProgressNotification(
+          buildId: build.buildId,
+          appName: build.appName,
+          status: displayStatus,
+        );
+      } catch (_) {}
+
       try {
         final response = await http.get(Uri.parse('$kBuildServerUrl/status/${build.buildId}'));
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           final serverStatus = data['status'] as String?;
 
-          if (serverStatus == 'completed' || serverStatus == 'failed' || serverStatus == 'cancelled') {
-            build.status = serverStatus!;
+          if (serverStatus != null && serverStatus != build.status) {
+            build.status = serverStatus;
             build.apkSize = data['apkSize'];
             build.downloadUrl = data['downloadUrl'] ?? '/download/${build.buildId}';
             build.error = data['error'];
+
+            // Update progress notification with new status
+            try {
+              final displayStatus = _statusToDisplayText(serverStatus);
+              await PushNotificationService.instance.updateBuildProgressNotification(
+                buildId: build.buildId,
+                appName: build.appName,
+                status: displayStatus,
+              );
+            } catch (_) {}
+          }
+
+          if (serverStatus == 'completed' || serverStatus == 'failed' || serverStatus == 'cancelled') {
             await _saveBuilds();
             builds.value = List<BuildInfo>.from(builds.value);
+
+            // Dismiss progress notification, show result notification
+            try {
+              await PushNotificationService.instance.dismissBuildProgressNotification(build.buildId);
+            } catch (_) {}
 
             if (serverStatus == 'completed') {
               _showNotification(build);
@@ -173,6 +211,24 @@ class BuildTracker {
         }
       } catch (_) {}
     }
+  }
+
+  String _statusToDisplayText(String status) {
+    switch (status) {
+      case 'preparing': return 'Preparing build environment...';
+      case 'building': return 'Building APK...';
+      case 'completed': return 'Build complete!';
+      case 'failed': return 'Build failed';
+      case 'cancelled': return 'Build cancelled';
+      default: return 'Processing...';
+    }
+  }
+
+  /// Re-poll all active builds immediately (called on app resume)
+  Future<void> refreshActiveBuilds() async {
+    final active = builds.value.where((b) => b.status == 'building' || b.status == 'preparing').toList();
+    if (active.isEmpty) return;
+    _startPolling();
   }
 
   Future<void> _showNotification(BuildInfo build) async {
@@ -207,6 +263,11 @@ class BuildTracker {
         build.error = 'Build cancelled by user';
         await _saveBuilds();
         builds.value = List<BuildInfo>.from(builds.value);
+
+        // Dismiss progress notification
+        try {
+          await PushNotificationService.instance.dismissBuildProgressNotification(buildId);
+        } catch (_) {}
       }
     } catch (e) {
       debugPrint('[BuildTracker] Cancel failed: $e');

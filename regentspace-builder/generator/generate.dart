@@ -363,6 +363,8 @@ class BuildGenerator {
       ..writeln('  final String appName;')
       ..writeln('  final String appDescription;')
       ..writeln('  final Uint8List? appIconBytes;')
+      ..writeln('  final BoxFit appIconFit;')
+      ..writeln('  final bool appIconRoundBorder;')
       ..writeln('  final Map<String, String> elementTexts;')
       ..writeln('  final Map<String, Color> elementColors;')
       ..writeln('  final Map<String, Color> containerBackgrounds;')
@@ -374,6 +376,8 @@ class BuildGenerator {
       ..writeln('    required this.appName,')
       ..writeln('    required this.appDescription,')
       ..writeln('    this.appIconBytes,')
+      ..writeln('    this.appIconFit = BoxFit.cover,')
+      ..writeln('    this.appIconRoundBorder = true,')
       ..writeln('    required this.elementTexts,')
       ..writeln('    required this.elementColors,')
       ..writeln('    required this.containerBackgrounds,')
@@ -421,11 +425,17 @@ class BuildGenerator {
       ..writeln('      iconBytes = base64Decode(iconBase64);')
       ..writeln('    }')
       ..writeln()
+      ..writeln('    final iconFitStr = app[\'iconFit\'] as String? ?? \'cover\';')
+      ..writeln('    final iconFit = iconFitStr == \'contain\' ? BoxFit.contain : BoxFit.cover;')
+      ..writeln('    final iconRoundBorder = app[\'iconRoundBorder\'] as bool? ?? true;')
+      ..writeln()
       ..writeln('    return BuildConfig(')
       ..writeln('      appId: app[\'id\'] as String? ?? \'default\',')
       ..writeln('      appName: app[\'name\'] as String? ?? \'App\',')
       ..writeln('      appDescription: app[\'description\'] as String? ?? \'\',')
       ..writeln('      appIconBytes: iconBytes,')
+      ..writeln('      appIconFit: iconFit,')
+      ..writeln('      appIconRoundBorder: iconRoundBorder,')
       ..writeln('      elementTexts: elementTexts,')
       ..writeln('      elementColors: elementColors,')
       ..writeln('      containerBackgrounds: containerBackgrounds,')
@@ -620,13 +630,13 @@ class BuildGenerator {
       ..writeln('                  width: 80, height: 80,')
       ..writeln('                  decoration: BoxDecoration(')
       ..writeln('                    color: Colors.white,')
-      ..writeln('                    borderRadius: BorderRadius.circular(20),')
+      ..writeln('                    borderRadius: BorderRadius.circular(config.appIconRoundBorder ? 20 : 0),')
       ..writeln('                    border: Border.all(color: const Color(0xFFE0E0E0)),')
       ..writeln('                  ),')
       ..writeln('                  child: config.appIconBytes != null')
       ..writeln('                      ? ClipRRect(')
-      ..writeln('                          borderRadius: BorderRadius.circular(20),')
-      ..writeln('                          child: Image.memory(config.appIconBytes!, width: 80, height: 80, fit: BoxFit.cover),')
+      ..writeln('                          borderRadius: BorderRadius.circular(config.appIconRoundBorder ? 20 : 0),')
+      ..writeln('                          child: Image.memory(config.appIconBytes!, width: 80, height: 80, fit: config.appIconFit),')
       ..writeln('                        )')
       ..writeln('                      : const Icon(Icons.image_outlined, size: 36, color: Color(0xFFB0B0B0)),')
       ..writeln('                ),')
@@ -1584,13 +1594,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 32, height: 32,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(config.appIconRoundBorder ? 8 : 0),
                       border: Border.all(color: Color(0xFFE0E0E0)),
                     ),
                     child: config.appIconBytes != null
                         ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.memory(config.appIconBytes!, width: 32, height: 32, fit: BoxFit.cover),
+                            borderRadius: BorderRadius.circular(config.appIconRoundBorder ? 8 : 0),
+                            child: Image.memory(config.appIconBytes!, width: 32, height: 32, fit: config.appIconFit),
                           )
                         : Icon(Icons.apps_rounded, size: 18, color: Color(0xFFB0B0B0)),
                   ),
@@ -1826,13 +1836,13 @@ class _SignupScreenState extends State<SignupScreen> {
                     width: 32, height: 32,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(config.appIconRoundBorder ? 8 : 0),
                       border: Border.all(color: Color(0xFFE0E0E0)),
                     ),
                     child: config.appIconBytes != null
                         ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.memory(config.appIconBytes!, width: 32, height: 32, fit: BoxFit.cover),
+                            borderRadius: BorderRadius.circular(config.appIconRoundBorder ? 8 : 0),
+                            child: Image.memory(config.appIconBytes!, width: 32, height: 32, fit: config.appIconFit),
                           )
                         : Icon(Icons.apps_rounded, size: 18, color: Color(0xFFB0B0B0)),
                   ),

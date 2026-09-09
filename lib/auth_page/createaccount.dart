@@ -422,7 +422,7 @@ class _CreateaccountpageState extends State<Createaccountpage> {
                         ),
                       ),
                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             'RegentSpace',
@@ -431,15 +431,6 @@ class _CreateaccountpageState extends State<Createaccountpage> {
                               fontWeight: FontWeight.w700,
                               color: const Color.fromRGBO(46, 3, 66, 1),
                               letterSpacing: -0.5,
-                            ),
-                          ),
-                          Text(
-                            'Technologies',
-                            style: TextStyle(fontFamily: 'DMSans', 
-                              fontSize: 20,
-                              fontWeight: FontWeight.w400,
-                              color: const Color.fromRGBO(46, 3, 66, 1),
-                              letterSpacing: 0.3,
                             ),
                           ),
                         ],
