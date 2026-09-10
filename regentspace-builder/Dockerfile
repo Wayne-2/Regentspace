@@ -2,7 +2,7 @@
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV BUILD_ID=20260910-flutter3274-agp901
+ENV BUILD_ID=20260910-fix-memory-1536m
 ENV FLUTTER_HOME=/opt/flutter
 ENV ANDROID_HOME=/opt/android-sdk
 ENV PATH="$FLUTTER_HOME/bin:$FLUTTER_HOME/bin/cache/dart-sdk/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
@@ -16,9 +16,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 
-# Memory limits for Java/Gradle processes (Hobby plan: up to 8GB)
-ENV GRADLE_OPTS="-Xmx4g -XX:MaxMetaspaceSize=1g -XX:ReservedCodeCacheSize=512m -Dfile.encoding=UTF-8"
-ENV JAVA_OPTS="-Xmx4g -XX:MaxMetaspaceSize=1g"
+# Memory limits for Java/Gradle processes (must fit within Railway container RAM)
+# Railway Hobby: ~1-2GB available. Keep JVM heap at 1.5GB to leave room for OS + Dart
+ENV GRADLE_OPTS="-Xmx1536m -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m -Dfile.encoding=UTF-8"
+ENV JAVA_OPTS="-Xmx1536m -XX:MaxMetaspaceSize=512m"
 
 # Install Flutter
 RUN git clone --depth 1 --branch 3.27.4 https://github.com/flutter/flutter.git "$FLUTTER_HOME" \
