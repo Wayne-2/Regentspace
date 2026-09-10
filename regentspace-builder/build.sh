@@ -23,6 +23,9 @@ echo "Input: $INPUT_JSON"
 echo "Output: $OUTPUT_DIR"
 echo "Workspace: $WORKSPACE"
 echo "Gradle Home: $GRADLE_USER_HOME"
+echo "Flutter: $(flutter --version 2>&1 | head -1)"
+echo "Java: $(java -version 2>&1 | head -1)"
+echo "Gradle: $(gradle --version 2>&1 | head -3 || echo 'wrapper will download')"
 echo ""
 
 # [1] Validate JSON
@@ -130,10 +133,10 @@ fi
 # [8] Resolve dependencies + Build APK
 echo "[8/9] Resolving dependencies..."
 cd "$WORKSPACE"
-flutter pub get
+flutter pub get --verbose
 
 echo "[9/9] Building APK..."
-flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons --split-per-abi
+flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons --split-per-abi --verbose 2>&1 | tail -100
 
 # Collect output
 echo ""
