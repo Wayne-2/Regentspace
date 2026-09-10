@@ -243,8 +243,12 @@ Future<void> runBuild(
       return;
     }
 
-    // Collect output (must consume streams to avoid zombie processes)
-    await process.stdout.drain<void>();
+    // Log stdout for debugging build progress
+    process.stdout.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
+      print('[$buildId] $line');
+    });
+
+    // Collect stderr for error reporting
     final stderrChunks = await process.stderr.toList();
     final stderrBytes = stderrChunks.expand((c) => c).toList();
     final exitCode = await process.exitCode;
