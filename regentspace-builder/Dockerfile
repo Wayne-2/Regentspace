@@ -10,7 +10,7 @@
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV BUILD_ID=20260910-clean-rewrite
+ENV BUILD_ID=20260910-with-ndk
 ENV FLUTTER_HOME=/opt/flutter
 ENV ANDROID_HOME=/opt/android-sdk
 ENV FLUTTER_ROOT=/opt/flutter
@@ -34,14 +34,14 @@ RUN git clone --depth 1 --branch 3.44.0 https://github.com/flutter/flutter.git "
     && flutter config --no-analytics \
     && dart --disable-analytics
 
-# ─── Layer 3: Android SDK ───
+# ─── Layer 3: Android SDK + NDK ───
 RUN mkdir -p "$ANDROID_HOME/cmdline-tools" \
     && curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip \
     && unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline-tools \
     && mv /tmp/cmdline-tools/cmdline-tools "$ANDROID_HOME/cmdline-tools/latest" \
     && rm -rf /tmp/cmdline-tools.zip /tmp/cmdline-tools \
     && yes | sdkmanager --licenses > /dev/null 2>&1 || true \
-    && sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+    && sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.0.12077973"
 
 # ─── Layer 4: App setup ───
 WORKDIR /app
