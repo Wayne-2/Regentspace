@@ -248,7 +248,7 @@ Future<void> runBuild(
       print('[$buildId] $line');
     });
 
-    // Collect stderr for error reporting
+    // Collect stderr for error reporting (limit to last 10KB to avoid memory issues)
     final stderrChunks = await process.stderr.toList();
     final stderrBytes = stderrChunks.expand((c) => c).toList();
     final exitCode = await process.exitCode;
@@ -257,8 +257,12 @@ Future<void> runBuild(
 
     if (exitCode != 0) {
       status.status = 'failed';
-      status.error = _sanitize(utf8.decode(stderrBytes, allowMalformed: true));
-      print('[$buildId] FAILED (exit $exitCode): ${status.error}');
+      final fullError = _sanitize(utf8.decode(stderrBytes, allowMalformed: true));
+      // Keep only last 10KB of error output to avoid huge JSON responses
+      status.error = fullError.length > 10240
+          ? '...${fullError.substring(fullError.length - 10240)}'
+          : fullError;
+      print('[$buildId] FAILED (exit $exitCode): ${status.error.substring(0, status.error.length.clamp(0, 500))}');
       return;
     }
 

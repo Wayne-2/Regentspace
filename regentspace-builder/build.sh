@@ -133,10 +133,10 @@ fi
 # [8] Resolve dependencies + Build APK
 echo "[8/9] Resolving dependencies..."
 cd "$WORKSPACE"
-flutter pub get --verbose
+flutter pub get > /dev/null 2>&1
 
 echo "[9/9] Building APK..."
-flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons --split-per-abi --verbose 2>&1 | tail -100
+flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons --split-per-abi 2>&1 | tail -50
 
 # Collect output
 echo ""
