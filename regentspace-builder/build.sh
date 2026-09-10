@@ -10,6 +10,11 @@ TEMPLATE_DIR="$SCRIPT_DIR"
 GENERATOR_DIR="$SCRIPT_DIR/generator"
 WORKSPACE="/tmp/regentspace-build-$$"
 
+# Use pre-cached Gradle home from Docker image
+export GRADLE_USER_HOME="${GRADLE_USER_HOME:-/root/.gradle}"
+# Reuse Gradle daemon across builds (same container, faster subsequent builds)
+export GRADLE_OPTS="${GRADLE_OPTS:-} -Dorg.gradle.daemon=true"
+
 INPUT_JSON="${1:?Usage: build.sh <input.json> [output_dir]}"
 OUTPUT_DIR="${2:-./build-output}"
 
@@ -17,22 +22,23 @@ echo "=== Regentspace Build ==="
 echo "Input: $INPUT_JSON"
 echo "Output: $OUTPUT_DIR"
 echo "Workspace: $WORKSPACE"
+echo "Gradle Home: $GRADLE_USER_HOME"
 echo ""
 
 # [1] Validate JSON
-echo "[1/10] Validating JSON..."
+echo "[1/9] Validating JSON..."
 if ! jq empty "$INPUT_JSON" 2>/dev/null; then
     echo "ERROR: Invalid JSON input"
     exit 1
 fi
 
 # [2] Create isolated workspace
-echo "[2/10] Creating workspace..."
+echo "[2/9] Creating workspace..."
 rm -rf "$WORKSPACE"
 mkdir -p "$WORKSPACE"
 
 # [3] Copy template
-echo "[3/10] Copying template..."
+echo "[3/9] Copying template..."
 cp -r "$TEMPLATE_DIR/android" "$WORKSPACE/"
 cp -r "$TEMPLATE_DIR/assets" "$WORKSPACE/"
 cp -r "$TEMPLATE_DIR/lib" "$WORKSPACE/"
@@ -40,7 +46,7 @@ cp "$TEMPLATE_DIR/analysis_options.yaml" "$WORKSPACE/"
 cp "$TEMPLATE_DIR/.metadata" "$WORKSPACE/" 2>/dev/null || true
 
 # [4] Parse JSON and extract values
-echo "[4/10] Parsing configuration..."
+echo "[4/9] Parsing configuration..."
 APP_NAME=$(jq -r '.app.name // "My App"' "$INPUT_JSON")
 APP_DESC=$(jq -r '.app.description // ""' "$INPUT_JSON")
 APP_VERSION=$(jq -r '.app.version // "1.0.0"' "$INPUT_JSON")
@@ -53,11 +59,11 @@ echo "  Package: $PACKAGE_NAME"
 echo "  Version: $APP_VERSION ($VERSION_CODE)"
 
 # [5] Run code generator
-echo "[5/10] Running code generator..."
+echo "[5/9] Running code generator..."
 dart "$GENERATOR_DIR/generate.dart" "$INPUT_JSON" "$WORKSPACE"
 
 # [6] Apply build-time configuration
-echo "[6/10] Applying build configuration..."
+echo "[6/9] Applying build configuration..."
 
 # Replace placeholders in pubspec.yaml
 sed -i "s/{{APP_NAME}}/$(echo $PACKAGE_NAME | sed 's/.*\.//')/g" "$WORKSPACE/pubspec.yaml"
@@ -74,7 +80,7 @@ sed -i "s/{{VERSION_CODE}}/$VERSION_CODE/g" "$WORKSPACE/android/app/build.gradle
 sed -i "s/{{VERSION_NAME}}/$APP_VERSION/g" "$WORKSPACE/android/app/build.gradle.kts"
 
 # [7] Generate launcher icon from base64 (if provided)
-echo "[7/10] Generating launcher icon..."
+echo "[7/9] Generating launcher icon..."
 ICON_BASE64=$(jq -r '.app.iconBase64 // ""' "$INPUT_JSON")
 if [ -n "$ICON_BASE64" ]; then
     echo "  Decoding app icon from build JSON..."
@@ -121,17 +127,17 @@ else
     echo "  No custom icon — using default"
 fi
 
-# [8] Resolve dependencies
-echo "[8/10] Resolving dependencies..."
+# [8] Resolve dependencies + Build APK
+echo "[8/9] Resolving dependencies..."
 cd "$WORKSPACE"
 flutter pub get
 
-# [9] Build APK
-echo "[9/10] Building APK..."
+echo "[9/9] Building APK..."
 flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons --split-per-abi
 
-# [10] Collect output
-echo "[10/10] Collecting output..."
+# Collect output
+echo ""
+echo "Collecting output..."
 mkdir -p "$OUTPUT_DIR"
 APK_PATH="$WORKSPACE/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk"
 if [ ! -f "$APK_PATH" ]; then
