@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../navigator.dart';
 import 'createaccount.dart';
 import 'verificationpage.dart';
+import 'forgot_password.dart';
 import '../components/button.dart';
 import '../components/inputarea.dart';
 import '../components/loadingpopup.dart';
@@ -364,18 +365,26 @@ class _LoginpageState extends State<Loginpage> {
                   child: const Button(label: 'Login'),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Forgot password?',
-                      style: TextStyle(fontFamily: 'DMSans', 
-                        color: const Color.fromRGBO(133, 99, 188, 1),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
+                    );
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Forgot password?',
+                        style: TextStyle(fontFamily: 'DMSans', 
+                          color: const Color.fromRGBO(133, 99, 188, 1),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(children: [

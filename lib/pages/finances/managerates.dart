@@ -9,7 +9,6 @@ class ManageRatesPage extends StatefulWidget {
 }
 
 class _ManageRatesPageState extends State<ManageRatesPage> {
-  // ── Airtime commission rates (%) ──
   final Map<String, double> airtimeRates = {
     'MTN': 3.5,
     'GLO': 3.0,
@@ -17,7 +16,6 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
     '9mobile': 3.0,
   };
 
-  // ── Data profit margin (₦ per GB) ──
   final Map<String, Map<String, double>> dataRates = {
     'MTN': {'SME': 280, 'Gifting': 260, 'Corporate': 250},
     'GLO': {'SME': 270, 'Gifting': 250, 'Corporate': 240},
@@ -25,14 +23,12 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
     '9mobile': {'SME': 300, 'Gifting': 280, 'Corporate': 270},
   };
 
-  // ── Cable TV commission rates ──
   final Map<String, double> cableTvRates = {
     'DSTV': 2.5,
     'GOTV': 2.0,
     'Startimes': 1.5,
   };
 
-  // ── Electricity processing fee (%) ──
   final Map<String, double> electricityRates = {
     'IKEDC': 1.0,
     'EKEDC': 1.0,
@@ -45,7 +41,6 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
     'AEDC-Prepaid': 1.0,
   };
 
-  // ── Service toggles ──
   final Map<String, bool> serviceToggles = {
     'Airtime': true,
     'Data': true,
@@ -54,7 +49,6 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
     'Education': false,
   };
 
-  // ── Transaction limits ──
   double minTransaction = 100;
   double maxTransaction = 500000;
 
@@ -297,43 +291,64 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
             Text("Set your commission rates and profit margins for each service.", style: AppTextStyles.body(color: AppColors.textTertiary)),
             const SizedBox(height: 20),
 
-            // ── Transaction Limits ──
             _buildSectionHeader('Transaction Limits', Icons.swap_horiz_rounded),
             const SizedBox(height: 10),
-            _buildTransactionLimitsCard(),
+            _buildTransactionLimitsTile(),
             const SizedBox(height: 20),
 
-            // ── Airtime Rates ──
             _buildSectionHeader('Airtime Commission', Icons.phone_android_rounded),
             const SizedBox(height: 10),
-            _buildAirtimeRatesCard(),
+            ...airtimeRates.entries.map((e) => _buildRateTile(
+              icon: Icons.phone_android_rounded,
+              title: e.key,
+              subtitle: 'Commission per sale',
+              value: '${e.value.toStringAsFixed(1)}%',
+              onTap: () => _editAirtimeRateDialog(e.key, e.value),
+            )),
             const SizedBox(height: 20),
 
-            // ── Data Rates ──
             _buildSectionHeader('Data Profit Margins', Icons.wifi_rounded),
             const SizedBox(height: 10),
-            _buildDataRatesCard(),
+            ...dataRates.entries.expand((network) => network.value.entries.map((type) => _buildRateTile(
+              icon: Icons.wifi_rounded,
+              title: '${network.key} ${type.key}',
+              subtitle: 'Profit per GB',
+              value: '₦${type.value.toStringAsFixed(0)}/GB',
+              onTap: () => _editDataRateDialog(network.key, type.key, type.value),
+            ))),
             const SizedBox(height: 20),
 
-            // ── Cable TV Rates ──
             _buildSectionHeader('Cable TV Commission', Icons.tv_rounded),
             const SizedBox(height: 10),
-            _buildCableTvRatesCard(),
+            ...cableTvRates.entries.map((e) => _buildRateTile(
+              icon: Icons.tv_rounded,
+              title: e.key,
+              subtitle: 'Commission per subscription',
+              value: '${e.value.toStringAsFixed(1)}%',
+              onTap: () => _editCableTvRateDialog(e.key, e.value),
+            )),
             const SizedBox(height: 20),
 
-            // ── Electricity Rates ──
             _buildSectionHeader('Electricity Processing Fee', Icons.flash_on_rounded),
             const SizedBox(height: 10),
-            _buildElectricityRatesCard(),
+            ...electricityRates.entries.map((e) => _buildRateTile(
+              icon: Icons.flash_on_rounded,
+              title: e.key,
+              subtitle: 'Processing fee',
+              value: '${e.value.toStringAsFixed(1)}%',
+              onTap: () => _editElectricityRateDialog(e.key, e.value),
+            )),
             const SizedBox(height: 20),
 
-            // ── Service Toggles ──
             _buildSectionHeader('Enable/Disable Services', Icons.toggle_on_rounded),
             const SizedBox(height: 10),
-            _buildServiceTogglesCard(),
+            ...serviceToggles.entries.map((e) => _buildToggleTile(
+              title: e.key,
+              value: e.value,
+              onChanged: (v) => setState(() => serviceToggles[e.key] = v),
+            )),
             const SizedBox(height: 24),
 
-            // ── Save Button ──
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -368,35 +383,55 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
     );
   }
 
-  Widget _buildTransactionLimitsCard() {
+  Widget _buildTransactionLimitsTile() {
     return GestureDetector(
       onTap: _editTransactionLimitsDialog,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.primarySoft,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.primaryLight, width: 1),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE8E8EA)),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Min: ₦${minTransaction.toStringAsFixed(0)}", style: AppTextStyles.body(color: AppColors.textPrimary)),
-                const SizedBox(height: 4),
-                Text("Max: ₦${maxTransaction.toStringAsFixed(0)}", style: AppTextStyles.body(color: AppColors.textPrimary)),
-              ],
-            ),
             Container(
-              width: 32,
-              height: 32,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFFFDF4FF),
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFEAC5F7), width: 1),
               ),
-              child: const Icon(Icons.edit_rounded, size: 16, color: AppColors.primary),
+              child: const Center(
+                child: Icon(Icons.swap_horiz_rounded, size: 18, color: AppColors.primary),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(child: Text('Transaction Limits', overflow: TextOverflow.ellipsis, style: AppTextStyles.body(color: AppColors.textPrimary))),
+                      const SizedBox(width: 8),
+                      Text('₦${minTransaction.toStringAsFixed(0)} - ₦${maxTransaction.toStringAsFixed(0)}', style: AppTextStyles.titleSmall(color: AppColors.textPrimary)),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(child: Text('Min & max per transaction', overflow: TextOverflow.ellipsis, style: AppTextStyles.caption(color: AppColors.textTertiary))),
+                      const SizedBox(width: 8),
+                      Icon(Icons.edit_rounded, size: 14, color: AppColors.primary),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -404,277 +439,119 @@ class _ManageRatesPageState extends State<ManageRatesPage> {
     );
   }
 
-  Widget _buildAirtimeRatesCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryLight, width: 1),
-      ),
-      child: Column(
-        children: airtimeRates.entries.map((entry) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+  Widget _buildRateTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE8E8EA)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFDF4FF),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFEAC5F7), width: 1),
+              ),
+              child: Center(
+                child: Icon(icon, size: 18, color: AppColors.primary),
+              ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(entry.key, style: AppTextStyles.body(color: AppColors.textPrimary)),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySoft,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        "${entry.value.toStringAsFixed(1)}%",
-                        style: AppTextStyles.titleSmall(color: AppColors.primary),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => _editAirtimeRateDialog(entry.key, entry.value),
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: AppColors.primarySoft,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.edit_rounded, color: AppColors.primary, size: 16),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(child: Text(title, overflow: TextOverflow.ellipsis, style: AppTextStyles.body(color: AppColors.textPrimary))),
+                      const SizedBox(width: 8),
+                      Text(value, style: AppTextStyles.titleSmall(color: AppColors.primary)),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(child: Text(subtitle, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption(color: AppColors.textTertiary))),
+                      const SizedBox(width: 8),
+                      Icon(Icons.edit_rounded, size: 14, color: AppColors.primary),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildDataRatesCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryLight, width: 1),
-      ),
-      child: Column(
-        children: dataRates.entries.map((networkEntry) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(networkEntry.key, style: AppTextStyles.titleSmall(color: AppColors.textPrimary)),
-                const SizedBox(height: 8),
-                ...networkEntry.value.entries.map((typeEntry) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(typeEntry.key, style: AppTextStyles.caption(color: AppColors.textTertiary)),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: AppColors.primarySoft,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                "₦${typeEntry.value.toStringAsFixed(0)}/GB",
-                                style: AppTextStyles.caption(color: AppColors.primary),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            GestureDetector(
-                              onTap: () => _editDataRateDialog(networkEntry.key, typeEntry.key, typeEntry.value),
-                              child: Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primarySoft,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Icon(Icons.edit_rounded, color: AppColors.primary, size: 14),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ],
-            ),
-          );
-        }).toList(),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCableTvRatesCard() {
+  Widget _buildToggleTile({
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryLight, width: 1),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE8E8EA)),
       ),
-      child: Column(
-        children: cableTvRates.entries.map((entry) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              color: value ? const Color(0xFFFDF4FF) : const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: value ? const Color(0xFFEAC5F7) : const Color(0xFFE8E8EA),
+                width: 1,
+              ),
             ),
+            child: Center(
+              child: Icon(
+                value ? Icons.check_rounded : Icons.close_rounded,
+                size: 18,
+                color: value ? AppColors.primary : AppColors.textHint,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(entry.key, style: AppTextStyles.body(color: AppColors.textPrimary)),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySoft,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        "${entry.value.toStringAsFixed(1)}%",
-                        style: AppTextStyles.titleSmall(color: AppColors.primary),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => _editCableTvRateDialog(entry.key, entry.value),
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: AppColors.primarySoft,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.edit_rounded, color: AppColors.primary, size: 16),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildElectricityRatesCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryLight, width: 1),
-      ),
-      child: Column(
-        children: electricityRates.entries.map((entry) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(entry.key, style: AppTextStyles.body(color: AppColors.textPrimary)),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySoft,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        "${entry.value.toStringAsFixed(1)}%",
-                        style: AppTextStyles.titleSmall(color: AppColors.primary),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => _editElectricityRateDialog(entry.key, entry.value),
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: AppColors.primarySoft,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.edit_rounded, color: AppColors.primary, size: 16),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildServiceTogglesCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryLight, width: 1),
-      ),
-      child: Column(
-        children: serviceToggles.entries.map((entry) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(entry.key, style: AppTextStyles.body(color: AppColors.textPrimary)),
+                Text(title, style: AppTextStyles.body(color: AppColors.textPrimary)),
                 Switch(
-                  value: entry.value,
-                  onChanged: (v) => setState(() => serviceToggles[entry.key] = v),
-                  activeColor: Colors.white,
+                  value: value,
+                  onChanged: onChanged,
+                  activeThumbColor: Colors.white,
                   activeTrackColor: AppColors.primary,
+                  inactiveTrackColor: const Color(0xFFE0E0E0),
                 ),
               ],
             ),
-          );
-        }).toList(),
+          ),
+        ],
       ),
     );
   }

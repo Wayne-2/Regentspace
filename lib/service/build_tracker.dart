@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'push_notification_service.dart';
+import '../pages/dashboard/newusertab.dart';
 
 const String kBuildServerUrl = 'https://regentspace-builder-production.up.railway.app';
 
@@ -106,10 +107,11 @@ class BuildTracker {
     final data = jsonDecode(response.body);
     final buildId = data['buildId'] as String;
 
-    // Write app metadata to Firestore so dashboard can query it
+    // Write app metadata to builder Firestore so dashboard can query it
     if (uid != null) {
       try {
-        await FirebaseFirestore.instance
+        final builderDb = await BuilderFirestore.instance;
+        await builderDb
             .collection('apps')
             .doc('regentspace-builder')
             .collection('apps')
@@ -121,7 +123,7 @@ class BuildTracker {
           'appId': appId,
         }, SetOptions(merge: true));
       } catch (e) {
-        debugPrint('[BuildTracker] Firestore write failed: $e');
+        debugPrint('[BuildTracker] Builder Firestore write failed: $e');
       }
     }
 
@@ -154,6 +156,23 @@ class BuildTracker {
     _pollAll();
   }
 
+  /// Map server phase names to client status names.
+  /// Server uses: queued, running, completed, failed, cancelled
+  /// Client uses: preparing, building, completed, failed, cancelled
+  String _normalizeStatus(String? serverStatus) {
+    switch (serverStatus) {
+      case 'queued': return 'preparing';
+      case 'running': return 'building';
+      case 'completed': return 'completed';
+      case 'failed': return 'failed';
+      case 'cancelled': return 'cancelled';
+      case 'building':
+      case 'preparing':
+        return serverStatus!;
+      default: return serverStatus ?? 'building';
+    }
+  }
+
   Future<void> _pollAll() async {
     final active = builds.value.where((b) => b.status == 'building' || b.status == 'preparing').toList();
     if (active.isEmpty) {
@@ -166,16 +185,16 @@ class BuildTracker {
         final response = await http.get(Uri.parse('$kBuildServerUrl/status/${build.buildId}'));
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
-          final serverStatus = data['status'] as String?;
+          final normalized = _normalizeStatus(data['status'] as String?);
 
-          if (serverStatus != null && serverStatus != build.status) {
-            build.status = serverStatus;
+          if (normalized != build.status) {
+            build.status = normalized;
             build.apkSize = data['apkSize'];
             build.downloadUrl = data['downloadUrl'] ?? '/download/${build.buildId}';
             build.error = data['error'];
           }
 
-          if (serverStatus == 'completed' || serverStatus == 'failed' || serverStatus == 'cancelled') {
+          if (normalized == 'completed' || normalized == 'failed' || normalized == 'cancelled') {
             await _saveBuilds();
             builds.value = List<BuildInfo>.from(builds.value);
 
@@ -184,7 +203,7 @@ class BuildTracker {
               await PushNotificationService.instance.dismissBuildProgressNotification(build.buildId);
             } catch (_) {}
 
-            if (serverStatus == 'completed') {
+            if (normalized == 'completed') {
               _showNotification(build);
             }
           } else {
@@ -247,8 +266,15 @@ class BuildTracker {
   Future<void> cancelBuild(String buildId) async {
     try {
       final response = await http.post(Uri.parse('$kBuildServerUrl/cancel/$buildId'));
-      if (response.statusCode == 200) {
-        final build = builds.value.firstWhere((b) => b.buildId == buildId);
+      debugPrint('[BuildTracker] Cancel response: ${response.statusCode} ${response.body}');
+      
+      // Find and update the build regardless of server response
+      final build = builds.value.cast<BuildInfo?>().firstWhere(
+        (b) => b!.buildId == buildId,
+        orElse: () => null,
+      );
+      
+      if (build != null) {
         build.status = 'cancelled';
         build.error = 'Build cancelled by user';
         await _saveBuilds();

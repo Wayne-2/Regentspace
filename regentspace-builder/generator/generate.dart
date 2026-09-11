@@ -686,21 +686,24 @@ class BuildGenerator {
     switch (type) {
       case 'home':
         return '''
-  Widget _serviceItem(IconData icon, String label, VoidCallback? onTap) {
+  Widget _serviceItem(IconData icon, String label, VoidCallback? onTap, {String? elementId}) {
+    final bgColor = elementId != null ? config.getContainerBg(elementId, fallback: Colors.white) : Colors.white;
+    final iconColor = elementId != null ? config.getElementColor('\x24{elementId}_icon', fallback: const Color(0xFF555555)) : const Color(0xFF555555);
+    final textColor = elementId != null ? config.getElementColor('\x24{elementId}_text', fallback: const Color(0xFF555555)) : const Color(0xFF555555);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: bgColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFE8E8E8)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 22, color: const Color(0xFF555555)),
+            Icon(icon, size: 22, color: iconColor),
             const SizedBox(height: 6),
-            Text(label, style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: Color(0xFF555555))),
+            Text(label, style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: textColor)),
           ],
         ),
       ),
@@ -721,22 +724,25 @@ class BuildGenerator {
   }''';
       case 'profile':
         return '''
-  Widget _menuItem(IconData icon, String label, [VoidCallback? onTap]) {
+  Widget _menuItem(IconData icon, String label, [VoidCallback? onTap, String? elementId]) {
+    final bgColor = elementId != null ? config.getContainerBg(elementId, fallback: Colors.white) : Colors.white;
+    final iconColor = elementId != null ? config.getElementColor(elementId, fallback: const Color(0xFF555555)) : const Color(0xFF555555);
+    final textColor = elementId != null ? config.getElementColor(elementId, fallback: const Color(0xFF333333)) : const Color(0xFF333333);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: bgColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFE8E8E8)),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: const Color(0xFF555555)),
+            Icon(icon, size: 20, color: iconColor),
             const SizedBox(width: 12),
-            Text(label, style: TextStyle(fontFamily: 'DMSans', fontSize: 13, color: Color(0xFF333333))),
+            Text(label, style: TextStyle(fontFamily: 'DMSans', fontSize: 13, color: textColor)),
             const Spacer(),
             Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFFBBBBBB)),
           ],
@@ -970,14 +976,14 @@ class BuildGenerator {
                 const SizedBox(height: 16),
                 GridView.count(crossAxisCount: 4, shrinkWrap: true, physics: NeverScrollableScrollPhysics(), mainAxisSpacing: 16, crossAxisSpacing: 12,
                   children: [
-                    _serviceItem(Icons.phone_android_rounded, 'Airtime', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AirtimeScreen()))),
-                    _serviceItem(Icons.wifi_rounded, 'Data', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DataScreen()))),
-                    _serviceItem(Icons.bolt_rounded, 'Electricity', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ElectricityScreen()))),
-                    _serviceItem(Icons.tv_rounded, 'Cable TV', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CableTvScreen()))),
-                    _serviceItem(Icons.school_rounded, 'Education', null),
-                    _serviceItem(Icons.sports_soccer_rounded, 'Betting', null),
-                    _serviceItem(Icons.water_drop_rounded, 'Water', null),
-                    _serviceItem(Icons.more_horiz_rounded, 'More', null),
+                    _serviceItem(Icons.phone_android_rounded, 'Airtime', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AirtimeScreen())), elementId: 'service_airtime'),
+                    _serviceItem(Icons.wifi_rounded, 'Data', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DataScreen())), elementId: 'service_data'),
+                    _serviceItem(Icons.bolt_rounded, 'Electricity', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ElectricityScreen())), elementId: 'service_electricity'),
+                    _serviceItem(Icons.tv_rounded, 'Cable TV', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CableTvScreen())), elementId: 'service_cable'),
+                    _serviceItem(Icons.school_rounded, 'Education', null, elementId: 'service_education'),
+                    _serviceItem(Icons.sports_soccer_rounded, 'Betting', null, elementId: 'service_betting'),
+                    _serviceItem(Icons.water_drop_rounded, 'Water', null, elementId: 'service_water'),
+                    _serviceItem(Icons.more_horiz_rounded, 'More', null, elementId: 'service_more'),
                   ]),
               ],
             ),
@@ -1056,7 +1062,7 @@ class BuildGenerator {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: config.getContainerBg('finance_plan_card_button', fallback: Colors.white),
                         borderRadius: BorderRadius.circular(10)),
                       child: Text('Manage', style: TextStyle(fontFamily: 'DMSans', fontSize: 10, fontWeight: FontWeight.w600, color: config.getElementColor('finance_plan_card_button_text', fallback: const Color(0xFF2E2E2E)))),
                     ),
@@ -1171,11 +1177,11 @@ class BuildGenerator {
                     Text(phone, style: TextStyle(fontFamily: 'DMSans', fontSize: 12, color: Color(0xFFAAAAAA))),
                 ])),
                 const SizedBox(height: 28),
-                _menuItem(Icons.person_outline_rounded, 'Personal Information', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalInfoPage()))),
-                _menuItem(Icons.credit_card_rounded, 'Payment Methods', () {}),
-                _menuItem(Icons.lock_outline_rounded, 'Security', () {}),
-                _menuItem(Icons.notifications_none_rounded, 'Notifications', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsPage()))),
-                _menuItem(Icons.help_outline_rounded, 'Help & Support', () {}),
+                _menuItem(Icons.person_outline_rounded, 'Personal Information', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalInfoPage())), 'profile_personal'),
+                _menuItem(Icons.credit_card_rounded, 'Payment Methods', () {}, 'profile_payment'),
+                _menuItem(Icons.lock_outline_rounded, 'Security', () {}, 'profile_security'),
+                _menuItem(Icons.notifications_none_rounded, 'Notifications', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsPage())), 'profile_notifications'),
+                _menuItem(Icons.help_outline_rounded, 'Help & Support', () {}, 'profile_help'),
                 const SizedBox(height: 20),
                 GestureDetector(
                   onTap: () async {
@@ -1535,6 +1541,24 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _forgotPassword() async {
+    final email = _emailCtrl.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _error = 'Enter your email above, then tap Forgot password');
+      return;
+    }
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Reset link sent to $email'), backgroundColor: config.getThemeColor('primaryColor', fallback: const Color(0xFF6C0090))),
+      );
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red.shade700),
+      );
+    }
+  }
+
   Future<void> _login() async {
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text;
@@ -1630,9 +1654,12 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
-                child: Text(config.getText('login_forgot', fallback: 'Forgot password?'),
-                  style: TextStyle(fontFamily: 'DMSans', fontSize: 11, fontWeight: FontWeight.w500,
-                    color: config.getElementColor('login_forgot', fallback: const Color(0xFFB0B0B0)))),
+                child: GestureDetector(
+                  onTap: _forgotPassword,
+                  child: Text(config.getText('login_forgot', fallback: 'Forgot password?'),
+                    style: TextStyle(fontFamily: 'DMSans', fontSize: 11, fontWeight: FontWeight.w500,
+                      color: config.getElementColor('login_forgot', fallback: const Color(0xFFB0B0B0)))),
+                ),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
@@ -1689,6 +1716,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildField(String label, String hint, {TextEditingController? controller, bool obscure = false, TextInputType? keyboardType, String? elementId}) {
+    final inputColor = elementId != null ? config.getElementColor(elementId, fallback: const Color(0xFF333333)) : const Color(0xFF333333);
     final labelColor = elementId != null ? config.getElementColor('${elementId}_label', fallback: const Color(0xFF888888)) : const Color(0xFF888888);
     final bgColor = elementId != null ? config.getContainerBg(elementId, fallback: Colors.white) : Colors.white;
     final borderColor = elementId != null ? config.getContainerBg('${elementId}_border', fallback: const Color(0xFFE0E0E0)) : const Color(0xFFE0E0E0);
@@ -1713,7 +1741,7 @@ class _LoginScreenState extends State<LoginScreen> {
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: borderColor)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
-          style: TextStyle(fontFamily: 'DMSans', fontSize: 13),
+          style: TextStyle(fontFamily: 'DMSans', fontSize: 13, color: inputColor),
         ),
       ],
     );
@@ -1929,6 +1957,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Widget _buildField(String label, String hint, {TextEditingController? controller, bool obscure = false, TextInputType? keyboardType, String? elementId}) {
+    final inputColor = elementId != null ? config.getElementColor(elementId, fallback: const Color(0xFF333333)) : const Color(0xFF333333);
     final labelColor = elementId != null ? config.getElementColor('${elementId}_label', fallback: const Color(0xFF888888)) : const Color(0xFF888888);
     final bgColor = elementId != null ? config.getContainerBg(elementId, fallback: Colors.white) : Colors.white;
     final borderColor = elementId != null ? config.getContainerBg('${elementId}_border', fallback: const Color(0xFFE0E0E0)) : const Color(0xFFE0E0E0);
@@ -1953,7 +1982,7 @@ class _SignupScreenState extends State<SignupScreen> {
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: borderColor)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
-          style: TextStyle(fontFamily: 'DMSans', fontSize: 13),
+          style: TextStyle(fontFamily: 'DMSans', fontSize: 13, color: inputColor),
         ),
       ],
     );

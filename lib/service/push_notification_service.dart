@@ -179,7 +179,7 @@ class PushNotificationService {
 
   /// Show a local test notification instantly (no FCM needed)
   Future<void> showTestNotification({String title = 'Test notification', String body = 'Push is working!'}) async {
-    NotificationStore.addLocal(title, body);
+    NotificationStore.addLocalOnly(title, body);
     const androidDetails = AndroidNotificationDetails(
       'regentspace_channel',
       'Regentspace Notifications',

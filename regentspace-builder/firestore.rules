@@ -6,10 +6,11 @@ service cloud.firestore {
     match /apps/{platformAppId} {
 
       // ─── Shared platform config ───
-      // apps/regentspace-builder/config/* — readable by any authenticated user
+      // apps/regentspace-builder/config/* — readable by anyone (API keys + rates for client)
       match /config/{configId} {
-        allow read: if request.auth != null;
-        allow write: if false; // set during build, read-only at runtime
+        allow read: if true;
+        // rates doc is writable by authenticated users (admin sets rates)
+        allow write: if request.auth != null && configId == 'rates';
       }
 
       // ─── Per-app data ───

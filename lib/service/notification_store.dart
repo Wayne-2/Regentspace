@@ -160,13 +160,15 @@ class NotificationStore {
     }
     _notifyListeners();
 
-    // Sync to Firestore in background
-    for (final id in ids) {
-      try {
-        await deleteForUser(uid, id);
-      } catch (e) {
-        if (kDebugMode) debugPrint('[NotificationStore] Firestore delete failed: $e');
+    // Sync to Firestore in background — batch delete
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      for (final id in ids) {
+        batch.delete(_col(uid).doc(id));
       }
+      await batch.commit();
+    } catch (e) {
+      if (kDebugMode) debugPrint('[NotificationStore] Firestore batch delete failed: $e');
     }
   }
 
@@ -314,6 +316,20 @@ class NotificationStore {
 
   static void addLocal(String title, String body) {
     addNotification(title: title, body: body);
+  }
+
+  /// Add to local Hive only — does NOT write to Firestore.
+  /// Use when the caller will handle Firestore persistence separately.
+  static Future<void> addLocalOnly(String title, String body) async {
+    final notifId = DateTime.now().millisecondsSinceEpoch.toString();
+    final n = AppNotification(
+      id: notifId, title: title, body: body, data: const {}, timestamp: DateTime.now(),
+    );
+    _items.removeWhere((e) => e.id == n.id);
+    _items.insert(0, n);
+    if (_items.length > 50) _items.removeLast();
+    await _saveToLocal(n);
+    _notifyListeners();
   }
 
   static void clear() {
