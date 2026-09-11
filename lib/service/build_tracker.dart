@@ -162,16 +162,6 @@ class BuildTracker {
     }
 
     for (final build in active) {
-      // Show/update persistent progress notification
-      try {
-        final displayStatus = _statusToDisplayText(build.status);
-        await PushNotificationService.instance.showBuildProgressNotification(
-          buildId: build.buildId,
-          appName: build.appName,
-          status: displayStatus,
-        );
-      } catch (_) {}
-
       try {
         final response = await http.get(Uri.parse('$kBuildServerUrl/status/${build.buildId}'));
         if (response.statusCode == 200) {
@@ -183,16 +173,6 @@ class BuildTracker {
             build.apkSize = data['apkSize'];
             build.downloadUrl = data['downloadUrl'] ?? '/download/${build.buildId}';
             build.error = data['error'];
-
-            // Update progress notification with new status
-            try {
-              final displayStatus = _statusToDisplayText(serverStatus);
-              await PushNotificationService.instance.updateBuildProgressNotification(
-                buildId: build.buildId,
-                appName: build.appName,
-                status: displayStatus,
-              );
-            } catch (_) {}
           }
 
           if (serverStatus == 'completed' || serverStatus == 'failed' || serverStatus == 'cancelled') {
@@ -207,6 +187,16 @@ class BuildTracker {
             if (serverStatus == 'completed') {
               _showNotification(build);
             }
+          } else {
+            // Still building — show/update persistent progress notification
+            try {
+              final displayStatus = _statusToDisplayText(build.status);
+              await PushNotificationService.instance.showBuildProgressNotification(
+                buildId: build.buildId,
+                appName: build.appName,
+                status: displayStatus,
+              );
+            } catch (_) {}
           }
         }
       } catch (_) {}

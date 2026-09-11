@@ -1526,6 +1526,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
   String? _error;
 
+  BuildConfig get config => BuildConfig.load();
+
   @override
   void dispose() {
     _emailCtrl.dispose();
@@ -1579,7 +1581,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final config = BuildConfig.load();
     return Scaffold(
       backgroundColor: config.getScreenBg(1),
       body: SafeArea(
@@ -1749,6 +1750,8 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _loading = false;
   String? _error;
 
+  BuildConfig get config => BuildConfig.load();
+
   @override
   void dispose() {
     _usernameCtrl.dispose();
@@ -1821,7 +1824,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final config = BuildConfig.load();
     return Scaffold(
       backgroundColor: config.getScreenBg(2),
       body: SafeArea(

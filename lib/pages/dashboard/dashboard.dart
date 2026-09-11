@@ -1126,6 +1126,10 @@ class _BuildResultBannerState extends State<_BuildResultBanner> {
   void _startElapsedTimer() {
     _elapsedTimer?.cancel();
     _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) {
+        _elapsedTimer?.cancel();
+        return;
+      }
       final builds = BuildTracker.instance.builds.value;
       final active = builds.where((b) => b.status == 'building' || b.status == 'preparing');
       if (active.isEmpty) {
@@ -1133,7 +1137,6 @@ class _BuildResultBannerState extends State<_BuildResultBanner> {
         return;
       }
       setState(() {
-        if (!mounted) return;
         _elapsed += const Duration(seconds: 1);
       });
     });
@@ -1214,7 +1217,7 @@ class _BuildResultBannerState extends State<_BuildResultBanner> {
 
         // Restart timer when build starts
         if (isBuilding && (_elapsedTimer == null || !_elapsedTimer!.isActive)) {
-          _elapsed = Duration.zero;
+          _elapsed = DateTime.now().difference(latest.createdAt);
           _startElapsedTimer();
         }
 
@@ -1253,12 +1256,14 @@ class _BuildResultBannerState extends State<_BuildResultBanner> {
         String subtitle;
         if (isBuilding) {
           subtitle = 'Elapsed: ${_fmtElapsed(_elapsed)} — Please keep the app open';
+        } else if (isCompleted) {
+          subtitle = '${latest.appName} is ready to download';
         } else if (isFailed) {
           subtitle = _sanitizeError(latest.error ?? 'An error occurred during build');
         } else if (isCancelled) {
           subtitle = 'The build was cancelled. You can restart from the canva.';
         } else {
-          subtitle = '${latest.appName} is ready to download';
+          subtitle = 'Processing...';
         }
 
         final sizeText = latest.apkSize != null
